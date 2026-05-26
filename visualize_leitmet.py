@@ -31,7 +31,9 @@ PERSON_SUBTEAM = {
     "FMD":"PC Products","Wud":"PC Products","Kih":"PC Products","HeT":"PC Products",
     "Kip":"PCT Leitung",
 }
-FK_LIST = ["Jco","MiG","Ktz","Beb","TOK","Urk","Kip","Kis","Krö"]
+# Nur tatsächliche Führungskräfte (laut Organigramm, blau markiert)
+# Kis und Krö sind Product Owner, keine Führungskräfte → nicht im FK-Filter
+FK_LIST = ["Jco","MiG","Ktz","Beb","TOK","Urk","Kip"]
 
 ABT_FARBEN = {
     "PC":"#2563eb","PCO":"#f59e0b","PCT":"#16a34a",
@@ -292,20 +294,24 @@ def build_sankey():
             for j in range(i+1,len(al)):
                 k = (al[i],al[j]) if al[i]<al[j] else (al[j],al[i])
                 fluss[k] += w
-    srcs,tgts,vals,lbl = [],[],[],[]
+    srcs,tgts,vals,lbl,link_colors = [],[],[],[],[]
     for (a,b),v in fluss.items():
         srcs.append(abt_idx[a]); tgts.append(abt_idx[b])
-        vals.append(round(v,1)); lbl.append(f"{a} ↔ {b}: {v:.1f}")
+        vals.append(round(v,1)); lbl.append(f"{a} ↔ {b}: {v:.1f} Freq.-Punkte")
+        # Farbige Links (Quell-Abteilungsfarbe, gut sichtbar)
+        hex_col = ABT_FARBEN.get(a,"#9ca3af").lstrip("#")
+        r,g,b_c = int(hex_col[0:2],16),int(hex_col[2:4],16),int(hex_col[4:6],16)
+        link_colors.append(f"rgba({r},{g},{b_c},0.35)")
     fig = go.Figure(go.Sankey(
-        node=dict(pad=20,thickness=20,
+        node=dict(pad=24,thickness=24,
                   line=dict(color="white",width=0.5),
                   label=abt_list,
                   color=[ABT_FARBEN.get(a,"#9ca3af") for a in abt_list],
-                  hovertemplate="%{label}<extra></extra>"),
+                  hovertemplate="<b>%{label}</b><extra></extra>"),
         link=dict(source=srcs,target=tgts,value=vals,
                   customdata=lbl,
-                  hovertemplate="%{customdata}<extra></extra>",
-                  color="rgba(200,200,200,0.4)"),
+                  hovertemplate="<b>%{customdata}</b><extra></extra>",
+                  color=link_colors),
     ))
     fig.update_layout(
         title=dict(text="Informationsfluss zwischen Abteilungen · Flussdicke = gewichtete Meeting-Frequenz",
@@ -383,8 +389,8 @@ def build_findings_html():
          "Einkauf/Operations (PCO) und Sales (PCS) sind im Netzwerk nicht direkt verbunden. Bei kundenseitigen Bedarfen, Lieferzeiten oder Beschaffungsfragen wäre eine direkte Schiene relevant."),
         ("luecke","🕳️","Kein übergreifendes Führungskräfte-Forum auf Teamlead-Ebene",
          "Unterhalb des Leitungsmeetings (GF-Ebene) gibt es kein dokumentiertes Meeting, in dem die Teamleads abteilungsübergreifend koordinieren. Beb, TOK, Urk, Kip treffen sich nur im Leitungsmeeting gemeinsam."),
-        ("klaerung","❓","1:1 MA Gespräche (Kip/PCT) – täglich oder rotierend?",
-         "Als täglich eingetragen: Mo/Di/Do 13:00–13:30, Mi 09:30–10:00, Fr Puffertermin. Trifft Kip täglich jeden Mitarbeiter, oder ist das ein Rotationsplan (je Tag ein anderer)? Die Häufigkeit hat große Auswirkung auf die Meeting-Last-Analyse."),
+        ("klaerung","✅","1:1 MA Gespräche (Kip/PCT) – rotierendes Format",
+         "Geklärt: Je Wochentag trifft Kip einen anderen Mitarbeiter aus PCT (Rotationsplan). Das erklärt die tägliche Eintragung. Die Meeting-Last-Einschätzung für Kip bleibt hoch, aber das Format ist strukturiert und nicht täglich mit allen."),
         ("klaerung","❓","'Regeltermin Turn – PQR' doppelt in der Quelltabelle",
          "Das Meeting erschien in Zeile 4 (mit vollständigen Daten) und Zeile 7 (unvollständig, ohne Teilnehmer und Zweck). Das zweite Vorkommen wurde bereinigt. Handelt es sich um zwei verschiedene Meeting-Instanzen oder ein Duplikat?"),
         ("klaerung","❓","PSG Sitzung – wer sind 'Projektverantwortliche' konkret?",
@@ -393,10 +399,14 @@ def build_findings_html():
          "Verantwortlich = 'Kundenbetreuer'. Ist das eine Rolle, die von Urk oder anderen PCS-Mitgliedern je nach Kunde übernommen wird? Für Netzwerk-Analyse relevant."),
         ("klaerung","❓","'PCS/ACF Sprintreview' – Name irreführend",
          "Laut Klärung ist das ein Produkt-Review innerhalb PCT AC. Verantwortlich ist Kip, durchgeführt von Kis. Der Name suggeriert PCS-Beteiligung, tatsächlich ist es ein PCT-internes Meeting. Sollte der Name in der Quelltabelle angepasst werden?"),
+        ("luecke","🕳️","Ktz (PCP Produktmanagement) – keine eigenen Meetings dokumentiert",
+         "Ktz ist Führungskraft von PCP Produktmanagement (mit Lav und Rls). Er erscheint nur als Teilnehmer in PC-Leitungsmeetings, hat aber keine eigenen Meetings verantwortet – weder 1:1s mit seinem Team noch ein PCP-Teammeeting. Entweder nicht erfasst oder tatsächlich nicht vorhanden. Klärung empfohlen."),
         ("datenqualitaet","📝","11 Meetings ohne Informationsfluss-Dokumentation",
          "Für 11 aktive Meetings ist nicht dokumentiert, welche Informationen hineinfließen und welche Entscheidungen/Outputs herauskommen. Empfehlung: Im Rahmen der Meeting-Überprüfung nachpflegen – der Informationsfluss ist entscheidend für die Qualitätsbeurteilung."),
         ("datenqualitaet","📝","Asymmetrie in der Dokumentation von Einzelgesprächen",
          "Urk und Beb listen ihre 1:1-Gespräche namentlich auf (pro Person ein eigenes Meeting). TOK und Kip verwenden Platzhalter. Das macht den Vergleich schwierig. Empfehlung: Einheitlichen Standard festlegen."),
+        ("datenqualitaet","📝","Uneinheitliche Terminologie: '1:1' vs. 'Jour Fixe (JF)'",
+         "Bilateral-Meetings zwischen zwei Personen werden in der Tabelle unterschiedlich bezeichnet: Urk nennt sie '1:1' (Einzelgespräch), Beb nennt identische Formate 'JF' (Jour Fixe). Funktional sind beide dasselbe: ein regelmäßiges bilaterales Meeting. Die unterschiedliche Benennung erschwert systemische Auswertung und Kategorisierung. Empfehlung: Gemeinsame Nomenklatur festlegen."),
         ("datenqualitaet","📝","Abteilung 'PCS/ACF Sprintreview' weist auf PCT hin",
          "Meeting ist unter PCT geführt, Name enthält PCS. Im Netzwerk wird dieses Meeting korrekt bei PCT verortet, aber der Name könnte zu Verwechslungen führen."),
     ]
@@ -433,8 +443,12 @@ def build_findings_html():
       </div>"""
         html += "</div>"
 
-    summary = f"<div class='findings-summary'>Gesamt: <b>{len(findings)} Auffälligkeiten</b> in {len(kat_meta)} Kategorien · Klicke auf eine Karte zum Aufklappen · Status-Badge anklicken zum Weiterschalten</div>"
-    return summary + html
+    export_btn = """<div class="findings-export">
+      <button class="export-btn" onclick="exportFindings()">📋 Notizen exportieren</button>
+      <span class="save-indicator" id="save-indicator">✓ Gespeichert</span>
+    </div>"""
+    summary = f"<div class='findings-summary'>Gesamt: <b>{len(findings)} Auffälligkeiten</b> in {len(kat_meta)} Kategorien · Klicke zum Aufklappen · Status-Badge anklicken zum Weiterschalten · Notizen werden lokal im Browser gespeichert</div>"
+    return export_btn + summary + html
 
 # ── Alle Charts rendern ──────────────────────────────────────────────────────
 print("🔨 Erzeuge Charts…")
@@ -565,6 +579,21 @@ body{{font-family:"Inter",system-ui,sans-serif;background:#f8fafc;color:#1e293b;
   font-family:inherit;font-size:.82rem;resize:vertical;outline:none;background:#fff}}
 .finding-note textarea:focus{{border-color:#2563eb}}
 
+/* Overlap-Legende */
+.overlap-legend{{display:flex;flex-direction:column;gap:8px;margin-top:12px;
+  background:white;border-radius:8px;padding:12px 16px;border:1px solid #f1f5f9;
+  font-size:.83rem;color:#374151}}
+.ol-item{{display:flex;align-items:flex-start;gap:10px}}
+.ol-dot{{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px}}
+
+/* Findings Export */
+.findings-export{{text-align:right;margin-bottom:8px}}
+.export-btn{{background:#1e293b;color:white;border:none;border-radius:6px;
+  padding:7px 14px;font-family:inherit;font-size:.8rem;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px}}
+.export-btn:hover{{background:#334155}}
+.save-indicator{{font-size:.72rem;color:#16a34a;margin-left:8px;opacity:0;transition:opacity .5s}}
+
 /* Footer */
 .footer{{text-align:center;padding:24px;font-size:.74rem;color:#94a3b8;border-top:1px solid #f1f5f9}}
 </style>
@@ -606,7 +635,10 @@ body{{font-family:"Inter",system-ui,sans-serif;background:#f8fafc;color:#1e293b;
 </div>
 <div id="panel-2" class="panel">
   <div class="chart-card">{div_overlap}</div>
-  <p class="hint">Rot = hohe Teilnehmer-Überschneidung (potenzielle Redundanz) · Hover für gemeinsame Personen</p>
+  <div class="overlap-legend">
+    <span class="ol-item"><span class="ol-dot" style="background:#dc2626"></span><b>Hohe Überschneidung (rot)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz. Frage: Brauchen wir beide Meetings?</span>
+    <span class="ol-item"><span class="ol-dot" style="background:#16a34a"></span><b>Keine Überschneidung (grün)</b> → völlig verschiedene Teilnehmer → kein direkter Informationsaustausch via Meeting. Hinweis: Lücke hier ist <em>kein Befund</em> – zwei Meetings müssen nicht dieselben Personen haben. Fehlende Meetings erkennst du besser im Netzwerk (isolierte Knoten) oder im Findings-Tab (dokumentierte Lücken).</span>
+  </div>
 </div>
 <div id="panel-3" class="panel">
   <div class="chart-card">{div_abt}</div>
@@ -660,24 +692,90 @@ function updateTableCount() {{
 }}
 
 // ── Findings-Interaktion ──────────────────────────────────────────────────
+var LS_PREFIX = "leitmet_finding_";
+
 function toggleFinding(id) {{
   var body  = document.getElementById("body-"+id);
   var arrow = document.getElementById("arrow-"+id);
   var open  = body.style.display==="block";
-  body.style.display  = open ? "none" : "block";
+  body.style.display    = open ? "none" : "block";
   arrow.style.transform = open ? "" : "rotate(90deg)";
-  arrow.textContent   = open ? "▸" : "▾";
+  arrow.textContent     = open ? "▸" : "▾";
 }}
+
 function cycleStatus(e, id) {{
   e.stopPropagation();
   var el = document.getElementById("status-"+id);
-  var states = [{{"cls":"offen","lbl":"Offen"}},{{"cls":"klaerung","lbl":"In Klärung"}},{{"cls":"geklaert","lbl":"Geklärt"}}];
+  var states = [{{cls:"offen",lbl:"Offen"}},{{cls:"klaerung",lbl:"In Klärung"}},{{cls:"geklaert",lbl:"Geklärt"}}];
   var cur = states.findIndex(s=>el.classList.contains(s.cls));
   var next = states[(cur+1)%3];
   states.forEach(s=>el.classList.remove(s.cls));
   el.classList.add(next.cls);
   el.textContent = next.lbl;
+  saveState(id);
 }}
+
+function saveNote(id) {{
+  var note   = (document.getElementById("note-"+id)||{{}}).value||"";
+  var status = document.getElementById("status-"+id).textContent;
+  localStorage.setItem(LS_PREFIX+id, JSON.stringify({{status:status,note:note}}));
+  var ind = document.getElementById("save-indicator");
+  if(ind){{ ind.style.opacity=1; setTimeout(()=>ind.style.opacity=0, 1800); }}
+}}
+
+function saveState(id) {{ saveNote(id); }}
+
+function restoreAll() {{
+  for(var i=0; i<localStorage.length; i++) {{
+    var key = localStorage.key(i);
+    if(!key.startsWith(LS_PREFIX)) continue;
+    var id = key.slice(LS_PREFIX.length);
+    try {{
+      var data = JSON.parse(localStorage.getItem(key));
+      var statusEl = document.getElementById("status-"+id);
+      var noteEl   = document.getElementById("note-"+id);
+      if(statusEl && data.status) {{
+        var states = [{{cls:"offen",lbl:"Offen"}},{{cls:"klaerung",lbl:"In Klärung"}},{{cls:"geklaert",lbl:"Geklärt"}}];
+        states.forEach(s=>statusEl.classList.remove(s.cls));
+        var match = states.find(s=>s.lbl===data.status);
+        if(match) {{ statusEl.classList.add(match.cls); statusEl.textContent=match.lbl; }}
+      }}
+      if(noteEl && data.note) noteEl.value = data.note;
+    }} catch(e) {{}}
+  }}
+}}
+
+function exportFindings() {{
+  var lines = ["Organisations-Meeting Informationsfluss – Auffälligkeiten & Maßnahmen","Stand: "+new Date().toLocaleDateString("de-DE"),""];
+  document.querySelectorAll(".finding-card").forEach(function(card) {{
+    var id     = card.id.replace("card-","");
+    var titel  = card.querySelector(".finding-title").textContent.trim();
+    var status = card.querySelector(".finding-status").textContent.trim();
+    var note   = (document.getElementById("note-"+id)||{{}}).value||"";
+    lines.push("• " + titel);
+    lines.push("  Status: " + status);
+    if(note) lines.push("  Notiz: " + note);
+    lines.push("");
+  }});
+  var text = lines.join("\\n");
+  navigator.clipboard.writeText(text).then(function(){{
+    alert("Notizen in Zwischenablage kopiert – bereit zum Einfügen in Confluence oder E-Mail.");
+  }}).catch(function(){{
+    var w=window.open("","_blank");
+    w.document.write("<pre style='font-family:monospace;padding:20px'>"+text.replace(/</g,"&lt;")+"</pre>");
+  }});
+}}
+
+// Notizen automatisch speichern (via Event Delegation)
+document.addEventListener("input", function(e) {{
+  if(e.target && e.target.tagName==="TEXTAREA") {{
+    var id = e.target.id.replace("note-","");
+    saveNote(id);
+  }}
+}});
+
+// Beim Laden: gespeicherte Zustände wiederherstellen
+window.addEventListener("DOMContentLoaded", restoreAll);
 </script>
 </body>
 </html>"""
