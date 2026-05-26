@@ -1,0 +1,16 @@
+# Quelldaten – bleiben lokal
+*.xlsx
+*.xls
+*.csv
+
+# Generierte Ausgaben (optional committen)
+# leitmet_clean.json
+# leitmet_dashboard.html
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# macOS
+.DS_Store
