@@ -405,7 +405,7 @@ def build_findings_html():
         ("datenqualitaet","📝","11 Meetings ohne Informationsfluss-Dokumentation",
          "Für 11 aktive Meetings ist nicht dokumentiert, welche Informationen hineinfließen und welche Entscheidungen/Outputs herauskommen. Empfehlung: Im Rahmen der Meeting-Überprüfung nachpflegen – der Informationsfluss ist entscheidend für die Qualitätsbeurteilung."),
         ("datenqualitaet","📝","Asymmetrie in der Dokumentation von Einzelgesprächen",
-         "Urk und Beb listen ihre 1:1-Gespräche namentlich auf (pro Person ein eigenes Meeting). TOK und Kip verwenden Platzhalter. Das macht den Vergleich schwierig. Empfehlung: Einheitlichen Standard festlegen."),
+         "Urk und Beb listen ihre 1:1-Gespräche namentlich auf (pro Person ein eigenes Meeting). TOK verwendet einen gemeinsamen Platzhalter. Das macht den Vergleich schwierig. Empfehlung: Einheitlichen Standard festlegen."),
         ("datenqualitaet","📝","Uneinheitliche Terminologie: '1:1' vs. 'Jour Fixe (JF)'",
          "Bilateral-Meetings zwischen zwei Personen werden in der Tabelle unterschiedlich bezeichnet: Urk nennt sie '1:1' (Einzelgespräch), Beb nennt identische Formate 'JF' (Jour Fixe). Funktional sind beide dasselbe: ein regelmäßiges bilaterales Meeting. Die unterschiedliche Benennung erschwert systemische Auswertung und Kategorisierung. Empfehlung: Gemeinsame Nomenklatur festlegen."),
         ("datenqualitaet","📝","Abteilung 'PCS/ACF Sprintreview' weist auf PCT hin",
