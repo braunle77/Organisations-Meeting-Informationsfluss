@@ -362,9 +362,19 @@ function normalizeAlias(raw) {
 // CSV / TSV Parsing
 // ══════════════════════════════════════════════════════════════════════════════
 function detectSeparator(text) {
-  const firstLine = text.split("\n")[0] || "";
-  if (firstLine.includes("\t")) return "\t";
-  if (firstLine.includes(";")) return ";";
+  // Nicht nur die erste Zeile prüfen – bei Confluence-Paste beginnt der Text
+  // mit Seitenname/Navigation, nicht mit dem Tabellen-Header.
+  // Erste Zeile mit ≥5 Trennzeichen gewinnt.
+  const lines = text.split("\n");
+  for (const line of lines.slice(0, 30)) {
+    if ((line.match(/\t/g) || []).length >= 5) return "\t";
+    if ((line.match(/;/g)  || []).length >= 5) return ";";
+    if ((line.match(/,/g)  || []).length >= 5) return ",";
+  }
+  // Fallback auf erste Zeile
+  const first = lines[0] || "";
+  if (first.includes("\t")) return "\t";
+  if (first.includes(";")) return ";";
   return ",";
 }
 
@@ -375,8 +385,18 @@ function parseData(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) throw new Error("Zu wenig Zeilen – mindestens Header + 1 Datensatz erwartet.");
 
-  // Parse header
-  const headerRaw = lines[0].split(sep).map(h => h.trim().toLowerCase());
+  // Header-Zeile finden – beim ⌘A+⌘C aus Confluence landet der Seitenname
+  // in den ersten Zeilen, bevor die eigentliche Tabelle beginnt.
+  // Wir scannen die ersten 30 Zeilen und nehmen die, die Tabellen-Schlüsselwörter enthält.
+  let headerLineIdx = 0;
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const l = lines[i].toLowerCase();
+    if (l.includes("abteilung") && (l.includes("meeting") || l.includes("rhythmus") || l.includes("teilnehmer"))) {
+      headerLineIdx = i;
+      break;
+    }
+  }
+  const headerRaw = lines[headerLineIdx].split(sep).map(h => h.trim().toLowerCase());
 
   // Column index mapping (case-insensitive, flexible)
   const colMap = {
@@ -401,7 +421,7 @@ function parseData(text) {
   }
 
   const meetings = [];
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerLineIdx + 1; i < lines.length; i++) {
     const cells = splitLine(lines[i], sep);
     const get = (key) => (colMap[key] !== -1 && cells[colMap[key]] !== undefined)
       ? cells[colMap[key]].trim() : "";
