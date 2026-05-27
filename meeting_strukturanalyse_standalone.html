@@ -174,7 +174,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
   <div id="panel-0" class="panel active">
     <div class="chart-card" id="chart-netzwerk"></div>
-    <p class="hint">Stern = Führungskraft · Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz · Personen-Filter oben links im Chart</p>
+    <p class="hint" id="hint-netzwerk">Stern (★) = Führungskraft · Klick auf Knoten = als FK markieren / entfernen · Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz</p>
   </div>
   <div id="panel-1" class="panel">
     <div class="chart-card" id="chart-kalender"></div>
@@ -313,6 +313,10 @@ function buildAbtFarben(depts) {
 let effectivePersonAbt = {};
 let effectiveAbtFarben = {};
 let allDepts = [];
+
+// Netzwerk: FK-Set (klickbar im Chart togglebar) + Positions-Cache
+let fkSet    = new Set(FK_LIST);   // wird bei neuem Daten-Load auf FK_LIST zurückgesetzt
+let netCache = null;               // { pos, edges, connectedPersons, isolatedCount }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Rhythmus-Normalisierung
@@ -555,6 +559,10 @@ function showDashboard() {
   effectivePersonAbt = { ...PERSON_ABT, ...autoDerivePERSON_ABT(MEETINGS) };
   effectiveAbtFarben = buildAbtFarben(allDepts);
 
+  // FK-Set und Netzwerk-Cache zurücksetzen
+  fkSet    = new Set(FK_LIST);
+  netCache = null;
+
   // abteilungsuebergreifend nachträglich korrekt berechnen (parseData läuft vor effectivePersonAbt)
   MEETINGS.forEach(m => {
     const abts = new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean));
@@ -581,7 +589,9 @@ function resetToImport() {
     document.getElementById(id).innerHTML = "";
   });
   document.getElementById("table-body").innerHTML = "";
-  renderedTabs.clear(); // reset – netzwerk wird in showDashboard() direkt neu gerendert
+  renderedTabs.clear();
+  fkSet    = new Set(FK_LIST);
+  netCache = null;
 }
 
 // Track which tabs have been rendered
@@ -653,6 +663,9 @@ window.addEventListener("resize", () => {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 1: Netzwerk (d3-force + Plotly)
 // ══════════════════════════════════════════════════════════════════════════════
+
+// renderNetzwerk: berechnet d3-force-Positionen (teuer), cached sie, ruft _plotNetzwerk auf.
+// _plotNetzwerk: baut Traces aus dem Cache – wird auch bei FK-Toggle aufgerufen (kein d3 neu).
 function renderNetzwerk() {
   renderedTabs.add(0);
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
@@ -662,7 +675,7 @@ function renderNetzwerk() {
   aktive.forEach(m => m.teilnehmer.forEach(t => { if (effectivePersonAbt[t]) nodeSet.add(t); }));
   const persons = Array.from(nodeSet);
 
-  const edgeMap = new Map(); // key "A||B" -> {weight, meetings}
+  const edgeMap = new Map();
   aktive.forEach(m => {
     const knoten = m.teilnehmer.filter(t => effectivePersonAbt[t]);
     const w = FREQ_W[m.rhythmus_klasse] || 0.5;
@@ -681,14 +694,13 @@ function renderNetzwerk() {
   });
   const edges = Array.from(edgeMap.values());
 
-  // d3-force layout
+  // d3-force layout (einmalig)
   const nodeObjs = persons.map(id => ({ id }));
   const personIdx = {};
   persons.forEach((p,i) => personIdx[p] = i);
   const linkObjs = edges.map(e => ({
     source: personIdx[e.a], target: personIdx[e.b], weight: e.weight
   }));
-
   const sim = d3.forceSimulation(nodeObjs)
     .force("link", d3.forceLink(linkObjs).distance(d => Math.max(80, 180 / (d.weight + 1))).strength(0.6))
     .force("charge", d3.forceManyBody().strength(-280))
@@ -700,15 +712,28 @@ function renderNetzwerk() {
   const pos = {};
   nodeObjs.forEach(n => pos[n.id] = [n.x, n.y]);
 
-  // Degree map
+  // Degree
   const degree = {};
   persons.forEach(p => degree[p] = 0);
   edges.forEach(e => { degree[e.a] = (degree[e.a]||0)+1; degree[e.b] = (degree[e.b]||0)+1; });
 
-  // Isolierte Knoten (Grad 0) ausblenden – das sind Platzhalter-Teilnehmer oder Personen
-  // die ausschließlich in Einzelgesprächen ohne weitere Verbindungen auftauchen.
   const connectedPersons = persons.filter(p => degree[p] > 0);
-  const isolatedCount = persons.length - connectedPersons.length;
+  const isolatedCount    = persons.length - connectedPersons.length;
+
+  // Meeting-Liste pro Person (für Hover)
+  const personMeetings = {};
+  connectedPersons.forEach(p => {
+    personMeetings[p] = aktive.filter(m => m.teilnehmer.includes(p)).map(m => m.name);
+  });
+
+  // Cache speichern
+  netCache = { pos, edges, connectedPersons, isolatedCount, degree, personMeetings };
+
+  _plotNetzwerk(true);
+}
+
+function _plotNetzwerk(firstRender) {
+  const { pos, edges, connectedPersons, isolatedCount, degree, personMeetings } = netCache;
 
   // Edge traces
   const edgeTraces = edges.map(e => {
@@ -723,15 +748,15 @@ function renderNetzwerk() {
     };
   });
 
-  // Node traces (nur verbundene Personen, eine Spur pro Person für Opacity-Steuerung)
+  // Node traces (Symbol hängt von fkSet ab)
   const nodeTraces = connectedPersons.map(p => {
-    const abt = effectivePersonAbt[p] || "unbekannt";
-    const sub = PERSON_SUBTEAM[p] || "";
-    const deg = degree[p] || 0;
-    const pMeetings = aktive.filter(m => m.teilnehmer.includes(p)).map(m => m.name);
-    const hover = `<b>${p}</b> · ${abt}${sub ? " / "+sub : ""}<br>Meetings (${pMeetings.length}): ` +
-      pMeetings.slice(0,6).join(", ") + (pMeetings.length > 6 ? "…" : "");
-    const isFk = FK_LIST.includes(p);
+    const abt   = effectivePersonAbt[p] || "unbekannt";
+    const sub   = PERSON_SUBTEAM[p] || "";
+    const deg   = degree[p] || 0;
+    const isFk  = fkSet.has(p);
+    const pMtgs = personMeetings[p] || [];
+    const hover = `<b>${p}</b>${isFk ? " ★" : ""} · ${abt}${sub ? " / "+sub : ""}<br>` +
+      `Meetings (${pMtgs.length}): ` + pMtgs.slice(0,6).join(", ") + (pMtgs.length > 6 ? "…" : "");
     return {
       x:[pos[p][0]], y:[pos[p][1]],
       mode:"markers+text",
@@ -749,9 +774,9 @@ function renderNetzwerk() {
     };
   });
 
-  // FK-Filter als klickbare Buttons (nur FKs die tatsächlich in den Daten vorkommen)
+  // FK-Filter-Buttons (nur FKs aus fkSet die im Netzwerk sichtbar sind)
   const n_edge = edgeTraces.length;
-  const n_node = nodeTraces.length; // entspricht connectedPersons.length
+  const n_node = nodeTraces.length;
 
   function makeOps(fk) {
     const nbrs = new Set(edges.flatMap(e => (e.a===fk||e.b===fk) ? [e.a,e.b] : []));
@@ -760,14 +785,14 @@ function renderNetzwerk() {
     const n_ops = connectedPersons.map(p => nbrs.has(p) ? 1.0 : 0.08);
     return e_ops.concat(n_ops);
   }
-  const alleOps = Array(n_edge + n_node).fill(1.0);
+  const alleOps  = Array(n_edge + n_node).fill(1.0);
+  const fkInNet  = connectedPersons.filter(p => fkSet.has(p));
   const fkButtons = [{ label:"Alle", method:"restyle", args:[{opacity: alleOps}] }];
-  FK_LIST.forEach(fk => {
-    if (pos[fk] && degree[fk] > 0)
-      fkButtons.push({ label:fk, method:"restyle", args:[{opacity: makeOps(fk)}] });
+  fkInNet.forEach(fk => {
+    fkButtons.push({ label: fk + " ★", method:"restyle", args:[{opacity: makeOps(fk)}] });
   });
 
-  // Legend traces (nur Abteilungen verbundener Personen)
+  // Legend traces
   const shownAbts = new Set();
   const legendTraces = [];
   connectedPersons.forEach(p => {
@@ -782,14 +807,19 @@ function renderNetzwerk() {
     }
   });
 
+  // Hint aktualisieren
+  const hintEl = document.getElementById("hint-netzwerk");
+  if (hintEl) {
+    const fkHint = fkInNet.length > 0
+      ? `Aktive FKs: ${fkInNet.join(", ")} · `
+      : "Noch keine FK markiert · ";
+    hintEl.textContent = "★ = Führungskraft · Klick auf Knoten = als FK markieren/entfernen · "
+      + fkHint
+      + "Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz"
+      + (isolatedCount > 0 ? ` · ${isolatedCount} isolierte Knoten ausgeblendet` : "");
+  }
+
   const allTraces = [...edgeTraces, ...nodeTraces, ...legendTraces];
-
-  // Hint-Text aktualisieren
-  const hintEl = document.querySelector("#panel-0 .hint");
-  const hintBase = "Stern = Führungskraft · Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz";
-  hintEl.textContent = hintBase
-    + (isolatedCount > 0 ? ` · ${isolatedCount} isolierte Knoten (keine gemeinsamen Meetings) ausgeblendet` : "");
-
   const layout = {
     title:{text:"Kommunikationsnetzwerk – Wer trifft wen?", font:{size:16,family:"Inter"}},
     updatemenus: fkButtons.length > 1 ? [{
@@ -813,7 +843,23 @@ function renderNetzwerk() {
     plot_bgcolor:"white", paper_bgcolor:"white",
     height:640, margin:{l:10,r:140,t:80,b:10}
   };
-  Plotly.newPlot("chart-netzwerk", allTraces, layout, {responsive:true, displayModeBar:true});
+
+  const chartEl = document.getElementById("chart-netzwerk");
+  if (firstRender) {
+    Plotly.newPlot(chartEl, allTraces, layout, {responsive:true, displayModeBar:true});
+    // Klick-Listener: Person als FK markieren / entfernen
+    chartEl.on("plotly_click", function(data) {
+      if (!data.points.length) return;
+      const person = data.points[0].data.name;
+      // Nur Node-Traces haben einen Person-Namen (Edge-Traces haben keinen)
+      if (!netCache || !netCache.connectedPersons.includes(person)) return;
+      if (fkSet.has(person)) fkSet.delete(person);
+      else fkSet.add(person);
+      _plotNetzwerk(false);
+    });
+  } else {
+    Plotly.react(chartEl, allTraces, layout);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
