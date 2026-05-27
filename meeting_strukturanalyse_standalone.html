@@ -530,7 +530,9 @@ function tryLoad(text) {
 function showDashboard() {
   // Dynamische Konfiguration aus den geladenen Daten ableiten
   allDepts = [...new Set(MEETINGS.map(m => m.abteilung))].filter(Boolean).sort();
-  effectivePersonAbt = { ...autoDerivePERSON_ABT(MEETINGS), ...PERSON_ABT };
+  // Auto-Ableitung gewinnt für Personen in den aktuellen Daten;
+  // PERSON_ABT dient als Fallback für Personen die nicht in Meetings vorkommen
+  effectivePersonAbt = { ...PERSON_ABT, ...autoDerivePERSON_ABT(MEETINGS) };
   effectiveAbtFarben = buildAbtFarben(allDepts);
 
   document.getElementById("import-screen").style.display = "none";
@@ -919,8 +921,8 @@ function renderAbteilung() {
 // ══════════════════════════════════════════════════════════════════════════════
 function renderSankey() {
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
-  // Extern hinzufügen falls benötigt
-  const hasExtern = aktive.some(m => m.teilnehmer.some(t => /extern/i.test(t)));
+  // Extern nur hinzufügen wenn ein Teilnehmer exakt "Extern" heißt (nicht bei Platzhaltern wie "externer Prüfer")
+  const hasExtern = aktive.some(m => m.teilnehmer.some(t => t.toLowerCase() === "extern"));
   const abtList = hasExtern ? [...allDepts, "Extern"] : [...allDepts];
   const abtIdx = {};
   abtList.forEach((a,i) => abtIdx[a] = i);
@@ -930,9 +932,9 @@ function renderSankey() {
   aktive.forEach(m => {
     const abts = new Set();
     m.teilnehmer.forEach(t => {
-      if (PERSON_ABT[t]) abts.add(PERSON_ABT[t]);
+      if (effectivePersonAbt[t]) abts.add(effectivePersonAbt[t]);
     });
-    if (m.teilnehmer.some(t => /extern/i.test(t))) abts.add("Extern");
+    if (m.teilnehmer.some(t => t.toLowerCase() === "extern")) abts.add("Extern");
     const normAbt = (m.abteilung || "").trim();
     if (abtList.includes(normAbt)) abts.add(normAbt);
 
@@ -945,6 +947,16 @@ function renderSankey() {
       }
     }
   });
+
+  // Keine abteilungsübergreifenden Meetings → Hinweis statt leeres Diagramm
+  if (Object.keys(fluss).length === 0) {
+    document.getElementById("chart-sankey").innerHTML =
+      `<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:.95rem">
+        Keine abteilungsübergreifenden Meetings in den Daten.<br>
+        <span style="font-size:.8rem">Das Sankey-Diagramm zeigt nur Verbindungen zwischen verschiedenen Abteilungen.</span>
+      </div>`;
+    return;
+  }
 
   const srcs=[],tgts=[],vals=[],lbls=[],linkColors=[];
   Object.entries(fluss).forEach(([key,v]) => {
