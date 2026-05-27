@@ -50,13 +50,7 @@ Rohdatei bleibt **lokal** und wird nicht ins Repository eingecheckt (`.gitignore
 ### 1. Daten bereinigen
 
 ```bash
-python3 daten_bereinigen.py
-```
-
-Liest standardmäßig `~/Downloads/LeitMet.xlsx`. Anderer Pfad:
-
-```bash
-python3 daten_bereinigen.py --input /pfad/zur/datei.xlsx
+python3 daten_bereinigen.py --input /pfad/zur/meetings.xlsx
 ```
 
 Erzeugt: `meetings_bereinigt.json`

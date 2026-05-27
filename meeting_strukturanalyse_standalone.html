@@ -229,46 +229,23 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // ══════════════════════════════════════════════════════════════════════════════
 // Optionale Konfiguration – leer lassen für automatische Erkennung
 //
+// ALIAS_MAP  : Kürzel-Normalisierung (z.B. "max": "Max"); optional
 // PERSON_ABT : überschreibt die automatische Person→Abteilung-Zuweisung
 // ABT_FARBEN : überschreibt die automatischen Abteilungsfarben
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
-// ALIAS_MAP  : Kürzel-Normalisierung (z.B. "karim" → "KTF"); optional
-//
-// Für eine neue Organisation: ALIAS_MAP, PERSON_ABT, FK_LIST leeren;
-// ABT_FARBEN leer lassen – Farben werden automatisch aus der Palette vergeben.
+// PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
 const ALIAS_MAP = {
-  "ipa":"Ipa","jco":"Jco","mig":"MiG","tok":"TOK","kip":"Kip","urk":"Urk",
-  "beb":"Beb","fln":"Fln","ktz":"Ktz","zes":"Zes","leb":"LeB","ada":"ADA",
-  "sez":"Sez","bre":"Bre","drs":"DrS","zrb":"Zrb","krö":"Krö","kro":"Krö",
-  "kis":"Kis","dem":"Dem","bas":"Bas","cst":"CST","dni":"Dni","fmd":"FMD",
-  "tih":"Tih","smi":"SMI","kih":"Kih","bra":"Bra","wud":"Wud","het":"HeT",
-  "fef":"Fef","smt":"Smt","pic":"Pic","klb":"Klb","zeller":"Zeller",
-  "mgr":"MGR","jfr":"JFR","awa":"AWA","mos":"MOS","karim":"KTF","ktf":"KTF",
-  "arg":"Arg","lke":"Lke","laa":"Laa","ran":"Ran","leo":"Leo","lic":"Lic",
-  "rre":"Rre","gam":"Gam","lav":"Lav","rls":"Rls"
+  // Beispiel: "max": "Max"
 };
 const PERSON_ABT = {
-  "Jco":"PC","MiG":"PC","Ktz":"PC","Lav":"PC","Rls":"PC","Sez":"PC","Bre":"PC","DrS":"PC","Zeller":"PC",
-  "Beb":"PCO","Ipa":"PCO","Fln":"PCO","Zes":"PCO","LeB":"PCO",
-  "Kip":"PCT","Kis":"PCT","Rre":"PCT","Lic":"PCT","Leo":"PCT","Gam":"PCT","Ran":"PCT",
-  "Krö":"PCT","Dem":"PCT","Bas":"PCT","CST":"PCT",
-  "Dni":"PCT","Bra":"PCT","Fef":"PCT","FMD":"PCT","Wud":"PCT","Kih":"PCT","HeT":"PCT",
-  "TOK":"PCC","ADA":"PCC","JFR":"PCC","SMI":"PCC","MGR":"PCC","MOS":"PCC","AWA":"PCC",
-  "Urk":"PCS","Zrb":"PCS","Smt":"PCS","KTF":"PCS","Arg":"PCS","Lke":"PCS","Tih":"PCS","Laa":"PCS"
+  // Beispiel: "Max": "Vertrieb"
 };
 const PERSON_SUBTEAM = {
-  "Kis":"AC","Rre":"AC","Lic":"AC","Leo":"AC","Gam":"AC","Ran":"AC",
-  "Krö":"DC","Dem":"DC","Bas":"DC","CST":"DC",
-  "Dni":"PC Products","Bra":"PC Products","Fef":"PC Products",
-  "FMD":"PC Products","Wud":"PC Products","Kih":"PC Products","HeT":"PC Products",
-  "Kip":"Entwicklung (Leitung)"
+  // Beispiel: "Max": "Innendienst"
 };
-const FK_LIST = ["Beb","Jco","Kip","Ktz","MiG","TOK","Urk"];
-const ABT_FARBEN = {
-  "PC":"#2563eb","PCO":"#f59e0b","PCT":"#16a34a",
-  "PCC":"#dc2626","PCS":"#7c3aed","unbekannt":"#9ca3af"
-};
+const FK_LIST = [];
+const ABT_FARBEN = {};
 const RHY_FARBEN = {
   "täglich":"#dc2626","wöchentlich":"#2563eb","dreiwöchentlich":"#0891b2",
   "zweiwöchentlich":"#16a34a","monatlich":"#f59e0b","quartalsweise":"#7c3aed","variabel":"#9ca3af"
