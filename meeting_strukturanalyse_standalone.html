@@ -277,8 +277,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="personen-grid" id="personen-grid"></div>
     <div class="personen-actions" id="personen-actions" style="display:none">
       <button class="btn-primary" onclick="refreshAllCharts()">Alle Charts aktualisieren</button>
-      <button class="btn-secondary" onclick="exportConfig()">Config als JSON kopieren</button>
-      <span class="hint-inline">Änderungen gelten bis zum Neu-Laden der Seite · JSON oben im HTML einfügen zum Persistieren</span>
+      <button class="btn-secondary" onclick="resetConfig()">Zuordnungen zurücksetzen</button>
+      <span class="hint-inline" id="config-save-hint"></span>
     </div>
   </div>
 
@@ -658,11 +658,15 @@ function showDashboard() {
   // PERSON_ABT dient als Fallback / expliziter Override
   const derived = autoDerivePERSON_ABT(MEETINGS);
   personConfidence   = derived.confidence;
-  effectivePersonAbt = { ...derived.map, ...PERSON_ABT }; // PERSON_ABT überschreibt Auto-Werte
+  // Reihenfolge: Auto → PERSON_ABT (HTML-Config) → localStorage-Overrides
+  effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
   effectiveAbtFarben = buildAbtFarben(allDepts);
 
-  // FK-Set und Netzwerk-Cache zurücksetzen
+  // FK-Set: erst aus FK_LIST (HTML-Config), dann localStorage
   fkSet         = new Set(FK_LIST);
+
+  // localStorage-Overrides laden und anwenden (nur Personen die in den Daten vorkommen)
+  applyStoredConfig();
   netCache      = null;
   sankeyRendered = false;
   abtRendered    = false;
@@ -1435,6 +1439,7 @@ function closePopover() {
 // ── Zuordnung ändern ─────────────────────────────────────────────────────────
 function assignPerson(person, newDept) {
   effectivePersonAbt[person] = newDept;
+  saveConfig();
 
   // Chip in der alten Spalte entfernen
   document.querySelectorAll(`.person-chip[data-person="${CSS.escape(person)}"]`).forEach(c => c.remove());
@@ -1455,6 +1460,7 @@ function assignPerson(person, newDept) {
 function toggleFK(person) {
   if (fkSet.has(person)) fkSet.delete(person);
   else                   fkSet.add(person);
+  saveConfig();
 }
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
@@ -1475,21 +1481,72 @@ function refreshAllCharts() {
   showToast("Charts aktualisiert");
 }
 
-// ── Config-Export ─────────────────────────────────────────────────────────────
-function exportConfig() {
-  // Nur Abweichungen vom Auto-Wert exportieren
+// ── localStorage-Persistenz ───────────────────────────────────────────────────
+const CONFIG_KEY = "meeting-strukturanalyse-config";
+
+function saveConfig() {
+  // Nur explizite Abweichungen vom Auto-Algorithmus speichern
   const personAbt = {};
   Object.entries(effectivePersonAbt).forEach(([p, d]) => {
-    if ((personConfidence[p]?.autoDept || PERSON_ABT[p]) !== d) personAbt[p] = d;
-    else if (PERSON_ABT[p] && PERSON_ABT[p] !== d) personAbt[p] = d; // expliziter Override beibehalten
+    const autoVal = personConfidence[p]?.autoDept;
+    const htmlVal = PERSON_ABT[p];
+    if (d !== autoVal || htmlVal) personAbt[p] = d; // abweichend oder explizit gesetzt
   });
   const fkArr = [...fkSet].sort();
-  const js = [
-    "// Oben im HTML in die Konfigurations-Blöcke einfügen:",
-    `const PERSON_ABT = ${JSON.stringify(personAbt, null, 2)};`,
-    `const FK_LIST    = ${JSON.stringify(fkArr)};`,
-  ].join("\n");
-  navigator.clipboard.writeText(js).then(() => showToast("Config kopiert – oben im HTML einfügen"));
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr }));
+    const hint = document.getElementById("config-save-hint");
+    if (hint) {
+      hint.textContent = "● Gespeichert";
+      hint.style.color = "#59B2A5";
+      setTimeout(() => { hint.textContent = "Wird automatisch im Browser gespeichert"; hint.style.color = ""; }, 2000);
+    }
+  } catch(e) { /* localStorage nicht verfügbar (z.B. privater Modus) */ }
+}
+
+function applyStoredConfig() {
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if (!raw) {
+      updateConfigHint(false);
+      return;
+    }
+    const cfg = JSON.parse(raw);
+    // Nur Personen anwenden die in den aktuellen Daten vorhanden sind
+    const knownPersons = new Set(Object.keys(effectivePersonAbt));
+    if (cfg.personAbt) {
+      Object.entries(cfg.personAbt).forEach(([p, d]) => {
+        if (knownPersons.has(p)) effectivePersonAbt[p] = d;
+      });
+    }
+    if (cfg.fkList) {
+      cfg.fkList.forEach(p => { if (knownPersons.has(p)) fkSet.add(p); });
+    }
+    updateConfigHint(true);
+  } catch(e) { /* ignore parse errors */ }
+}
+
+function updateConfigHint(hasStored) {
+  const hint = document.getElementById("config-save-hint");
+  if (!hint) return;
+  hint.style.color = "";
+  hint.textContent = hasStored
+    ? "Gespeicherte Zuordnungen geladen"
+    : "Wird automatisch im Browser gespeichert";
+}
+
+function resetConfig() {
+  if (!confirm("Alle manuellen Zuordnungen und FK-Markierungen löschen?")) return;
+  try { localStorage.removeItem(CONFIG_KEY); } catch(e) {}
+  // Neu ableiten ohne Overrides
+  const derived = autoDerivePERSON_ABT(MEETINGS);
+  personConfidence   = derived.confidence;
+  effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
+  fkSet = new Set(FK_LIST);
+  netCache = null;
+  renderPersonenTab();
+  refreshAllCharts();
+  showToast("Zuordnungen zurückgesetzt");
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
