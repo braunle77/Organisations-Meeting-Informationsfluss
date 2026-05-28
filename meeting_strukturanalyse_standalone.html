@@ -5,40 +5,40 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meeting Strukturanalyse – Standalone</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Inter",system-ui,sans-serif;background:#f8fafc;color:#1e293b;font-size:14px}
+body{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2c;font-size:14px}
 
 /* ── Import Screen ──────────────────────────────────────────── */
 #import-screen{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  min-height:100vh;padding:40px 20px;background:#f8fafc}
+  min-height:100vh;padding:40px 20px;background:#f8faf9}
 .import-card{background:white;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.1);
   padding:36px 40px;max-width:680px;width:100%}
-.import-logo{font-size:1.7rem;font-weight:700;color:#1e40af;margin-bottom:4px;letter-spacing:-0.5px}
+.import-logo{font-size:1.7rem;font-weight:700;color:#246b61;margin-bottom:4px;letter-spacing:-0.5px}
 .import-sub{font-size:.85rem;color:#64748b;margin-bottom:28px}
 .import-section-title{font-size:.8rem;font-weight:600;color:#94a3b8;letter-spacing:.06em;
   text-transform:uppercase;margin-bottom:10px;margin-top:22px}
-.import-instructions{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
-  padding:12px 16px;margin-bottom:18px;font-size:.84rem;color:#1e40af;line-height:1.6}
-.import-instructions code{background:#dbeafe;padding:1px 5px;border-radius:3px;font-size:.83em}
+.import-instructions{background:#f0faf8;border:1px solid #b2ddd8;border-radius:8px;
+  padding:12px 16px;margin-bottom:18px;font-size:.84rem;color:#246b61;line-height:1.6}
+.import-instructions code{background:#c8e6e0;padding:1px 5px;border-radius:3px;font-size:.83em}
 textarea#paste-area{width:100%;min-height:180px;border:2px solid #e2e8f0;border-radius:8px;
-  padding:12px;font-family:"Inter",system-ui,monospace;font-size:.82rem;color:#374151;
+  padding:12px;font-family:"DM Sans",system-ui,monospace;font-size:.82rem;color:#374151;
   resize:vertical;outline:none;transition:border .15s}
-textarea#paste-area:focus{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+textarea#paste-area:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.18)}
 textarea#paste-area::placeholder{color:#cbd5e1}
-.btn-primary{background:#2563eb;color:white;border:none;border-radius:8px;
+.btn-primary{background:#59B2A5;color:white;border:none;border-radius:8px;
   padding:10px 22px;font-family:inherit;font-size:.88rem;font-weight:600;
   cursor:pointer;transition:background .15s;margin-top:12px}
-.btn-primary:hover{background:#1d4ed8}
+.btn-primary:hover{background:#4a9e92}
 .import-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#94a3b8;font-size:.8rem}
 .import-divider::before,.import-divider::after{content:"";flex:1;border-top:1px solid #e2e8f0}
 .file-upload-label{display:inline-flex;align-items:center;gap:8px;border:2px dashed #cbd5e1;
   border-radius:8px;padding:12px 18px;cursor:pointer;font-size:.85rem;color:#64748b;
   transition:all .15s;width:100%}
-.file-upload-label:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff}
+.file-upload-label:hover{border-color:#59B2A5;color:#59B2A5;background:#f0faf8}
 #file-input{display:none}
 .import-status{margin-top:16px;padding:10px 14px;border-radius:8px;font-size:.85rem;
   font-weight:500;display:none}
@@ -47,44 +47,55 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
 /* ── Dashboard ───────────────────────────────────────────────── */
 #dashboard{display:none}
-.header{background:linear-gradient(135deg,#1e40af 0%,#2563eb 60%,#0891b2 100%);
-  color:white;padding:22px 36px 20px;display:flex;justify-content:space-between;align-items:center}
-.header-left h1{font-size:1.45rem;font-weight:700;letter-spacing:-0.3px}
-.header-left p{opacity:.8;font-size:.82rem;margin-top:3px}
+.header{background:#59B2A5;color:white;padding:22px 36px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  position:relative;overflow:hidden}
+.header::before{content:"";position:absolute;width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,0.08);top:-70px;right:40px}
+.header::after{content:"";position:absolute;width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,0.05);bottom:-50px;right:110px}
+.header-left h1{font-size:1.45rem;font-weight:600;letter-spacing:-0.3px;position:relative}
+.header-left p{opacity:.8;font-size:.82rem;margin-top:3px;position:relative}
 .btn-reload{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);
   color:white;border-radius:7px;padding:7px 14px;font-family:inherit;font-size:.8rem;
   cursor:pointer;transition:background .15s;white-space:nowrap}
 .btn-reload:hover{background:rgba(255,255,255,.25)}
 .stats{display:flex;gap:12px;padding:16px 36px;flex-wrap:wrap}
 .stat{background:white;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;
-  text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #f1f5f9}
-.stat .val{font-size:1.9rem;font-weight:700;color:#2563eb;line-height:1}
-.stat .lbl{font-size:.75rem;color:#64748b;margin-top:3px}
+  text-align:center;box-shadow:0 1px 4px rgba(89,178,165,0.08);border:1px solid #f1f5f9}
+.stat .val{font-size:1.9rem;font-weight:700;color:#59B2A5;line-height:1;
+  font-family:"DM Mono",monospace}
+.stat .lbl{font-size:.75rem;color:#4a6b67;margin-top:3px}
+.stat-warn{border-color:#fcd34d;background:#fffbeb}
+.stat-warn .val{color:#b83232}
 .warnings{margin:0 36px 12px;background:#fffbeb;border:1px solid #fcd34d;
-  border-left:4px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:.82rem}
-.warnings ul{padding-left:16px}
+  border-left:4px solid #f59e0b;border-radius:6px;padding:8px 14px;font-size:.82rem}
+.warn-toggle{background:none;border:none;cursor:pointer;font-family:inherit;
+  font-size:.82rem;font-weight:600;color:#92400e;padding:2px 0;display:block;width:100%}
+.warn-toggle:hover{color:#78350f}
+.warnings ul{padding-left:16px;margin-top:6px}
 .warnings li{margin-bottom:2px}
-.tab-bar{display:flex;gap:2px;padding:0 36px;background:#f8fafc;
+.tab-bar{display:flex;gap:2px;padding:0 36px;background:#f8faf9;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;z-index:100;flex-wrap:wrap}
 .tab-btn{padding:10px 16px;border:none;background:none;cursor:pointer;
-  font-family:inherit;font-size:.83rem;font-weight:500;color:#64748b;
+  font-family:inherit;font-size:.83rem;font-weight:500;color:#4a6b67;
   border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
-.tab-btn:hover{color:#2563eb}
-.tab-btn.active{color:#2563eb;border-bottom-color:#2563eb}
+.tab-btn:hover{color:#59B2A5}
+.tab-btn.active{color:#59B2A5;border-bottom-color:#59B2A5}
 .panel{display:none;padding:20px 36px 30px}
 .panel.active{display:block}
 .chart-card{background:white;border-radius:10px;padding:16px;
   box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #f1f5f9}
-.hint{font-size:.78rem;color:#94a3b8;margin-top:8px;padding-left:4px}
+.hint{font-size:.78rem;color:#7a9e9a;margin-top:8px;padding-left:4px}
 /* Table */
 .table-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 #table-search{flex:1;max-width:380px;padding:8px 12px;border:1px solid #e2e8f0;
   border-radius:8px;font-family:inherit;font-size:.85rem;outline:none}
-#table-search:focus{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+#table-search:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.18)}
 .table-meta{font-size:.8rem;color:#94a3b8}
 .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0}
 #meeting-table{width:100%;border-collapse:collapse;font-size:.82rem}
-#meeting-table thead th{background:#1e293b;color:white;padding:10px 12px;
+#meeting-table thead th{background:#246b61;color:white;padding:10px 12px;
   text-align:left;font-weight:600;white-space:nowrap;position:sticky;top:0}
 #meeting-table tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s}
 #meeting-table tbody tr:hover{background:#f8fafc}
@@ -102,20 +113,19 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .badge-aktiv{background:#dcfce7;color:#15803d}
 .badge-geplant{background:#dbeafe;color:#1d4ed8}
 .teiln-cell,.zweck-cell,.learning-cell{max-width:220px;font-size:.8rem;color:#475569}
-/* Auffälligkeiten placeholder */
-.placeholder-box{background:white;border-radius:10px;padding:36px 32px;
-  box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #f1f5f9;max-width:640px;
-  margin:0 auto;text-align:center}
-.placeholder-box .ph-icon{font-size:2.5rem;margin-bottom:16px}
-.placeholder-box h3{font-size:1.05rem;font-weight:600;color:#374151;margin-bottom:10px}
-.placeholder-box p{font-size:.88rem;color:#64748b;line-height:1.7}
+/* KI Analyse Placeholder */
+.findings-placeholder{text-align:center;padding:60px 40px;color:#4a6b67}
+.findings-placeholder-icon{font-size:3rem;margin-bottom:16px}
+.findings-placeholder h2{font-size:1.2rem;font-weight:600;margin-bottom:10px;color:#1a2e2c}
+.findings-placeholder p{font-size:.88rem;color:#4a6b67;max-width:520px;margin:0 auto 8px;line-height:1.65}
+.findings-placeholder-sub{color:#7a9e9a !important;font-size:.83rem !important}
 /* Overlap legend */
 .overlap-legend{display:flex;flex-direction:column;gap:8px;margin-top:12px;
   background:white;border-radius:8px;padding:12px 16px;border:1px solid #f1f5f9;
   font-size:.83rem;color:#374151}
 .ol-item{display:flex;align-items:flex-start;gap:10px}
 .ol-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px}
-.footer{text-align:center;padding:24px;font-size:.74rem;color:#94a3b8;border-top:1px solid #f1f5f9}
+.footer{text-align:center;padding:16px;font-size:.74rem;color:#7a9e9a;border-top:1px solid #f1f5f9}
 </style>
 </head>
 <body>
@@ -169,12 +179,12 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <button class="tab-btn" onclick="showTab(3)">Abteilungen</button>
     <button class="tab-btn" onclick="showTab(4)">Informationsfluss</button>
     <button class="tab-btn" onclick="showTab(5)">Alle Meetings</button>
-    <button class="tab-btn" onclick="showTab(6)">Auffälligkeiten</button>
+    <button class="tab-btn" onclick="showTab(6)">KI Analyse</button>
   </div>
 
   <div id="panel-0" class="panel active">
     <div class="chart-card" id="chart-netzwerk"></div>
-    <p class="hint" id="hint-netzwerk">Stern (★) = Führungskraft · Klick auf Knoten = als FK markieren / entfernen · Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz</p>
+    <p class="hint" id="hint-netzwerk">Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz · Klick = Verbindungen hervorheben · Doppelklick = FK markieren / entfernen</p>
   </div>
   <div id="panel-1" class="panel">
     <div class="chart-card" id="chart-kalender"></div>
@@ -183,8 +193,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-2" class="panel">
     <div class="chart-card" id="chart-overlap"></div>
     <div class="overlap-legend">
-      <span class="ol-item"><span class="ol-dot" style="background:#dc2626"></span><b>Hohe Überschneidung (rot)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
-      <span class="ol-item"><span class="ol-dot" style="background:#16a34a"></span><b>Keine Überschneidung (grün)</b> → verschiedene Teilnehmer. Fehlende Meetings erkennst du besser im Netzwerk-Tab.</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → verschiedene Teilnehmer. Fehlende Meetings erkennst du besser im Netzwerk-Tab.</span>
     </div>
   </div>
   <div id="panel-3" class="panel">
@@ -213,12 +223,11 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Suche filtert über Meeting-Name, Teilnehmer und Abteilung</p>
   </div>
   <div id="panel-6" class="panel">
-    <div class="placeholder-box">
-      <div class="ph-icon">💡</div>
-      <h3>Auffälligkeiten &amp; Muster</h3>
-      <p>Dieser Tab ist für projektspezifische Beobachtungen vorgesehen.<br>
-      Die Charts zeigen <em>was</em> da ist – <em>warum</em> etwas auffällt,<br>
-      entscheidet der Mensch, der die Organisation kennt.</p>
+    <div class="findings-placeholder">
+      <div class="findings-placeholder-icon">🤖</div>
+      <h2>KI-Analyse</h2>
+      <p>Für diese Organisation wurden noch keine KI-Analysen erstellt.</p>
+      <p class="findings-placeholder-sub">Dieser Bereich ist für kommentierte Beobachtungen gedacht – z.&thinsp;B. erkannte Redundanzen, hohe Meeting-Last, Kommunikationslücken.<br><br>Analysen können hier als aufklappbare Karten ergänzt werden.</p>
     </div>
   </div>
 
@@ -247,8 +256,8 @@ const PERSON_SUBTEAM = {
 const FK_LIST = [];
 const ABT_FARBEN = {};
 const RHY_FARBEN = {
-  "täglich":"#dc2626","wöchentlich":"#2563eb","dreiwöchentlich":"#0891b2",
-  "zweiwöchentlich":"#16a34a","monatlich":"#f59e0b","quartalsweise":"#7c3aed","variabel":"#9ca3af"
+  "täglich":"#c25050","wöchentlich":"#59B2A5","dreiwöchentlich":"#3a8fbf",
+  "zweiwöchentlich":"#7c9e44","monatlich":"#d4a843","quartalsweise":"#7c6bab","variabel":"#b0bec5"
 };
 const FREQ_W = {
   "täglich":5,"wöchentlich":4,"dreiwöchentlich":3,
@@ -259,8 +268,8 @@ const FREQ_W = {
 // Dynamische Konfiguration – wird nach dem Laden der Daten berechnet
 // ══════════════════════════════════════════════════════════════════════════════
 const PALETTE = [
-  "#2563eb","#f59e0b","#16a34a","#dc2626","#7c3aed",
-  "#0891b2","#db2777","#65a30d","#ea580c","#6366f1"
+  "#59B2A5","#e57f5a","#7c9e44","#c25050","#7c6bab",
+  "#3a8fbf","#d4a843","#46a085","#c2607a","#7a8ea3"
 ];
 
 // Leitet Person→Abteilung aus den Daten ab (häufigste Abteilung pro Person)
@@ -372,7 +381,7 @@ function parseData(text) {
   let headerLineIdx = 0;
   for (let i = 0; i < Math.min(lines.length, 30); i++) {
     const l = lines[i].toLowerCase();
-    if (l.includes("abteilung") && (l.includes("meeting") || l.includes("rhythmus") || l.includes("teilnehmer"))) {
+    if ((l.includes("abteilung") || l.includes("abt.")) && (l.includes("meeting") || l.includes("meeting-name") || l.includes("rhythmus") || l.includes("teilnehmer"))) {
       headerLineIdx = i;
       break;
     }
@@ -385,10 +394,10 @@ function parseData(text) {
     name:      findCol(headerRaw, ["meeting-name","meeting name","meetingname","name","titel"]),
     kategorie: findCol(headerRaw, ["kategorie","kat"]),
     zweck:     findCol(headerRaw, ["zweck","ziel","purpose"]),
-    vera:      findCol(headerRaw, ["verantwortlich","verantwortl","owner","responsible"]),
+    vera:      findCol(headerRaw, ["kopf","verantwortlich","verantwortl","owner","responsible"]),
     teiln:     findCol(headerRaw, ["teilnehmer","participants","personen"]),
     rhythmus:  findCol(headerRaw, ["rhythmus","frequenz","frequency","cadence","turnus"]),
-    infofluss: findCol(headerRaw, ["informationsfluss","infofluss","information"]),
+    infofluss: findCol(headerRaw, ["informations-fluss","informationsfluss","infofluss","information"]),
     status:    findCol(headerRaw, ["status"]),
     uebergr:   findCol(headerRaw, ["abt.übergreifend","abt.uebergreifend","übergreifend","uebergreifend","cross"]),
     platzh:    findCol(headerRaw, ["platzhalter","placeholder"]),
@@ -580,32 +589,48 @@ const renderedTabs = new Set();
 function renderStats() {
   const m = MEETINGS;
   const aktive = m.filter(x => x.status === "Aktiv");
-  const nWoech = m.filter(x => x.rhythmus_klasse === "wöchentlich").length;
+  const nOhneInfo = m.filter(x => !x.infofluss).length;
   const nUG    = m.filter(x => x.abteilungsuebergreifend).length;
   const nEinzel = m.filter(x => /einzelgespräch|1:1|jf/i.test(x.kategorie)).length;
   const nPlatz = m.filter(x => x.ist_platzhalter).length;
 
+  const ohne_info_class = nOhneInfo > 0 ? "stat stat-warn" : "stat";
+  const platz_class = nPlatz > 0 ? "stat stat-warn" : "stat";
+
   document.getElementById("stats-bar").innerHTML = `
     <div class="stat"><div class="val">${aktive.length}</div><div class="lbl">Aktive Meetings</div></div>
-    <div class="stat"><div class="val">${nWoech}</div><div class="lbl">Wöchentlich</div></div>
+    <div class="${ohne_info_class}"><div class="val">${nOhneInfo}</div><div class="lbl">Ohne Infofluss-Doku</div></div>
     <div class="stat"><div class="val">${nUG}</div><div class="lbl">Abt.übergreifend</div></div>
     <div class="stat"><div class="val">${nEinzel}</div><div class="lbl">Einzelgespräche</div></div>
-    <div class="stat"><div class="val">${nPlatz}</div><div class="lbl">⚠ Platzhalter</div></div>
-    <div class="stat"><div class="val">${m.length}</div><div class="lbl">Meetings gesamt</div></div>
+    <div class="${platz_class}"><div class="val">${nPlatz}</div><div class="lbl">⚠ Platzhalter</div></div>
   `;
 
   document.getElementById("header-meta").textContent =
-    `Interaktives Dashboard · ${m.length} Meetings · ${aktive.length} aktiv`;
+    `Interaktives Dashboard · Stand: ${new Date().toLocaleDateString("de-DE")} · ${m.length} Meetings`;
   document.getElementById("footer-text").textContent =
-    `Meeting Strukturanalyse · ${m.length} Meetings · ${allDepts.join(", ")}`;
+    `${m.length} Meetings · Stand: ${new Date().toLocaleDateString("de-DE")}`;
 
-  // Warnings
+  // Warnings (collapsible)
   const warns = [];
   if (nPlatz) warns.push(`<b>${nPlatz} Meetings</b> mit Platzhalter-Teilnehmern (⚠)`);
-  const nOhneInfo = m.filter(x => !x.infofluss).length;
   if (nOhneInfo) warns.push(`<b>${nOhneInfo} Meetings</b> ohne Informationsfluss-Dokumentation`);
-  document.getElementById("warnings-bar").innerHTML = warns.length
-    ? `<div class="warnings"><ul>${warns.map(w=>`<li>${w}</li>`).join("")}</ul></div>` : "";
+  if (warns.length) {
+    const warnCount = warns.length;
+    const hinweis = warnCount === 1 ? "Hinweis" : "Hinweise";
+    document.getElementById("warnings-bar").innerHTML =
+      `<div class="warnings"><button class="warn-toggle" onclick="toggleWarning()">⚠ ${warnCount} ${hinweis} ▾</button><ul id="warn-list">${warns.map(w=>`<li>${w}</li>`).join("")}</ul></div>`;
+  } else {
+    document.getElementById("warnings-bar").innerHTML = "";
+  }
+}
+
+function toggleWarning() {
+  const list = document.getElementById("warn-list");
+  const btn = document.querySelector(".warn-toggle");
+  if (!list) return;
+  const open = list.style.display !== "none";
+  list.style.display = open ? "none" : "";
+  if (btn) btn.textContent = btn.textContent.replace(open ? "▾" : "▸", open ? "▸" : "▾");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -645,7 +670,7 @@ window.addEventListener("resize", () => {
 // _plotNetzwerk: baut Traces aus dem Cache – wird auch bei FK-Toggle aufgerufen (kein d3 neu).
 function renderNetzwerk() {
   renderedTabs.add(0);
-  const aktive = MEETINGS.filter(m => m.status === "Aktiv");
+  const aktive = MEETINGS.filter(m => m.status === "Aktiv" && !m.ist_platzhalter);
 
   // Build graph
   const nodeSet = new Set();
@@ -709,6 +734,10 @@ function renderNetzwerk() {
   _plotNetzwerk(true);
 }
 
+// Klick-Verhalten: clickTimer + activeNode für single/double click
+let clickTimer = null;
+let activeNode = null;
+
 function _plotNetzwerk(firstRender) {
   const { pos, edges, connectedPersons, isolatedCount, degree, personMeetings } = netCache;
 
@@ -751,23 +780,8 @@ function _plotNetzwerk(firstRender) {
     };
   });
 
-  // FK-Filter-Buttons (nur FKs aus fkSet die im Netzwerk sichtbar sind)
   const n_edge = edgeTraces.length;
   const n_node = nodeTraces.length;
-
-  function makeOps(fk) {
-    const nbrs = new Set(edges.flatMap(e => (e.a===fk||e.b===fk) ? [e.a,e.b] : []));
-    nbrs.add(fk);
-    const e_ops = edges.map(e => (e.a===fk||e.b===fk) ? 0.7 : 0.04);
-    const n_ops = connectedPersons.map(p => nbrs.has(p) ? 1.0 : 0.08);
-    return e_ops.concat(n_ops);
-  }
-  const alleOps  = Array(n_edge + n_node).fill(1.0);
-  const fkInNet  = connectedPersons.filter(p => fkSet.has(p));
-  const fkButtons = [{ label:"Alle", method:"restyle", args:[{opacity: alleOps}] }];
-  fkInNet.forEach(fk => {
-    fkButtons.push({ label: fk + " ★", method:"restyle", args:[{opacity: makeOps(fk)}] });
-  });
 
   // Legend traces
   const shownAbts = new Set();
@@ -784,58 +798,75 @@ function _plotNetzwerk(firstRender) {
     }
   });
 
-  // Hint aktualisieren
-  const hintEl = document.getElementById("hint-netzwerk");
-  if (hintEl) {
-    const fkHint = fkInNet.length > 0
-      ? `Aktive FKs: ${fkInNet.join(", ")} · `
-      : "Noch keine FK markiert · ";
-    hintEl.textContent = "★ = Führungskraft · Klick auf Knoten = als FK markieren/entfernen · "
-      + fkHint
-      + "Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz"
-      + (isolatedCount > 0 ? ` · ${isolatedCount} isolierte Knoten ausgeblendet` : "");
+  // Opacity helpers
+  function opAll() {
+    return Array(n_edge + n_node).fill(1.0);
+  }
+  function opForNode(person) {
+    const nbrs = new Set([person]);
+    const edgeOps = edges.map(e => {
+      if (e.a === person || e.b === person) { nbrs.add(e.a); nbrs.add(e.b); return 0.85; }
+      return 0.04;
+    });
+    const nodeOps = connectedPersons.map(p => nbrs.has(p) ? 1.0 : 0.07);
+    return edgeOps.concat(nodeOps);
+  }
+  function applyOps(ops) {
+    const chartEl = document.getElementById("chart-netzwerk");
+    const idxs = [], vals = [];
+    for (let i = 0; i < ops.length; i++) { idxs.push(i); vals.push(ops[i]); }
+    Plotly.restyle(chartEl, {"opacity": vals}, idxs);
   }
 
   const allTraces = [...edgeTraces, ...nodeTraces, ...legendTraces];
   const layout = {
-    title:{text:"Kommunikationsnetzwerk – Wer trifft wen?", font:{size:16,family:"Inter"}},
-    updatemenus: fkButtons.length > 1 ? [{
-      type:"buttons", direction:"right",
-      x:0.0, xanchor:"left", y:1.10, yanchor:"top",
-      bgcolor:"#f1f5f9", bordercolor:"#e2e8f0",
-      font:{size:11, color:"#374151"},
-      buttons: fkButtons, active:0, pad:{r:4,t:4},
-      showactive:true
-    }] : [],
-    annotations: fkButtons.length > 1 ? [{
-      text:"<b>FK-Filter:</b>", x:0.0, xanchor:"left",
-      y:1.145, yanchor:"top", xref:"paper", yref:"paper",
-      showarrow:false, font:{size:11,color:"#6b7280"}
-    }] : [],
+    title:{text:"Kommunikationsnetzwerk – Wer trifft wen?", font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
+    font:{family:"DM Sans, system-ui, sans-serif"},
     showlegend:true,
     legend:{title:{text:"Abteilung"}, itemsizing:"constant", x:1.01, y:1},
     hovermode:"closest",
     xaxis:{showgrid:false,zeroline:false,showticklabels:false},
     yaxis:{showgrid:false,zeroline:false,showticklabels:false},
     plot_bgcolor:"white", paper_bgcolor:"white",
-    height:640, margin:{l:10,r:140,t:80,b:10}
+    height:640, margin:{l:10,r:140,t:50,b:10}
   };
 
   const chartEl = document.getElementById("chart-netzwerk");
   if (firstRender) {
-    Plotly.newPlot(chartEl, allTraces, layout, {responsive:true, displayModeBar:true});
-    // Klick-Listener: Person als FK markieren / entfernen
+    Plotly.newPlot(chartEl, allTraces, layout, {responsive:true, displayModeBar:false, doubleClick:false});
+    // Click listener: single click = highlight connections, double click = FK toggle
     chartEl.on("plotly_click", function(data) {
       if (!data.points.length) return;
       const person = data.points[0].data.name;
-      // Nur Node-Traces haben einen Person-Namen (Edge-Traces haben keinen)
       if (!netCache || !netCache.connectedPersons.includes(person)) return;
-      if (fkSet.has(person)) fkSet.delete(person);
-      else fkSet.add(person);
-      _plotNetzwerk(false);
+
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        // Double click → FK toggle
+        if (fkSet.has(person)) fkSet.delete(person);
+        else fkSet.add(person);
+        activeNode = null;
+        _plotNetzwerk(false);
+        applyOps(opAll());
+      } else {
+        const n = person;
+        clickTimer = setTimeout(function() {
+          clickTimer = null;
+          if (activeNode === n) {
+            activeNode = null;
+            applyOps(opAll());
+          } else {
+            activeNode = n;
+            applyOps(opForNode(n));
+          }
+        }, 280);
+      }
     });
   } else {
+    activeNode = null;
     Plotly.react(chartEl, allTraces, layout);
+    applyOps(opAll());
   }
 }
 
@@ -873,18 +904,14 @@ function renderKalender() {
     hovertext:hvrs, hoverinfo:"text", type:"scatter"
   };
   const layout = {
-    title:{text:"Meeting-Kalender – Wann findet was statt?",font:{size:16,family:"Inter"}},
+    title:{text:"Meeting-Kalender – Wann findet was statt?",font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
+    font:{family:"DM Sans, system-ui, sans-serif"},
     xaxis:{title:"Wochentag",categoryorder:"array",categoryarray:tageO,showgrid:true,gridcolor:"#f3f4f6"},
     yaxis:{title:"Rhythmus",categoryorder:"array",categoryarray:rhyO,showgrid:true,gridcolor:"#f3f4f6"},
     plot_bgcolor:"white",paper_bgcolor:"white",
-    height:460, margin:{l:150,r:20,t:60,b:80},
-    annotations:[{
-      text:"Bubble-Größe = Anzahl Meetings · Hover für Details",
-      xref:"paper",yref:"paper",x:0,y:-0.16,showarrow:false,
-      font:{size:10,color:"#9ca3af"}
-    }]
+    height:460, margin:{l:150,r:20,t:60,b:40}
   };
-  Plotly.newPlot("chart-kalender", [trace], layout, {responsive:true});
+  Plotly.newPlot("chart-kalender", [trace], layout, {responsive:true, displayModeBar:false});
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -892,7 +919,9 @@ function renderKalender() {
 // ══════════════════════════════════════════════════════════════════════════════
 function renderOverlap() {
   const ml = MEETINGS.filter(m => m.status === "Aktiv" && m.teilnehmer.length >= 2);
+  const kurz = n => n.length > 22 ? n.slice(0,22)+"…" : n;
   const namen = ml.map(m => m.name);
+  const namen_kurz = ml.map(m => kurz(m.name));
   const sets  = ml.map(m => new Set(m.teilnehmer));
   const n = ml.length;
 
@@ -916,25 +945,22 @@ function renderOverlap() {
 
   const trace = {
     type:"heatmap",
-    z:matrix, x:namen, y:namen,
+    z:matrix, x:namen_kurz, y:namen_kurz,
     text:matrix.map(r => r.map(v => v>0 ? `${(v*100).toFixed(0)}%` : "")),
-    texttemplate:"%{text}", textfont:{size:8},
-    colorscale:[[0,"#16a34a"],[0.5,"#fbbf24"],[1,"#dc2626"]], zmin:0, zmax:1,
+    texttemplate:"%{text}", textfont:{size:8, color:"#374151"},
+    colorscale:[[0,"#f0faf8"],[0.25,"#c8e6e0"],[0.55,"#f5c97a"],[0.80,"#e08060"],[1,"#c25050"]],
+    zmin:0, zmax:1,
     hovertext:hover, hoverinfo:"text",
     colorbar:{title:{text:"Jaccard<br>Ähnlichkeit"}}
   };
   const layout = {
-    title:{text:"Teilnehmer-Überschneidung – Welche Meetings sind ähnlich?",font:{size:16,family:"Inter"}},
-    height:700, margin:{l:210,r:100,t:60,b:210},
+    title:{text:"Teilnehmer-Überschneidung – Welche Meetings sind ähnlich?",font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
+    font:{family:"DM Sans, system-ui, sans-serif"},
+    height:Math.max(520, ml.length * 22), margin:{l:210,r:100,t:60,b:180},
     xaxis:{tickangle:-45,tickfont:{size:9}},
-    yaxis:{tickfont:{size:9}},
-    annotations:[{
-      text:"Rot = hohe Überschneidung (potenzielle Redundanz) · Hover für Details",
-      xref:"paper",yref:"paper",x:0,y:-0.3,showarrow:false,
-      font:{size:10,color:"#9ca3af"}
-    }]
+    yaxis:{tickfont:{size:9}}
   };
-  Plotly.newPlot("chart-overlap", [trace], layout, {responsive:true});
+  Plotly.newPlot("chart-overlap", [trace], layout, {responsive:true, displayModeBar:false});
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -970,14 +996,15 @@ function renderAbteilung() {
 
   const layout = {
     barmode:"stack",
-    title:{text:"Meeting-Dichte pro Abteilung",font:{size:16,family:"Inter"}},
+    title:{text:"Meeting-Dichte pro Abteilung",font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
+    font:{family:"DM Sans, system-ui, sans-serif"},
     xaxis:{title:"Abteilung"},
     yaxis:{title:"Anzahl Meetings",showgrid:true,gridcolor:"#f3f4f6"},
     legend:{title:{text:"Rhythmus"}},
     plot_bgcolor:"white", paper_bgcolor:"white",
     height:440, margin:{l:60,r:20,t:60,b:60}
   };
-  Plotly.newPlot("chart-abt", traces, layout, {responsive:true});
+  Plotly.newPlot("chart-abt", traces, layout, {responsive:true, displayModeBar:false});
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1031,7 +1058,7 @@ function renderSankey() {
     lbls.push(`${a} ↔ ${b}: ${v.toFixed(1)} Freq.-Punkte`);
     const hex = (effectiveAbtFarben[a]||"#9ca3af").replace("#","");
     const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),bv=parseInt(hex.slice(4,6),16);
-    linkColors.push(`rgba(${r},${g},${bv},0.35)`);
+    linkColors.push(`rgba(${r},${g},${bv},0.25)`);
   });
 
   const trace = {
@@ -1052,10 +1079,27 @@ function renderSankey() {
   };
   const layout = {
     title:{text:"Informationsfluss zwischen Abteilungen · Flussdicke = gewichtete Meeting-Frequenz",
-      font:{size:15,family:"Inter"}},
+      font:{size:15,family:"DM Sans, system-ui, sans-serif"}},
+    font:{family:"DM Sans, system-ui, sans-serif"},
     height:440, margin:{l:20,r:20,t:60,b:30}
   };
-  Plotly.newPlot("chart-sankey", [trace], layout, {responsive:true});
+  Plotly.newPlot("chart-sankey", [trace], layout, {responsive:true, displayModeBar:false});
+
+  // Hover-Kontrast verstärken
+  const sankeyEl = document.getElementById("chart-sankey");
+  const baseColors = [...linkColors]; // Kopie
+  function toOp(c, op) { return c.replace(/,[\d.]+\)$/, ","+op+")"); }
+  sankeyEl.on("plotly_hover", function(ev) {
+    if (!ev || !ev.points || !ev.points.length) return;
+    const pt = ev.points[0];
+    if (pt.source === undefined) return;
+    const idx = pt.pointNumber;
+    const cols = baseColors.map((c,i) => toOp(c, i===idx ? 0.92 : 0.04));
+    Plotly.restyle(sankeyEl, {"link.color": [cols]}, [0]);
+  });
+  sankeyEl.on("plotly_unhover", function() {
+    Plotly.restyle(sankeyEl, {"link.color": [baseColors]}, [0]);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
