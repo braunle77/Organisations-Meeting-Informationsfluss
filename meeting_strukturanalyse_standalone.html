@@ -381,7 +381,13 @@ function parseData(text) {
   let headerLineIdx = 0;
   for (let i = 0; i < Math.min(lines.length, 30); i++) {
     const l = lines[i].toLowerCase();
-    if ((l.includes("abteilung") || l.includes("abt.")) && (l.includes("meeting") || l.includes("meeting-name") || l.includes("rhythmus") || l.includes("teilnehmer"))) {
+    // Erkenne Header-Zeile: enthält Abteilungs-Begriff UND Meeting/Rhythmus/Teilnehmer-Begriff
+    const hasAbt  = l.includes("abteilung") || l.includes("abt.");
+    const hasMtg  = l.includes("meeting") || l.includes("rhythmus") || l.includes("teilnehmer");
+    // Alternativ: Zeile hat ≥ 5 Spalten und enthält "status" (robuster Fallback)
+    const cols    = lines[i].split(sep);
+    const hasMany = cols.length >= 5 && l.includes("status");
+    if ((hasAbt && hasMtg) || hasMany) {
       headerLineIdx = i;
       break;
     }
@@ -391,7 +397,7 @@ function parseData(text) {
   // Column index mapping (case-insensitive, flexible)
   const colMap = {
     abteilung: findCol(headerRaw, ["abteilung","abt"]),
-    name:      findCol(headerRaw, ["meeting-name","meeting name","meetingname","name","titel"]),
+    name:      findCol(headerRaw, ["meeting-name","meeting name","meetingname","meeting","name","titel"]),
     kategorie: findCol(headerRaw, ["kategorie","kat"]),
     zweck:     findCol(headerRaw, ["zweck","ziel","purpose"]),
     vera:      findCol(headerRaw, ["kopf","verantwortlich","verantwortl","owner","responsible"]),
@@ -400,14 +406,38 @@ function parseData(text) {
     infofluss: findCol(headerRaw, ["informations-fluss","informationsfluss","infofluss","information"]),
     status:    findCol(headerRaw, ["status"]),
     uebergr:   findCol(headerRaw, ["abt.übergreifend","abt.uebergreifend","übergreifend","uebergreifend","cross"]),
-    platzh:    findCol(headerRaw, ["platzhalter","placeholder"]),
+    platzh:    findCol(headerRaw, ["platzhalter / in real mehr","platzhalter","placeholder"]),
     learning:  findCol(headerRaw, ["learnings","learning","erkenntnis"]),
   };
 
-  // Validate required columns
-  const required = ["abteilung","name","teiln","rhythmus","status"];
-  for (const r of required) {
-    if (colMap[r] === -1) throw new Error(`Pflicht-Spalte nicht gefunden: "${r}". Bitte prüfe die Tabellen-Header.`);
+  // Positionsbasierter Fallback (wie Python-Pipeline: Reihenfolge zählt, Namen egal)
+  // Greift wenn Pflicht-Spalten per Name nicht gefunden wurden – z.B. bei unbekannten Header-Namen.
+  const POSITIONAL_KEYS = ["abteilung","name","kategorie","zweck","vera","teiln",
+                           "rhythmus","infofluss","status","uebergr","platzh","learning"];
+  const requiredKeys = ["abteilung","name","teiln","rhythmus","status"];
+  const missingRequired = requiredKeys.filter(k => colMap[k] === -1);
+
+  if (missingRequired.length > 0) {
+    // Prüfe ob genug Spalten da sind für positionsbasiertes Mapping
+    if (headerRaw.length >= 5) {
+      POSITIONAL_KEYS.forEach((key, i) => { if (i < headerRaw.length) colMap[key] = i; });
+    } else {
+      // Erkannte Header für bessere Fehlermeldung ausgeben
+      throw new Error(
+        `Spalten konnten nicht zugeordnet werden (gefunden: "${headerRaw.join(" | ")}").\n` +
+        `Erwartet werden mind. 5 Spalten in dieser Reihenfolge:\n` +
+        `Abt. · Meeting-Name · Kategorie · Zweck · Kopf · Teilnehmer · Rhythmus · Informations-Fluss · Status · Abt.übergreifend · Platzhalter · Learnings`
+      );
+    }
+  }
+
+  // Finale Validierung nach Fallback
+  const stillMissing = requiredKeys.filter(k => colMap[k] === -1);
+  if (stillMissing.length > 0) {
+    throw new Error(
+      `Pflicht-Spalten nicht gefunden: ${stillMissing.join(", ")}.\n` +
+      `Erkannte Header: "${headerRaw.join(" | ")}"`
+    );
   }
 
   const meetings = [];

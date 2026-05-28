@@ -375,19 +375,124 @@ def build_tabelle_html():
 
 # ── VIEW 7: KI Analyse ───────────────────────────────────────────────────────
 def build_findings_html():
-    return """
-    <div class="findings-placeholder">
-      <div class="findings-placeholder-icon">🤖</div>
-      <h2>KI-Analyse</h2>
-      <p>Für diese Organisation wurden noch keine KI-Analysen erstellt.</p>
-      <p class="findings-placeholder-sub">
-        Dieser Bereich ist für kommentierte Beobachtungen gedacht – z.&thinsp;B. erkannte
-        Redundanzen, hohe Meeting-Last einzelner Personen, Kommunikationslücken zwischen
-        Abteilungen oder Klärungsbedarfe aus der Datenpflege.<br><br>
-        Analysen können hier als aufklappbare Karten ergänzt werden und dienen als
-        Gesprächsgrundlage im Management-Review.
-      </p>
-    </div>"""
+    findings = [
+        # (kategorie, emoji, titel, beschreibung)
+
+        # ── Redundanzen ─────────────────────────────────────────────────────
+        ("redundanz","🔴","PCC-Update · Reklamationsmeeting · PCC-Teammeeting – identische Teilnehmer",
+         "Alle drei Meetings haben exakt dieselben 7 Teilnehmer (ADA, JFR, SMI, MGR, MOS, AWA, TOK) – Jaccard-Ähnlichkeit 100 %. "
+         "PCC-Update läuft täglich, das Reklamationsmeeting wöchentlich, das Teammeeting zweiwöchentlich. "
+         "Die Frage ist, ob drei verschiedene Formate mit demselben Teilnehmerkreis notwendig sind oder ob Inhalte konsolidiert werden könnten. "
+         "Konkret: Was passiert im Reklamationsmeeting, das nicht im täglichen Update behandelt werden kann?"),
+
+        ("redundanz","🔴","PC Leitungsmeeting ↔ 3M – 78 % Überschneidung",
+         "7 der 9 Personen im 3M (Monthly Management Meeting) sind identisch mit dem wöchentlichen Leitungsmeeting (Jco, Ktz, Beb, TOK, MiG, Kip, Urk). "
+         "Beide haben laut Zweck-Beschreibung einen KPI- und Maßnahmen-Reporting-Fokus. DrS und Sez kommen beim 3M hinzu. "
+         "Ist das 3M eine eigenständige strategische Eskalationsebene für GF/Beirat-Vorbereitung – oder ein ausführlicheres Leitungsmeeting? "
+         "Wenn ersteres: sollte das im Zweck klarer abgegrenzt werden."),
+
+        ("redundanz","🟡","JF Beschaffung ↔ JF Enasys – beide wöchentlich, beide Ipa + Beb",
+         "JF Beschaffung (Ipa, Ktz, Beb · Mo) und JF Enasys (Enasys, Ipa, Fln, Beb · Do) teilen Ipa und Beb als Kern-Teilnehmer und behandeln beide Beschaffungsthemen rund um Vorkomponenten und Lieferzeiten. "
+         "Könnten die Enasys-spezifischen Themen als fester Punkt im JF Beschaffung integriert werden, "
+         "oder ist die Trennung bewusst gewählt (intern vs. extern)?"),
+
+        # ── Meeting-Last ─────────────────────────────────────────────────────
+        ("last","⚠️","Ktz – meistgebuchte Person im Netzwerk (9 Meetings)",
+         "Ktz ist in 9 aktiven, nicht-platzhalter Meetings eingebunden: PC Leitungsmeeting, PC Quarterly, 3M, JF Beschaffung, Regeltermin Turn PQR, DC4PC-Session, JF Jco & Ktz, JF Kip & Ktz, JF PO/PM. "
+         "Er agiert als Knotenpunkt zwischen GF-Ebene, Beschaffung und Technologie – ohne selbst Meetings zu verantworten. "
+         "Das deutet auf eine zentrale Querschnittsfunktion (PCP Produktmanagement) hin, "
+         "die in der Meeting-Struktur aber nicht explizit sichtbar ist. Ist diese Rolle dokumentiert?"),
+
+        ("last","⚠️","Beb (PCO) – 8 Meetings, davon 3 individuelle JFs mit direkten Berichten",
+         "Beb ist Teilnehmer in 8 aktiven Meetings und verantwortet 3 wöchentliche 1:1 JFs (mit Ipa, Fln, Jco). "
+         "Dazu kommen PCO Teammeeting, JF Beschaffung, JF Enasys, PC Leitungsmeeting und 3M. "
+         "Frage: Welche Themen aus den individuellen JFs werden im PCO Teammeeting nicht behandelt? "
+         "Falls die 1:1s operativen Inhalt haben, der im Teammeeting fehlt, ist die Trennung sinnvoll. "
+         "Falls es Überschneidungen gibt, könnte das Teammeeting die 1:1-Frequenz reduzieren."),
+
+        ("last","⚠️","Urk (PCS) – 4 dokumentierte Einzelgespräche + 3 übergreifende Meetings",
+         "Urk führt wöchentliche 1:1s mit Zrb, Smt und KTF sowie zweiwöchentlich mit Tih – "
+         "alle individuell dokumentiert. Dazu: PC Leitungsmeeting, 3M und JF Jco & Urk. "
+         "Im Gegensatz zu TOK (Platzhalter für alle 1:1s) und Kip (Platzhalter) wählt Urk eine transparente Einzeldokumentation. "
+         "Das ist vorbildlich für die Analyse, stellt aber die Frage: Gibt es ein strukturiertes PCS-Teamformat "
+         "jenseits des Sales JF (aktuell Platzhalter ohne Teilnehmerliste)?"),
+
+        # ── Dokumentationslücken ─────────────────────────────────────────────
+        ("datenqualitaet","📝","29 von 41 Meetings ohne Informationsfluss-Dokumentation (71 %)",
+         "Besonders betroffen: PCT mit 8 Meetings ohne Infofluss (JF PCD, PLM Prozess, JF Jco/Kip, Hardware JF PC, JF PO PCT, JF PO/PM, DC4PC-Session, PCT/PCS JF) "
+         "und PCS mit 6 Meetings (alle 1:1s, JF Kunden, PCT/PCS JF). "
+         "Ohne Infofluss-Dokumentation ist nicht beurteilbar, ob ein Meeting seinen Zweck erfüllt oder "
+         "ob Entscheidungen und Ergebnisse die Organisation erreichen. "
+         "Empfehlung: Für jeden Meeting-Typ reicht ein Satz – 'Rein: X · Raus: Y'."),
+
+        ("datenqualitaet","📝","2 Meetings ohne jegliche Daten – Status 'Unbekannt'",
+         "'Regeltermin Turn – Power Flexibility' und 'Regeltermin Turn – Costdown und Portfolio' "
+         "haben weder Teilnehmer, noch Rhythmus, Zweck oder Informationsfluss dokumentiert. Status: Unbekannt. "
+         "Sind diese Meetings aktiv, geplant, ausgelaufen oder Platzhalter für zukünftige Formate? "
+         "Sie tauchen im Netzwerk nicht auf, verzerren aber die Statistiken. Klärung empfohlen."),
+
+        # ── Kommunikationsstruktur ───────────────────────────────────────────
+        ("luecke","🕳️","Keine dokumentierte reguläre Schnittstelle PCC ↔ PCS",
+         "PCC (Customer) und PCS (Sales) sind funktional direkt aufeinander angewiesen: "
+         "Reklamationen, Kundenanfragen und Eskalationen erfordern Abstimmung zwischen beiden Abteilungen. "
+         "In der Meeting-Landschaft gibt es kein reguläres Bindeglied. "
+         "JF Kunden (variabel, Platzhalter) enthält 'ggf. PCO, PCC', ist aber nicht strukturiert. "
+         "Frage: Läuft diese Koordination aktuell ad-hoc, per Chat oder über das Leitungsmeeting?"),
+
+        ("luecke","🕳️","PCT-Subteams ohne übergreifendes Teamformat",
+         "PCT ist in drei Subeinheiten dokumentiert (PCTAC/DC, PCTProduct, PCTDC) mit jeweils eigenen Meetings. "
+         "Ein übergreifendes PCT-Teammeeting existiert nicht – JF PO PCT (Kip, Krö, Kis) deckt nur die PO-Ebene ab. "
+         "Entwickler, HW-Engineers und DC-Team koordinieren ausschließlich bilateral oder über den JF PO. "
+         "Ist das bewusst (flache Koordination) oder fehlt ein Forum für technologieübergreifende Themen?"),
+
+        # ── Klärungsbedarf ──────────────────────────────────────────────────
+        ("klaerung","❓","PCS/ACF Sprintreview – Name suggeriert PCS-Beteiligung, Inhalt ist PCT-intern",
+         "Das Meeting ist unter Abteilung PCT geführt, Verantwortlich ist Kis (PCT), "
+         "Teilnehmer sind 'PC, Ktz, Steakholder' (Platzhalter). "
+         "Der Name 'PCS/ACF Sprintreview' suggeriert Sales-Beteiligung, tatsächlich ist es "
+         "ein Entwicklungs-Review des ACF-Produkts. "
+         "Empfehlung: Name anpassen (z.B. 'ACF Sprintreview') und Teilnehmerkreis konkretisieren."),
+
+        ("klaerung","❓","Sales JF – Platzhalter ohne Teilnehmerliste oder Inhalt",
+         "Der Sales JF (Urk · wöchentlich Mo 15–16 Uhr) hat als Teilnehmer nur 'PCS' – ein Abteilungs-Platzhalter. "
+         "Zweck und Informationsfluss sind nicht dokumentiert. "
+         "Als einziges PCS-Teamformat ist das der zentrale Abstimmungskanal der Sales-Abteilung – "
+         "gleichzeitig das am wenigsten dokumentierte. Wer nimmt konkret teil, und was wird besprochen?"),
+    ]
+
+    kat_meta = {
+        "redundanz":      ("Mögliche Redundanzen",       "#c25050","#fef2f2","#f5c6c6"),
+        "last":           ("Hohe Meeting-Last",           "#d4a843","#fffbeb","#fcd34d"),
+        "luecke":         ("Kommunikationslücken",        "#7c6bab","#f5f3ff","#c4b5fd"),
+        "klaerung":       ("Klärungsbedarf",              "#3a8fbf","#eff6ff","#93c5fd"),
+        "datenqualitaet": ("Dokumentationslücken",        "#4a6b67","#f0faf8","#b2ddd8"),
+    }
+
+    html = ""
+    for kat, (titel, col, bg, border) in kat_meta.items():
+        items = [f for f in findings if f[0]==kat]
+        if not items:
+            continue
+        html += f"""<div class="finding-category">
+      <h3 style="color:{col};border-left:4px solid {col};padding-left:10px">{titel} <span class="finding-count">{len(items)}</span></h3>"""
+        for i, (_, emoji, heading, desc) in enumerate(items):
+            fid = f"{kat}-{i}"
+            html += f"""<div class="finding-card" id="card-{fid}" style="border-left:3px solid {border};background:{bg}">
+        <div class="finding-header" onclick="toggleFinding('{fid}')">
+          <span class="finding-emoji">{emoji}</span>
+          <span class="finding-title">{heading}</span>
+          <span class="finding-arrow" id="arrow-{fid}">▸</span>
+        </div>
+        <div class="finding-body" id="body-{fid}">
+          <p>{desc}</p>
+        </div>
+      </div>"""
+        html += "</div>"
+
+    n_kat = sum(1 for kat in kat_meta if any(f[0]==kat for f in findings))
+    summary = (f"<div class='findings-summary'>Gesamt: <b>{len(findings)} Beobachtungen</b> in {n_kat} Kategorien "
+               f"· Klicke auf eine Karte zum Aufklappen · Basierend auf {len(meetings)} Meetings</div>")
+    return summary + html
 
 # ── Alle Charts rendern ──────────────────────────────────────────────────────
 print("🔨 Erzeuge Charts…")
@@ -547,6 +652,25 @@ body{{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2
   font-size:.83rem;color:#374151}}
 .ol-item{{display:flex;align-items:flex-start;gap:10px}}
 .ol-dot{{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px}}
+
+/* Findings */
+.findings-summary{{background:#f0faf8;border:1px solid #b2ddd8;border-radius:8px;
+  padding:10px 16px;margin-bottom:16px;font-size:.85rem;color:#4a6b67}}
+.finding-category{{margin-bottom:20px}}
+.finding-category h3{{font-size:.95rem;font-weight:700;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}}
+.finding-count{{background:currentColor;color:white;border-radius:20px;
+  padding:1px 8px;font-size:.75rem;font-weight:700;opacity:.85}}
+.finding-card{{border-radius:8px;margin-bottom:8px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}}
+.finding-header{{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  cursor:pointer;user-select:none}}
+.finding-header:hover{{filter:brightness(.97)}}
+.finding-emoji{{font-size:1rem;flex-shrink:0}}
+.finding-title{{flex:1;font-weight:500;font-size:.88rem}}
+.finding-arrow{{color:#9ca3af;font-size:.8rem;transition:transform .2s;flex-shrink:0}}
+.finding-body{{display:none;padding:12px 16px 14px 42px;border-top:1px solid rgba(0,0,0,.06)}}
+.finding-body p{{font-size:.85rem;color:#374151;line-height:1.6}}
 
 /* KI Analyse Placeholder */
 .findings-placeholder{{text-align:center;padding:60px 40px;color:#4a6b67}}
