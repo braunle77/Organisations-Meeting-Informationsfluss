@@ -3,6 +3,9 @@
 *.xls
 *.csv
 
+# Claude-Session-Kontext – lokal, nicht im Repo
+CLAUDE_CONTEXT.md
+
 # Generierte Ausgaben (optional committen)
 # leitmet_clean.json
 # leitmet_dashboard.html
