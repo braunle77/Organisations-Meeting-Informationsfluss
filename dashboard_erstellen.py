@@ -319,7 +319,7 @@ def build_sankey():
                   color=link_colors),
     ))
     fig.update_layout(
-        title=dict(text="Informationsfluss zwischen Abteilungen · Flussdicke = gewichtete Meeting-Frequenz",
+        title=dict(text="Kommunikationsintensität zwischen Abteilungen · Flussdicke = wie oft sitzen Abteilungen gemeinsam in Meetings (gewichtet nach Rhythmus)",
                    font=dict(size=15)),
         font=dict(family="DM Sans, system-ui, sans-serif"),
         height=440,margin=dict(l=20,r=20,t=60,b=30),
@@ -706,7 +706,7 @@ body{{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2
   <button class="tab-btn" onclick="showTab(1)">Kalender</button>
   <button class="tab-btn" onclick="showTab(2)">Überschneidungen</button>
   <button class="tab-btn" onclick="showTab(3)">Abteilungen</button>
-  <button class="tab-btn" onclick="showTab(4)">Informationsfluss</button>
+  <button class="tab-btn" onclick="showTab(4)">Kommunikation</button>
   <button class="tab-btn" onclick="showTab(5)">Alle Meetings</button>
   <button class="tab-btn" onclick="showTab(6)">KI Analyse</button>
 </div>

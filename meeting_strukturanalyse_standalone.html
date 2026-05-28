@@ -177,7 +177,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <button class="tab-btn" onclick="showTab(1)">Kalender</button>
     <button class="tab-btn" onclick="showTab(2)">Überschneidungen</button>
     <button class="tab-btn" onclick="showTab(3)">Abteilungen</button>
-    <button class="tab-btn" onclick="showTab(4)">Informationsfluss</button>
+    <button class="tab-btn" onclick="showTab(4)">Kommunikation</button>
     <button class="tab-btn" onclick="showTab(5)">Alle Meetings</button>
     <button class="tab-btn" onclick="showTab(6)">KI Analyse</button>
   </div>
@@ -467,7 +467,10 @@ function parseData(text) {
 
     const abteilung = get("abteilung");
     const name = get("name");
-    if (!abteilung && !name) continue; // skip empty rows
+    // Zeilen ohne Meeting-Name überspringen – das sind leere Zeilen ODER
+    // Section-Header-Zeilen in Confluence (zusammengeführte Zellen über alle Spalten,
+    // z.B. "PCTAC/DC" als Trennzeile). Diese liefern abteilung≠"" aber name="".
+    if (!name) continue;
 
     // Parse Teilnehmer
     const teilnRaw = get("teiln");
@@ -1127,7 +1130,7 @@ function renderSankey() {
     }
   };
   const layout = {
-    title:{text:"Informationsfluss zwischen Abteilungen · Flussdicke = gewichtete Meeting-Frequenz",
+    title:{text:"Kommunikationsintensität zwischen Abteilungen · Flussdicke = wie oft sitzen Abteilungen gemeinsam in Meetings (gewichtet nach Rhythmus)",
       font:{size:15,family:"DM Sans, system-ui, sans-serif"}},
     font:{family:"DM Sans, system-ui, sans-serif"},
     height:440, margin:{l:20,r:20,t:60,b:30}
