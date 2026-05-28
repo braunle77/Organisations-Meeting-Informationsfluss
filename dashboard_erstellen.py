@@ -30,8 +30,8 @@ ABT_FARBEN = {
     # Override Abteilungsfarben; leer = automatisch aus der Palette vergeben
 }
 RHY_FARBEN = {
-    "täglich":"#dc2626","wöchentlich":"#59B2A5","dreiwöchentlich":"#3a8fbf",
-    "zweiwöchentlich":"#7c9e44","monatlich":"#f59e0b","quartalsweise":"#7c6bab","variabel":"#9ca3af",
+    "täglich":"#c25050","wöchentlich":"#59B2A5","dreiwöchentlich":"#3a8fbf",
+    "zweiwöchentlich":"#7c9e44","monatlich":"#d4a843","quartalsweise":"#7c6bab","variabel":"#b0bec5",
 }
 FREQ_W = {"täglich":5,"wöchentlich":4,"dreiwöchentlich":3,
           "zweiwöchentlich":2,"monatlich":1,"quartalsweise":0.5,"variabel":0.5}
@@ -225,11 +225,18 @@ def build_overlap():
             hr.append(f"<b>{namen[i]}</b> ↔ <b>{namen[j]}</b><br>"
                       f"Ähnlichkeit: {v:.0%}<br>Gemeinsam: {', '.join(sorted(gem)) or '–'}")
         matrix.append(mr); hover.append(hr)
+    _overlap_scale = [
+        [0.00, "#f0faf8"],   # kein Overlap → helles Mint
+        [0.25, "#c8e6e0"],   # wenig → softes Teal
+        [0.55, "#f5c97a"],   # mittel → warmes Amber
+        [0.80, "#e08060"],   # hoch → Terrakotta
+        [1.00, "#c25050"],   # Maximum → gedämpftes Rot
+    ]
     fig = go.Figure(go.Heatmap(
         z=matrix,x=namen_kurz,y=namen_kurz,
         text=[[f"{v:.0%}" if v>0 else "" for v in r] for r in matrix],
-        texttemplate="%{text}",textfont=dict(size=8),
-        colorscale="RdYlGn_r",zmin=0,zmax=1,
+        texttemplate="%{text}",textfont=dict(size=8,color="#374151"),
+        colorscale=_overlap_scale,zmin=0,zmax=1,
         hovertext=hover,hoverinfo="text",
         colorbar=dict(title="Jaccard<br>Ähnlichkeit"),
     ))
@@ -591,8 +598,8 @@ body{{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2
 <div id="panel-2" class="panel">
   <div class="chart-card">{div_overlap}</div>
   <div class="overlap-legend">
-    <span class="ol-item"><span class="ol-dot" style="background:#dc2626"></span><b>Hohe Überschneidung (rot)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz. Frage: Brauchen wir beide Meetings?</span>
-    <span class="ol-item"><span class="ol-dot" style="background:#16a34a"></span><b>Keine Überschneidung (grün)</b> → völlig verschiedene Teilnehmer → kein direkter Informationsaustausch via Meeting. Hinweis: Lücke hier ist <em>kein Befund</em> – zwei Meetings müssen nicht dieselben Personen haben. Fehlende Meetings erkennst du besser im Netzwerk (isolierte Knoten) oder im Tab <b>🤖 KI Analyse</b> (dokumentierte Lücken).</span>
+    <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz. Frage: Brauchen wir beide Meetings?</span>
+    <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → völlig verschiedene Teilnehmer → kein direkter Informationsaustausch via Meeting. Hinweis: Lücke hier ist <em>kein Befund</em> – zwei Meetings müssen nicht dieselben Personen haben. Fehlende Meetings erkennst du besser im Netzwerk (isolierte Knoten) oder im Tab <b>KI Analyse</b> (dokumentierte Lücken).</span>
   </div>
 </div>
 <div id="panel-3" class="panel">
