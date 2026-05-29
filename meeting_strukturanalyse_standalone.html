@@ -308,7 +308,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "29.05.2026 16:16";
+const APP_VERSION = "29.05.2026 16:21";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1019,6 +1019,8 @@ function _plotNetzwerk(firstRender) {
         // Double click → FK toggle
         if (fkSet.has(person)) fkSet.delete(person);
         else fkSet.add(person);
+        saveConfig();
+        renderedTabs.delete(7); // Personen-Tab beim nächsten Besuch neu zeichnen
         activeNode = null;
         _plotNetzwerk(false);
         applyOps(opAll());
