@@ -334,7 +334,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 17:45";
+const APP_VERSION = "30.05.2026 18:10";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1989,6 +1989,8 @@ function renderTreemap() {
   katSet.forEach((k, i) => { katColor[k] = PALETTE[i % PALETTE.length]; });
 
   // Plotly-Treemap-Arrays
+  // ids entkoppelt von labels → verhindert Kollision wenn Meetingname = Kategoriename
+  const ids         = [];
   const labels       = [];
   const parents      = [];
   const values       = [];
@@ -2000,6 +2002,7 @@ function renderTreemap() {
   katSet.forEach(kat => {
     const items = withHours.filter(({m}) => (m.kategorie || "Sonstige") === kat);
     const total = Math.round(items.reduce((s, {mH}) => s + mH, 0) * 10) / 10;
+    ids.push("cat::" + kat);
     labels.push(kat);
     parents.push("");
     values.push(total);                     // branchvalues:"total" → explizite Summe
@@ -2009,10 +2012,11 @@ function renderTreemap() {
   });
 
   // ── Meeting-Knoten ────────────────────────────────────────────────────────
-  withHours.forEach(({m, mH}) => {
+  withHours.forEach(({m, mH}, i) => {
     const kat = m.kategorie || "Sonstige";
+    ids.push("m::" + i);
     labels.push(m.name);
-    parents.push(kat);
+    parents.push("cat::" + kat);
     values.push(mH);
     colors.push(katColor[kat]);
     customdata.push([mH, m.dauer, m.rhythmus_klasse, m.teilnehmer.length]);
@@ -2029,6 +2033,7 @@ function renderTreemap() {
 
   Plotly.newPlot("chart-treemap", [{
     type:         "treemap",
+    ids,
     labels,
     parents,
     values,

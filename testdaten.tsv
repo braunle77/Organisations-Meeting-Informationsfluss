@@ -1,0 +1,74 @@
+Abteilung	Meetingname	Kategorie	Zweck	Verantwortlich	Personen	Rhythmus	Dauer	Informationsfluss	Wirkung (1–4)	Status	Abteilungsübergreifend	Platzhalter	Learnings
+Business Unit	Leitungsmeeting	Leitungsmeeting	Wöchentlicher Austausch aller Führungskräfte	Maa	Maa, Bsc, Kna, Rie, Foh, Wku, Ste	wöchentlich Mo	60	Top-Down Informationen, Entscheidungen, Eskalationen	3	Aktiv	Ja
+Sales	Teammeeting Sales	Teammeeting	Monatlicher Austausch im Vertriebsteam	Bsc	Bsc, Jha, Tkr, Mvo, Swe, Pku, Afe, Cba, Lme	monatlich Di	90	Vertriebszahlen, Kundenfeedback, Pipeline-Status	2	Aktiv	Nein
+Support	Teammeeting Support	Teammeeting	Monatlicher Austausch im Support-Team	Kna	Kna, Uri, Dbe, Mho, Fwi, Sle, Rgi, Amu	monatlich Mi	60	Ticket-Status, Eskalationen, Verbesserungsideen	3	Aktiv	Nein
+Operations	Teammeeting Operations	Teammeeting	Wöchentliche Abstimmung im Operations-Team	Ste	Ste, Mla, Bha, Cwa, Nvo	wöchentlich Do	45	Operative Aufgaben, Prioritäten, Blocker	3	Aktiv	Nein
+Product Management	Teammeeting Product Management	Teammeeting	Wöchentlicher Austausch im PM-Team	Foh	Foh, Lpe	wöchentlich Di	30	Roadmap, Priorisierung, Stakeholder-Feedback	4	Aktiv	Nein
+Business Excellence	Qualitätszirkel	Koordination	Monatliche Qualitätsrunde mit Vertreterinnen aller Abteilungen	Rie	Rie, Bsc, Kna, Wku, Ste, Foh	monatlich Mi	60	Qualitätsindikatoren, Prozessverbesserungen, KPIs	3	Aktiv	Ja
+Entwicklung	Teammeeting Entwicklung	Teammeeting	Monatliches Gesamtteam-Meeting der Entwicklung	Wku	Wku, Awo, Nki, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	monatlich Do	90	Entwicklungsfortschritt, Teamankündigungen, Highlights	3	Aktiv	Nein
+Entwicklung	Standup Produkt-Team A	Standup	Zweimal wöchentlicher Sync – Di und Do	Awo	Awo, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma	wöchentlich Di Do	15	Fortschritt, Blocker, Tagesplanung	4	Aktiv	Nein
+Entwicklung	Standup Produkt-Team B	Standup	Zweimal wöchentlicher Sync – Mo und Mi	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	wöchentlich Mo Mi	15	Fortschritt, Blocker, Tagesplanung	4	Aktiv	Nein
+Business Unit	1-on-1 BUL & Sales	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit Vertriebsleiterin	Maa	Maa, Bsc	zweiwöchentlich Di	45	Ziele, Herausforderungen, Strategieabgleich	3	Aktiv	Ja
+Business Unit	1-on-1 BUL & Support	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit Support-Leiter	Maa	Maa, Kna	zweiwöchentlich Mi	45	Ziele, Eskalationen, Teamgesundheit	3	Aktiv	Ja
+Business Unit	1-on-1 BUL & Business Excellence	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit BE-Managerin	Maa	Maa, Rie	zweiwöchentlich Do	45	Qualitätsinitiativen, Projektstatus	3	Aktiv	Ja
+Business Unit	1-on-1 BUL & Product Management	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit PM-Leiter	Maa	Maa, Foh	zweiwöchentlich Di	45	Roadmap-Alignment, Priorisierung	4	Aktiv	Ja
+Business Unit	1-on-1 BUL & Entwicklung	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit Entwicklungsleiter	Maa	Maa, Wku	zweiwöchentlich Mi	45	Entwicklungsfortschritt, Ressourcen, Risiken	3	Aktiv	Ja
+Business Unit	1-on-1 BUL & Operations	1-on-1	Zweiwöchentliches Führungsgespräch BUL mit Operations-Leiter	Maa	Maa, Ste	zweiwöchentlich Do	45	Operative Themen, Effizienz	3	Aktiv	Ja
+Operations	Ops-Koordination mit BUL	Koordination	Wöchentliche operative Abstimmung BUL mit Operations-Team	Maa	Maa, Ste, Mla, Bha, Cwa, Nvo	wöchentlich Mo	30	Operative Entscheidungen, Kapazitäten, laufende Projekte	2	Aktiv	Ja
+Geschäftsleitung	GL Statusmeeting	Statusmeeting	Quartalsweise Gesamtschau mit der Geschäftsleitung	Ath	Ath, Emu, Maa, Bsc, Kna, Rie, Foh, Wku, Ste	quartalsweise	120	Strategische Kennzahlen, Quartalsziele, Investitionsentscheidungen	3	Aktiv	Ja
+Entwicklung	Projekt-Sync Externe	Synchronisation	Wöchentlicher Sync mit externen Partnern	Foh	Foh, Wku, Awo, Pfe, Sba	wöchentlich Fr	60	Projektfortschritt, Liefergegenstände, technische Abstimmung	2	Aktiv	Ja
+Operations	Ops-Extern Koordination	Koordination	Zweiwöchentliche Abstimmung mit externen Partnern	Ste	Ste, Pfe, Sba	zweiwöchentlich Mi	60	Logistik, Lieferkette, SLA-Tracking	2	Aktiv	Ja
+Support	Support-Entwicklung Sync	Synchronisation	Wöchentlicher Austausch zwischen Support und Entwicklung	Kna	Kna, Uri, Wku, Awo	wöchentlich Do	60	Bug-Reports, Feature-Requests, Eskalationen	3	Aktiv	Ja
+Sales	Sales-Entwicklung Sync	Synchronisation	Zweiwöchentlicher Austausch zwischen Sales und Entwicklung	Bsc	Bsc, Jha, Wku, Nki	zweiwöchentlich Di	60	Kundenanforderungen, Produktroadmap, Demo-Feedback	2	Aktiv	Ja
+Operations	Operations-Sales Abstimmung	Koordination	Monatliche Abstimmung zwischen Operations und Sales	Ste	Ste, Bsc	monatlich Di	60	Kapazitätsplanung, Kundenprojekte, Lieferfähigkeit		Aktiv	Ja
+Operations	Operations-Support Abstimmung	Koordination	Monatliche Abstimmung zwischen Operations und Support	Ste	Ste, Kna	monatlich Mi	60	Serviceprozesse, Eskalationswege, SLA-Einhaltung		Aktiv	Ja
+Geschäftsleitung	GL-BUL Monatsgespräch	1-on-1	Monatliches Strategiegespräch GL mit BUL	Ath	Ath, Emu, Maa	monatlich Fr	60	Unternehmensstrategie, Budget, Personal	4	Aktiv	Ja
+Geschäftsleitung	GL-BE-Stabsfunktion Meeting	Koordination	Monatliches Meeting GL mit BE-Managerin und Stabsfunktion	Ath	Ath, Emu, Rie, Hge	monatlich Do	60	Qualitätsstandards, Compliance, interne Berichterstattung	3	Aktiv	Ja
+Entwicklung	Product Owner Sync	Synchronisation	Wöchentlicher Austausch der Product Owner mit Product Management	Foh	Foh, Lpe, Awo, Nki, Wku	wöchentlich Di	30	Anforderungsklärung, Roadmap-Alignment, Priorisierung	4	Aktiv	Ja
+Entwicklung	Retrospektive Team A	Retrospektive	Monatliche Retrospektive für Produktteam A	Awo	Awo, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma	monatlich Fr	60	Verbesserungsideen, Teamdynamik, Prozessoptimierung	4	Aktiv	Nein
+Entwicklung	Retrospektive Team B	Retrospektive	Monatliche Retrospektive für Produktteam B	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	monatlich Fr	60	Verbesserungsideen, Teamdynamik, Prozessoptimierung	4	Aktiv	Nein
+Entwicklung	Sprint Planning Team A	Planung	Zweiwöchentliches Sprint Planning für Produktteam A	Awo	Awo, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma, Foh	zweiwöchentlich Mo	90	Sprint-Ziele, Story Points, Kapazitätsplanung	3	Aktiv	Ja
+Entwicklung	Sprint Planning Team B	Planung	Zweiwöchentliches Sprint Planning für Produktteam B	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso, Lpe	zweiwöchentlich Mo	90	Sprint-Ziele, Story Points, Kapazitätsplanung	3	Aktiv	Ja
+Sales	Sales Pipeline Review	Statusmeeting	Wöchentliche Pipeline-Besprechung im Vertrieb	Bsc	Bsc, Jha, Tkr, Mvo, Swe, Pku	wöchentlich Mi	45	CRM-Daten, offene Opportunities, Forecast	3	Aktiv	Nein
+Support	Customer Escalation Meeting	Koordination	Ad-hoc Meeting bei kritischen Kundeneskalationen	Kna	Kna, Uri, Dbe, Bsc	variabel	30	Kundenproblem, Lösungsweg, Zeitplan		Aktiv	Ja
+Product Management	Produktroadmap Review	Statusmeeting	Monatliche Review der Produktroadmap mit Stakeholdern	Foh	Foh, Lpe, Wku, Bsc, Maa	monatlich Do	60	Roadmap-Anpassungen, Marktfeedback, Machbarkeit	4	Aktiv	Ja		Kundenfeedback früher einbeziehen
+Business Excellence	Prozessoptimierungs-Workshop	Workshop	Quartalsweiser Workshop zu Prozessverbesserungen	Rie	Rie, Maa, Kna, Ste, Wku	quartalsweise	120	Prozessanalyse, Optimierungsmaßnahmen, KPIs		Aktiv	Ja
+Entwicklung	Tech Debt Review	Statusmeeting	Monatliche Bestandsaufnahme technischer Schulden	Wku	Wku, Awo, Nki	monatlich Di	45	Refactoring-Priorisierung, Sicherheits-Updates	2	Aktiv	Nein
+Sales	Sales Pitch Vorbereitung	Vorbereitung	Zweiwöchentliche Vorbereitung für wichtige Kundentermine	Bsc	Bsc, Mvo, Tkr	zweiwöchentlich Mo	30	Demo-Vorbereitung, Präsentationsunterlagen		Geplant	Nein
+Support	Einarbeitung neue Mitarbeitende	Onboarding	Einarbeitung neuer Teammitglieder im Support	Kna	Kna, Uri	variabel	60	Prozesse, Tools, Kundenkommunikation		Geplant	Nein
+Entwicklung	Mitarbeitergespräch Wku & Awo	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Awo	monatlich Mo	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Nki	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Nki	monatlich Mo	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Rsc	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Rsc	monatlich Di	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Tba	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Tba	monatlich Di	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Mfi	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Mfi	monatlich Mi	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Jhe	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Jhe	monatlich Mi	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Kst	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Kst	monatlich Do	30	Ziele, Fortschritt, Entwicklungswünsche	4	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Pwo	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Pwo	monatlich Do	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Hma	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Hma	monatlich Fr	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Dho	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Dho	monatlich Mo	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Cpr	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Cpr	monatlich Di	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Sre	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Sre	monatlich Mi	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Ipl	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Ipl	monatlich Do	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Gle	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Gle	monatlich Fr	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Bme	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Bme	monatlich Mo	30	Ziele, Fortschritt, Entwicklungswünsche	3	Aktiv	Nein
+Entwicklung	Mitarbeitergespräch Wku & Jso	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Wku	Wku, Jso	monatlich Di	30	Ziele, Fortschritt, Entwicklungswünsche		Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Jha	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Jha	monatlich Mo	30	Ziele, Kundenerfolge, Entwicklungswünsche	3	Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Tkr	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Tkr	monatlich Di	30	Ziele, Kundenerfolge, Entwicklungswünsche		Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Mvo	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Mvo	monatlich Mi	30	Ziele, Kundenerfolge, Entwicklungswünsche	3	Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Swe	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Swe	monatlich Do	30	Ziele, Kundenerfolge, Entwicklungswünsche		Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Pku	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Pku	monatlich Fr	30	Ziele, Kundenerfolge, Entwicklungswünsche	3	Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Afe	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Afe	monatlich Mo	30	Ziele, Kundenerfolge, Entwicklungswünsche		Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Cba	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Cba	monatlich Di	30	Ziele, Kundenerfolge, Entwicklungswünsche	3	Aktiv	Nein
+Sales	Mitarbeitergespräch Bsc & Lme	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Bsc	Bsc, Lme	monatlich Mi	30	Ziele, Kundenerfolge, Entwicklungswünsche		Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Uri	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Uri	monatlich Mo	30	Ziele, Ticket-Qualität, Entwicklungswünsche	4	Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Dbe	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Dbe	monatlich Di	30	Ziele, Ticket-Qualität, Entwicklungswünsche	3	Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Mho	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Mho	monatlich Mi	30	Ziele, Ticket-Qualität, Entwicklungswünsche		Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Fwi	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Fwi	monatlich Do	30	Ziele, Ticket-Qualität, Entwicklungswünsche	3	Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Sle	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Sle	monatlich Fr	30	Ziele, Ticket-Qualität, Entwicklungswünsche		Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Rgi	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Rgi	monatlich Mo	30	Ziele, Ticket-Qualität, Entwicklungswünsche	3	Aktiv	Nein
+Support	Mitarbeitergespräch Kna & Amu	1-on-1	Monatliches Mitarbeitergespräch: Ziele, Entwicklung, Feedback	Kna	Kna, Amu	monatlich Di	30	Ziele, Ticket-Qualität, Entwicklungswünsche		Aktiv	Nein
+Operations	Mitarbeitergespräch Ste & Mla	1-on-1	Zweiwöchentliches Mitarbeitergespräch (kleine Abteilung)	Ste	Ste, Mla	zweiwöchentlich Do	30	Ziele, operative Aufgaben, Entwicklungswünsche	4	Aktiv	Nein
+Operations	Mitarbeitergespräch Ste & Bha	1-on-1	Zweiwöchentliches Mitarbeitergespräch (kleine Abteilung)	Ste	Ste, Bha	zweiwöchentlich Do	30	Ziele, operative Aufgaben, Entwicklungswünsche	4	Aktiv	Nein
+Operations	Mitarbeitergespräch Ste & Cwa	1-on-1	Zweiwöchentliches Mitarbeitergespräch (kleine Abteilung)	Ste	Ste, Cwa	zweiwöchentlich Fr	30	Ziele, operative Aufgaben, Entwicklungswünsche	4	Aktiv	Nein
+Operations	Mitarbeitergespräch Ste & Nvo	1-on-1	Zweiwöchentliches Mitarbeitergespräch (kleine Abteilung)	Ste	Ste, Nvo	zweiwöchentlich Fr	30	Ziele, operative Aufgaben, Entwicklungswünsche	4	Aktiv	Nein
+Product Management	Mitarbeitergespräch Foh & Lpe	1-on-1	Wöchentliches Mitarbeitergespräch (zweiköpfiges Team)	Foh	Foh, Lpe	wöchentlich Mi	30	Ziele, Roadmap-Aufgaben, Entwicklungswünsche	4	Aktiv	Nein
