@@ -234,6 +234,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <button class="tab-btn" onclick="showTab(7)">Personen</button>
     <button class="tab-btn" onclick="showTab(8)">Engpass</button>
     <button class="tab-btn" onclick="showTab(9)">Zeitverteilung</button>
+    <button class="tab-btn" onclick="showTab(10)">Wirkung</button>
   </div>
 
   <div id="panel-0" class="panel active">
@@ -314,6 +315,11 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Fläche = monatliche Personen-Stunden (Dauer × Häufigkeit × Teilnehmerzahl) · Farbe = Kategorie · Klick auf Kategorie = Drill-down zu Einzelmeetings</p>
   </div>
 
+  <div id="panel-10" class="panel">
+    <div class="chart-card" id="chart-wirkung" style="height:520px"></div>
+    <p class="hint">Nur Meetings mit Dauer- UND Wirkungsangabe · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Hover = Details · X-Trennlinie = Median der Zeitlast</p>
+  </div>
+
   <div id="toast" class="toast"></div>
   <div class="footer" id="footer-text">Meeting Strukturanalyse</div>
 </div>
@@ -328,7 +334,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 17:15";
+const APP_VERSION = "30.05.2026 17:45";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -866,6 +872,7 @@ function showTab(idx) {
     if (idx === 7) renderPersonenTab();
     if (idx === 8) renderEngpass();
     if (idx === 9) renderTreemap();
+    if (idx === 10) renderWirkungsMatrix();
   }
   // Personen-Aktions-Leiste nur im Personen-Tab einblenden
   const pa = document.getElementById("personen-actions");
@@ -2049,6 +2056,99 @@ function toggleFK(person) {
   saveConfig();
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// Tab 10: Wirkungsmatrix – Zeit vs. Wirkung Scatter
+// ══════════════════════════════════════════════════════════════════════════════
+
+function renderWirkungsMatrix() {
+  const el = document.getElementById("chart-wirkung");
+  if (!el) return;
+
+  const data = MEETINGS.filter(m => m.dauer !== null && m.wert !== null && !m.ist_platzhalter);
+
+  if (!data.length) {
+    el.innerHTML = `<div style="padding:40px;text-align:center;color:#9ca3af;font-size:.9rem">
+      Noch keine Meetings mit Dauer- UND Wirkungsangabe vorhanden.<br>
+      Wirkung kann in Tab „Alle Meetings" per Klick eingetragen werden.
+    </div>`;
+    return;
+  }
+
+  // X = Stunden/Monat
+  const xVals = data.map(m => Math.round(m.dauer * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5) / 60 * 100) / 100);
+
+  // Median für X-Trennlinie
+  const sorted = [...xVals].sort((a, b) => a - b);
+  const xMedian = sorted.length % 2 === 0
+    ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+    : sorted[Math.floor(sorted.length / 2)];
+
+  // Kategorien + Farben
+  const katList = [...new Set(data.map(m => m.kategorie || "Sonstige"))].sort();
+  const katColor = {};
+  katList.forEach((k, i) => { katColor[k] = PALETTE[i % PALETTE.length]; });
+
+  // Einen Trace pro Kategorie (für Legende)
+  const traces = katList.map(kat => {
+    const items = data.map((m, i) => ({ m, x: xVals[i] })).filter(({m}) => (m.kategorie || "Sonstige") === kat);
+    return {
+      type: "scatter",
+      mode: "markers",
+      name: kat,
+      x: items.map(({x}) => x),
+      y: items.map(({m}) => m.wert),
+      text: items.map(({m, x}) =>
+        `<b>${m.name}</b><br>Abteilung: ${m.abteilung}<br>Kategorie: ${m.kategorie}<br>` +
+        `Rhythmus: ${m.rhythmus_klasse}<br>Dauer: ${m.dauer} min<br>` +
+        `Zeit/Monat: ${x} h<br>Wirkung: ${'●'.repeat(m.wert)}${'○'.repeat(4 - m.wert)}<br>` +
+        `Teilnehmer: ${m.teilnehmer.length || 1}`
+      ),
+      hovertemplate: "%{text}<extra></extra>",
+      marker: {
+        color: katColor[kat],
+        size: items.map(({m}) => Math.max(m.teilnehmer.length || 1, 1) * 6 + 8),
+        opacity: 0.82,
+        line: { color: "#fff", width: 1.5 }
+      }
+    };
+  });
+
+  const xMax = Math.max(...xVals) * 1.15 || 10;
+
+  // Quadranten-Labels
+  const annotations = [
+    { x: xMedian / 2,           y: 3.6, text: "Bereichernd",     font: { color: "#059669", size: 11 } },
+    { x: (xMedian + xMax) / 2,  y: 3.6, text: "Effizient halten",font: { color: "#2563eb", size: 11 } },
+    { x: xMedian / 2,           y: 1.4, text: "Hinterfragen",    font: { color: "#9ca3af", size: 11 } },
+    { x: (xMedian + xMax) / 2,  y: 1.4, text: "Optimieren",      font: { color: "#dc2626", size: 11 } },
+  ].map(a => ({
+    ...a, xref: "x", yref: "y", showarrow: false,
+    font: { ...a.font, family: "inherit" }, opacity: 0.6
+  }));
+
+  const shapes = [
+    // vertikale Trennlinie (Median)
+    { type: "line", x0: xMedian, x1: xMedian, y0: 0.5, y1: 4.5,
+      line: { color: "#cbd5e1", width: 1.5, dash: "dot" }, xref: "x", yref: "y" },
+    // horizontale Trennlinie (y=2.5)
+    { type: "line", x0: 0, x1: xMax, y0: 2.5, y1: 2.5,
+      line: { color: "#cbd5e1", width: 1.5, dash: "dot" }, xref: "x", yref: "y" },
+  ];
+
+  Plotly.react(el, traces, {
+    margin: { t: 24, r: 24, b: 56, l: 56 },
+    xaxis: { title: "Zeitaufwand h/Monat", zeroline: false, gridcolor: "#f1f5f9", range: [0, xMax] },
+    yaxis: { title: "Wirkung", tickvals: [1,2,3,4], ticktext: ["1","2","3","4"], range: [0.5, 4.5], gridcolor: "#f1f5f9" },
+    shapes,
+    annotations,
+    legend: { orientation: "h", y: -0.15 },
+    plot_bgcolor: "#fff",
+    paper_bgcolor: "#fff",
+    font: { family: "Inter, system-ui, sans-serif", size: 12, color: "#374151" },
+    hovermode: "closest"
+  }, { responsive: true });
+}
+
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
 function refreshAllCharts() {
   // abteilungsuebergreifend neu berechnen
@@ -2061,6 +2161,7 @@ function refreshAllCharts() {
   renderedTabs.delete(1); // Kalender wird beim nächsten Tab-Besuch frisch gerendert
   renderedTabs.delete(8); // Engpass wird beim nächsten Tab-Besuch frisch gerendert
   renderedTabs.delete(9); // Zeitverteilung wird beim nächsten Tab-Besuch frisch gerendert
+  renderedTabs.delete(10); // Wirkungsmatrix wird beim nächsten Tab-Besuch frisch gerendert
   if (sankeyRendered)  { renderedTabs.delete(4); renderSankey(); renderedTabs.add(4); }
   if (abtRendered)     { renderedTabs.delete(3); renderAbteilung(); renderedTabs.add(3); abtRendered = true; }
   renderStats(); // abteilungsuebergreifend-Zählung aktualisieren
