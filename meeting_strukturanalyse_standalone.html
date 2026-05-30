@@ -327,7 +327,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 14:47";
+const APP_VERSION = "30.05.2026 14:59";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1538,11 +1538,19 @@ function renderPersonenTab() {
 
   // Personen aus MEETINGS sammeln (unique, geordnet nach Name)
   // Verantwortliche/r wird explizit einbezogen – steht manchmal nicht in Teilnehmer
-  // Generische Platzhalter-Namen (Leerzeichen = Beschreibung, keine Abkürzung) herausfiltern
+  // Generische Beschreibungen herausfiltern: beginnt mit Kleinbuchstabe ("alle MA", "jeweilige…")
+  // oder mehr als zwei Wörter oder länger als 30 Zeichen.
+  // Leerzeichen IM Namen (z. B. "Jana Müller", "J. M.") sind explizit erlaubt.
   const allPersons = [...new Set(
     MEETINGS.filter(m => !m.ist_platzhalter)
             .flatMap(m => [...m.teilnehmer, m.verantwortlich].filter(Boolean))
-            .filter(p => !p.includes(" "))   // "Jeweilige Ticketowner", "PC-Interessierte" etc.
+            .filter(p => {
+              if (!p.includes(" ")) return true;            // Kein Leerzeichen → kein Beschreibungstext
+              const words = p.trim().split(/\s+/);
+              return words.length <= 2                      // max. 2 Wörter
+                  && /^[A-ZÄÖÜ]/.test(words[0])            // erstes Wort beginnt groß → echter Name
+                  && p.length <= 30;                        // max. 30 Zeichen
+            })
   )].sort();
 
   allPersons.forEach(p => {
