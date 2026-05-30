@@ -303,6 +303,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-8" class="panel">
     <div class="chart-card" id="chart-engpass"></div>
     <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf, inkl. Vorbereitung) · Grün = als Teilnehmer/in · Hover = Details · Sortiert nach Gesamtlast</p>
+    <div class="chart-card" id="chart-zeitlast" style="margin-top:20px"></div>
+    <p class="hint" id="hint-zeitlast">Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit</p>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -319,7 +321,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 11:56";
+const APP_VERSION = "30.05.2026 12:04";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -338,6 +340,11 @@ const RHY_FARBEN = {
 const FREQ_W = {
   "täglich":5,"wöchentlich":4,"dreiwöchentlich":3,
   "zweiwöchentlich":2,"monatlich":1,"quartalsweise":0.5,"variabel":0.5
+};
+// Monatliche Häufigkeit für Zeitlast-Berechnung (Arbeitstage/Wochen pro Monat)
+const FREQ_MONTHLY = {
+  "täglich":22, "wöchentlich":4, "dreiwöchentlich":1.33,
+  "zweiwöchentlich":2, "monatlich":1, "quartalsweise":0.33, "variabel":0.5
 };
 
 // Feste Sonder-Kategorien – immer im Personen-Tab sichtbar, nicht aus Daten abgeleitet
@@ -1719,6 +1726,85 @@ function renderEngpass() {
     title: { text: "Meeting-Last pro Person", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Anzahl Meetings", showgrid: true, gridcolor: "#f3f4f6", dtick: 1 },
+    yaxis: { autorange: "reversed", automargin: true },
+    legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
+    plot_bgcolor: "white", paper_bgcolor: "white",
+    height: HEIGHT,
+    margin: { l: 10, r: 20, t: 60, b: 60 }
+  }, { responsive: true, displayModeBar: false });
+  renderZeitlast();
+}
+
+function renderZeitlast() {
+  if (!MEETINGS.length) return;
+
+  // Monatliche Minuten pro Person berechnen (nur Meetings mit Dauer-Angabe)
+  const kopfMin  = {};
+  const teilnMin = {};
+  let missingDauer = 0;
+
+  MEETINGS.forEach(m => {
+    const freq = FREQ_MONTHLY[m.rhythmus_klasse] || 0.5;
+    if (m.dauer === null) { missingDauer++; return; }
+    const monMin = m.dauer * freq;
+
+    const v = m.verantwortlich;
+    if (v) kopfMin[v] = (kopfMin[v] || 0) + monMin;
+    m.teilnehmer.forEach(t => {
+      teilnMin[t] = (teilnMin[t] || 0) + monMin;
+    });
+  });
+
+  const hint = document.getElementById("hint-zeitlast");
+
+  // Keine Dauer-Daten vorhanden → Hinweis statt Chart
+  if (Object.keys(kopfMin).length === 0 && Object.keys(teilnMin).length === 0) {
+    document.getElementById("chart-zeitlast").innerHTML =
+      `<div style="padding:32px;text-align:center;color:#9ca3af;font-size:.9rem">
+        Noch keine Dauer-Angaben in den Daten – Zeitlast-Chart wird verfügbar,<br>
+        sobald die Spalte „Dauer" in der Confluence-Tabelle befüllt ist.
+      </div>`;
+    if (hint) hint.textContent = "Zeitlast-Chart: Dauer-Spalte noch nicht befüllt";
+    return;
+  }
+
+  const allP = new Set([...Object.keys(kopfMin), ...Object.keys(teilnMin)]);
+  const persons = [...allP].sort((a, b) =>
+    ((kopfMin[b]||0) + (teilnMin[b]||0)) - ((kopfMin[a]||0) + (teilnMin[a]||0))
+  );
+
+  // Minuten → Stunden, auf 1 Stelle runden
+  const toH = min => Math.round(min / 60 * 10) / 10;
+  const HEIGHT = Math.max(420, persons.length * 26 + 140);
+
+  const suffix = missingDauer > 0
+    ? ` (${missingDauer} Meeting${missingDauer>1?"s":""} ohne Dauer-Angabe nicht berücksichtigt)`
+    : "";
+  if (hint) hint.textContent =
+    `Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit${suffix}`;
+
+  Plotly.newPlot("chart-zeitlast", [
+    {
+      type: "bar", orientation: "h",
+      name: "als Verantwortliche/r (Kopf)",
+      y: persons,
+      x: persons.map(p => toH(kopfMin[p] || 0)),
+      marker: { color: "#2176ae" },
+      hovertemplate: "<b>%{y}</b><br>%{x} h/Monat als Verantwortliche/r<extra></extra>"
+    },
+    {
+      type: "bar", orientation: "h",
+      name: "als Teilnehmer/in",
+      y: persons,
+      x: persons.map(p => toH(teilnMin[p] || 0)),
+      marker: { color: "#59B2A5" },
+      hovertemplate: "<b>%{y}</b><br>%{x} h/Monat als Teilnehmer/in<extra></extra>"
+    }
+  ], {
+    barmode: "group",
+    title: { text: "Zeitlast pro Person (Stunden/Monat, geschätzt)", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
+    font: { family: "DM Sans, system-ui, sans-serif" },
+    xaxis: { title: "Stunden pro Monat", showgrid: true, gridcolor: "#f3f4f6" },
     yaxis: { autorange: "reversed", automargin: true },
     legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
     plot_bgcolor: "white", paper_bgcolor: "white",
