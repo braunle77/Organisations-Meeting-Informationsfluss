@@ -327,7 +327,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 15:16";
+const APP_VERSION = "30.05.2026 16:42";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1542,9 +1542,10 @@ function renderPersonenTab() {
   // Generische Beschreibungen herausfiltern: beginnt mit Kleinbuchstabe ("alle MA", "jeweilige…")
   // oder mehr als zwei Wörter oder länger als 30 Zeichen.
   // Leerzeichen IM Namen (z. B. "Jana Müller", "J. M.") sind explizit erlaubt.
+  // Platzhalter-Meetings werden NICHT gefiltert – echte Personen stehen auch dort drin.
+  // Generische Texte ("alle MA") werden durch die _filtered-Logik unten abgefangen.
   const _rawCandidates = [...new Set(
-    MEETINGS.filter(m => !m.ist_platzhalter)
-            .flatMap(m => [...m.teilnehmer, m.verantwortlich].filter(Boolean))
+    MEETINGS.flatMap(m => [...m.teilnehmer, m.verantwortlich].filter(Boolean))
   )].sort();
 
   const _filtered = [];   // für Diagnose: herausgefilterte Einträge
