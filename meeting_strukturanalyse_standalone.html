@@ -195,7 +195,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     </div>
 
     <div class="import-section-title">Schritt 2: Einfügen oder hochladen</div>
-    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A in Confluence → ⌘C → hier ⌘V)...&#10;&#10;Erwartet wird eine Tab-getrennte Tabelle mit diesen Spalten:&#10;Abteilung · Meeting-Name · Kategorie · Zweck · Verantwortlich · Teilnehmer · Rhythmus · Informationsfluss · Status · Abt.übergreifend · Platzhalter · Learnings"></textarea>
+    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A in Confluence → ⌘C → hier ⌘V)...&#10;&#10;Erwartet wird eine Tab-getrennte Tabelle mit diesen Spalten (in beliebiger Reihenfolge):&#10;Abteilung · Meetingname · Kategorie · Zweck · Verantwortlich · Personen · Rhythmus · Dauer · Informationsfluss · Wirkung (1–4) · Status · Abteilungsübergreifend · Platzhalter · Learnings&#10;&#10;Optionale Spalten (Dauer, Wirkung) können leer bleiben."></textarea>
     <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
 
     <div class="import-divider">oder</div>
@@ -327,7 +327,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 12:36";
+const APP_VERSION = "30.05.2026 12:37";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
