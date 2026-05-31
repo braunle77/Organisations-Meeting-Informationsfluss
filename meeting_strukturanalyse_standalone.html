@@ -29,6 +29,10 @@ textarea#paste-area{width:100%;min-height:180px;border:2px solid #e2e8f0;border-
   resize:vertical;outline:none;transition:border .15s}
 textarea#paste-area:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.18)}
 textarea#paste-area::placeholder{color:#cbd5e1}
+.toggle-grp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:8px}
+.toggle-grp button{padding:4px 14px;border:1px solid #d1d5db;border-radius:20px;background:#f9fafb;font-family:inherit;font-size:0.8rem;cursor:pointer;color:#6b7280;transition:all .15s}
+.toggle-grp button.active{background:#59B2A5;border-color:#59B2A5;color:#fff;font-weight:600}
+.toggle-grp button:hover:not(.active){border-color:#59B2A5;color:#59B2A5}
 .btn-primary{background:#59B2A5;color:white;border:none;border-radius:8px;
   padding:10px 22px;font-family:inherit;font-size:.88rem;font-weight:600;
   cursor:pointer;transition:background .15s;margin-top:12px}
@@ -254,8 +258,12 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Zellwert = Jaccard-Index (0 = keine, 1 = identische Teilnehmergruppe) · Hover = Überschneidende Personen</p>
   </div>
   <div id="panel-3" class="panel">
+    <div class="toggle-grp">
+      <button id="abt-btn-anzahl" class="active" onclick="setAbtMode('anzahl')">Anzahl</button>
+      <button id="abt-btn-freq" onclick="setAbtMode('freq')">Freq./Monat</button>
+    </div>
     <div class="chart-card" id="chart-abt"></div>
-    <p class="hint">Balkenhöhe = Anzahl distinct Meeting-Formate (nicht frequenzgewichtet) · Farbe = Rhythmus · Hover = Meeting-Namen</p>
+    <p class="hint" id="hint-abt">Balkenhöhe = Anzahl distinct Meeting-Formate · Farbe = Rhythmus · Hover = Meeting-Namen</p>
     <div class="chart-card" id="chart-status" style="margin-top:20px"></div>
     <p class="hint">Anteil je Status-Kategorie pro Abteilung (100 % = alle Meetings der Abteilung) · Hover = absolute Anzahl</p>
     <div class="chart-card" id="chart-rhythmus" style="margin-top:20px"></div>
@@ -334,7 +342,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "30.05.2026 18:25";
+const APP_VERSION = "31.05.2026 13:55";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -430,6 +438,7 @@ let allDepts = [];
 let personConfidence   = {};  // { person: { autoDept, score, alternatives } }
 let sankeyRendered     = false;
 let abtRendered        = false;
+let abtMode            = "anzahl"; // "anzahl" | "freq"
 
 // Netzwerk: FK-Set (klickbar im Chart togglebar) + Positions-Cache
 let fkSet    = new Set(FK_LIST);   // wird bei neuem Daten-Load auf FK_LIST zurückgesetzt
@@ -795,6 +804,7 @@ function resetToImport() {
   personConfidence = {};
   sankeyRendered = false;
   abtRendered    = false;
+  abtMode        = "anzahl";
   document.getElementById("personen-grid").innerHTML = "";
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = "none";
@@ -1241,45 +1251,78 @@ function renderOverlap() {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 4: Abteilungen (stacked Bar)
 // ══════════════════════════════════════════════════════════════════════════════
-function renderAbteilung() {
+function setAbtMode(mode) {
+  abtMode = mode;
+  const btnAnzahl = document.getElementById("abt-btn-anzahl");
+  const btnFreq   = document.getElementById("abt-btn-freq");
+  if (btnAnzahl) btnAnzahl.classList.toggle("active", mode === "anzahl");
+  if (btnFreq)   btnFreq.classList.toggle("active",   mode === "freq");
+  renderAbtChart();
+}
+
+function renderAbtChart() {
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
-  const xAbts = allDepts; // dynamisch aus geladenen Daten
-  const rhyO = ["täglich","wöchentlich","dreiwöchentlich","zweiwöchentlich","monatlich","quartalsweise","variabel"];
+  const xAbts  = allDepts;
+  const rhyO   = ["täglich","wöchentlich","dreiwöchentlich","zweiwöchentlich","monatlich","quartalsweise","variabel"];
 
   // abt_rhy[abt][rhy] = [meeting names]
   const abt_rhy = {};
   xAbts.forEach(a => { abt_rhy[a] = {}; rhyO.forEach(r => abt_rhy[a][r] = []); });
   aktive.forEach(m => {
     const a = (m.abteilung || "").trim();
-    if (!abt_rhy[a]) return; // unbekannte Abteilung → ignorieren
+    if (!abt_rhy[a]) return;
     const rhy = rhyO.includes(m.rhythmus_klasse) ? m.rhythmus_klasse : "variabel";
     abt_rhy[a][rhy].push(m.name);
   });
+
+  const isFreq = abtMode === "freq";
 
   const traces = rhyO.map(rhy => ({
     type:"bar",
     name: rhy,
     x: xAbts,
-    y: xAbts.map(a => (abt_rhy[a]?.[rhy] || []).length),
+    y: xAbts.map(a => {
+      const names = abt_rhy[a]?.[rhy] || [];
+      if (!isFreq) return names.length;
+      return Math.round(names.length * (FREQ_MONTHLY[rhy] || 0.5) * 10) / 10;
+    }),
     marker:{color: RHY_FARBEN[rhy] || "#9ca3af"},
     hovertext: xAbts.map(a => {
-      const mn = abt_rhy[a]?.[rhy] || [];
-      return `<b>${a} / ${rhy}</b><br>` + (mn.length ? mn.join("<br>") : "–");
+      const names = abt_rhy[a]?.[rhy] || [];
+      const val   = isFreq
+        ? `${Math.round(names.length * (FREQ_MONTHLY[rhy] || 0.5) * 10) / 10} /Monat`
+        : `${names.length} Format${names.length !== 1 ? "e" : ""}`;
+      return `<b>${a} / ${rhy}</b><br>${val}<br>` + (names.length ? names.join("<br>") : "–");
     }),
     hoverinfo:"text"
   }));
 
   const layout = {
     barmode:"stack",
-    title:{text:"Meeting-Dichte pro Abteilung",font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
+    title:{
+      text: isFreq ? "Monatliche Meeting-Frequenz pro Abteilung" : "Meeting-Dichte pro Abteilung",
+      font:{size:16,family:"DM Sans, system-ui, sans-serif"}
+    },
     font:{family:"DM Sans, system-ui, sans-serif"},
     xaxis:{title:"Abteilung"},
-    yaxis:{title:"Anzahl Meeting-Formate",showgrid:true,gridcolor:"#f3f4f6"},
+    yaxis:{
+      title: isFreq ? "Meetings/Monat" : "Anzahl Meeting-Formate",
+      showgrid:true, gridcolor:"#f3f4f6"
+    },
     legend:{title:{text:"Rhythmus"}},
     plot_bgcolor:"white", paper_bgcolor:"white",
     height:440, margin:{l:60,r:20,t:60,b:60}
   };
-  Plotly.newPlot("chart-abt", traces, layout, {responsive:true, displayModeBar:false});
+  Plotly.react("chart-abt", traces, layout, {responsive:true, displayModeBar:false});
+
+  const hint = document.getElementById("hint-abt");
+  if (hint) hint.textContent = isFreq
+    ? "Balkenhöhe = Meetings/Monat (Anzahl × monatliche Häufigkeit) · Farbe = Rhythmus · Hover = Meeting-Namen"
+    : "Balkenhöhe = Anzahl distinct Meeting-Formate · Farbe = Rhythmus · Hover = Meeting-Namen";
+}
+
+function renderAbteilung() {
+  renderAbtChart();
   renderStatusVerteilung();
   renderRhythmusChart();
 }
