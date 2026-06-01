@@ -263,13 +263,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
   <div id="panel-2" class="panel" data-tab="5">
     <button class="tab-info-btn" onclick="showTabInfo(5)">ℹ</button>
+    <div id="top-paare-list" style="margin-bottom:24px"></div>
     <div class="chart-card" id="chart-overlap"></div>
     <div class="overlap-legend">
       <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
       <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → verschiedene Teilnehmer. Fehlende Meetings erkennst du besser im Netzwerk-Tab.</span>
     </div>
     <p class="hint">Zellwert = Jaccard-Index (0 = keine, 1 = identische Teilnehmergruppe) · Hover = Überschneidende Personen</p>
-    <div id="top-paare-list" style="margin-top:20px"></div>
   </div>
   <div id="panel-3" class="panel" data-tab="2">
     <button class="tab-info-btn" onclick="showTabInfo(2)">ℹ</button>
@@ -279,10 +279,10 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     </div>
     <div class="chart-card" id="chart-abt"></div>
     <p class="hint" id="hint-abt">Balkenhöhe = Anzahl distinct Meeting-Formate · Farbe = Rhythmus · Hover = Meeting-Namen</p>
-    <div class="chart-card" id="chart-status" style="margin-top:20px"></div>
-    <p class="hint">Anteil je Status-Kategorie pro Abteilung (100 % = alle Meetings der Abteilung) · Hover = absolute Anzahl</p>
     <div class="chart-card" id="chart-rhythmus" style="margin-top:20px"></div>
     <p class="hint">Balkenhöhe = Anzahl Meeting-Formate je Rhythmus-Klasse · Farbe = Kategorie · von hochfrequent (links) nach selten (rechts)</p>
+    <div class="chart-card" id="chart-status" style="margin-top:20px"></div>
+    <p class="hint">Anteil je Status-Kategorie pro Abteilung (100 % = alle Meetings der Abteilung) · Hover = absolute Anzahl</p>
   </div>
   <div id="panel-4" class="panel" data-tab="4">
     <button class="tab-info-btn" onclick="showTabInfo(4)">ℹ</button>
@@ -314,8 +314,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="findings-placeholder">
       <div class="findings-placeholder-icon">🤖</div>
       <h2>KI-Analyse</h2>
-      <p>Für diese Organisation wurden noch keine KI-Analysen erstellt.</p>
-      <p class="findings-placeholder-sub">Dieser Bereich ist für kommentierte Beobachtungen gedacht – z.&thinsp;B. erkannte Redundanzen, hohe Meeting-Last, Kommunikationslücken.<br><br>Analysen können hier als aufklappbare Karten ergänzt werden.</p>
+      <p>Diese Ausbaustufe ist noch nicht aktiviert.</p>
+      <p class="findings-placeholder-sub">Dieser Tab ist für KI-gestützte Mustererkennung vorgesehen. Eine KI analysiert die Datenlage und erkennt Muster, die visuell nicht sofort sichtbar sind – z.&thinsp;B. Redundanzen, strukturelle Engpässe oder auffällige Kommunikationslücken.<br><br>Die Ergebnisse erscheinen hier als kommentierte Befund-Karten. Diese Funktion kann auf Wunsch ergänzt werden.</p>
     </div>
   </div>
 
@@ -364,7 +364,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "01.06.2026 10:00";
+const APP_VERSION = "01.06.2026 14:30";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -806,6 +806,17 @@ function showDashboard() {
   // FK-Set: erst aus FK_LIST (HTML-Config), dann localStorage
   fkSet         = new Set(FK_LIST);
 
+  // wertOverrides gehören zur vorherigen Datensession → bei neuem Import löschen.
+  // personAbt und fkList bleiben erhalten (sie sind Konfiguration, keine Datenannotation).
+  try {
+    const _raw = localStorage.getItem(CONFIG_KEY);
+    if (_raw) {
+      const _c = JSON.parse(_raw);
+      delete _c.wertOverrides;
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(_c));
+    }
+  } catch(e) {}
+
   // localStorage-Overrides laden und anwenden (nur Personen die in den Daten vorkommen)
   applyStoredConfig();
   netCache      = null;
@@ -924,9 +935,9 @@ const TAB_INFO = {
        achten: "Volle Spalten an bestimmten Tagen = Meeting-Stau. Überlagerte Bubbles = Kollisionsrisiko für Personen in mehreren Abteilungen.",
        folgefragen: "Gibt es Tage mit zu vielen parallelen Meetings? Sind bestimmte Abteilungen an bestimmten Tagen überlastet?" },
   4: { title: "Kommunikationsflüsse (Sankey)",
-       was: "Flussbreite = gewichtete Meeting-Häufigkeit zwischen Abteilungen. Farbe = Quell-Abteilung.",
+       was: "Flussbreite = gewichtete Meeting-Häufigkeit zwischen Abteilungen. Farbe dient der Unterscheidung – die Kommunikation ist bidirektional: beide Abteilungen treffen sich in denselben Meetings.",
        achten: "Breite Flüsse = starke Vernetzung. Dünne oder fehlende Verbindungen zeigen Kommunikationssilos.",
-       folgefragen: "Welche Abteilungen kommunizieren kaum miteinander? Sind die Flüsse zu den richtigen Partnern?" },
+       folgefragen: "Welche Abteilungen kommunizieren kaum miteinander? Sind die Verbindungen zu den strategisch wichtigen Partnern vorhanden?" },
   5: { title: "Teilnehmer-Überschneidungen",
        was: "Jaccard-Index: 0% = keine gemeinsamen Teilnehmer, 100% = identische Gruppe. Warme Farben = hohe Überschneidung. Top-Paare als Liste unten.",
        achten: "Orangene/rote Felder zeigen Meetings mit fast gleichen Teilnehmergruppen – Kandidaten für Zusammenlegung.",
@@ -1435,10 +1446,10 @@ function renderAbtChart() {
     font: { family:"DM Sans, system-ui, sans-serif" },
     yaxis: { automargin:true, tickfont:{ size:12 } },
     xaxis: { title: isFreq ? "Meetings/Monat" : "Anzahl Meeting-Formate", showgrid:true, gridcolor:"#f3f4f6" },
-    legend: { title:{ text:"Frequenz-Gruppe" }, orientation:"h", y:1.1, x:0.5, xanchor:"center" },
+    legend: { title:{ text:"Frequenz-Gruppe" }, orientation:"v", x:1.02, xanchor:"left", y:1, yanchor:"top" },
     plot_bgcolor:"white", paper_bgcolor:"white",
     height: Math.max(320, yAbts.length * 36 + 120),
-    margin: { l:150, r:20, t:70, b:50 }
+    margin: { l:150, r:160, t:50, b:50 }
   };
   Plotly.react("chart-abt", traces, layout, { responsive:true, displayModeBar:false });
 
@@ -1450,8 +1461,8 @@ function renderAbtChart() {
 
 function renderAbteilung() {
   renderAbtChart();
-  renderStatusVerteilung();
   renderRhythmusChart();
+  renderStatusVerteilung();
 }
 
 function renderStatusVerteilung() {
@@ -2219,15 +2230,19 @@ function renderTreemap() {
   }, { responsive: true, displayModeBar: false });
 
   // Abgerundete Ecken per SVG-Postprocessing
-  setTimeout(() => {
+  // Sowohl sichtbare rects als auch clipPath-rects müssen gerundet werden,
+  // damit die Clip-Maske die Abrundung nicht aufhebt.
+  const _roundTreemap = () => {
     const el = document.getElementById("chart-treemap");
     if (!el) return;
-    el.querySelectorAll("rect").forEach(r => {
+    el.querySelectorAll("rect, clipPath rect").forEach(r => {
       const w = parseFloat(r.getAttribute("width") || 0);
       const h = parseFloat(r.getAttribute("height") || 0);
       if (w > 8 && h > 8) { r.setAttribute("rx", "6"); r.setAttribute("ry", "6"); }
     });
-  }, 200);
+  };
+  setTimeout(_roundTreemap, 300);
+  setTimeout(_roundTreemap, 800); // zweiter Pass falls Plotly noch nachrückt
 
 }
 
