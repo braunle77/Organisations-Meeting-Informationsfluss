@@ -287,7 +287,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-4" class="panel" data-tab="4">
     <button class="tab-info-btn" onclick="showTabInfo(4)">ℹ</button>
     <div class="chart-card" id="chart-sankey"></div>
-    <p class="hint">Pfeilrichtung = Verantwortliche/r → beteiligte Abteilungen · Flussdicke = Meeting-Häufigkeit · zeigt wer Meetings initiiert</p>
+    <p class="hint">Flussdicke = gewichtete Meeting-Häufigkeit · Nodes sortiert nach Vernetzungsgrad (oben = am stärksten vernetzt) · Richtung nicht bedeutsam</p>
     <div class="chart-card" id="chart-chord" style="margin-top:20px"></div>
     <p class="hint">Chord-Diagramm: Bogengröße = Gesamtkommunikation der Abteilung · Bandbreite = bidirektionale Meeting-Häufigkeit · Hover = Details</p>
   </div>
@@ -366,7 +366,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "01.06.2026 20:00";
+const APP_VERSION = "01.06.2026 20:30";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -936,10 +936,10 @@ const TAB_INFO = {
        was: "X-Achse = Wochentag, Y-Achse = Rhythmusklasse. Bubble-Größe = Anzahl Meetings, Farbe = Abteilung.",
        achten: "Volle Spalten an bestimmten Tagen = Meeting-Stau. Überlagerte Bubbles = Kollisionsrisiko für Personen in mehreren Abteilungen.",
        folgefragen: "Gibt es Tage mit zu vielen parallelen Meetings? Sind bestimmte Abteilungen an bestimmten Tagen überlastet?" },
-  4: { title: "Kommunikationsflüsse (Sankey)",
-       was: "Flussbreite = gewichtete Meeting-Häufigkeit zwischen Abteilungen. Die Kommunikation ist bidirektional – beide Abteilungen nehmen an denselben Meetings teil. Die Pfeilrichtung ist nicht bedeutsam, nur die Dicke zählt.",
-       achten: "Breite Flüsse = starke gegenseitige Vernetzung. Dünne oder fehlende Verbindungen zeigen Kommunikationssilos zwischen Abteilungen.",
-       folgefragen: "Welche Abteilungen kommunizieren kaum miteinander? Sind die Verbindungen zu strategisch wichtigen Partnern vorhanden?" },
+  4: { title: "Kommunikationsflüsse (Sankey + Chord)",
+       was: "Sankey: Flussbreite = gewichtete Meeting-Häufigkeit. Nodes oben = am stärksten vernetzt. Pfeilrichtung nicht bedeutsam. Chord-Diagramm darunter zeigt dieselben Daten kreisförmig und bidirektional.",
+       achten: "Breite Flüsse = starke Vernetzung. Abteilungen oben im Sankey sind die Kommunikationshubs. Kleine Bögen im Chord = wenig übergreifende Kommunikation.",
+       folgefragen: "Welche Abteilungen kommunizieren kaum miteinander? Sind die wichtigsten strategischen Partner auch die stärksten Verbindungen?" },
   5: { title: "Teilnehmer-Überschneidungen",
        was: "Jaccard-Index: 0% = keine gemeinsamen Teilnehmer, 100% = identische Gruppe. Warme Farben = hohe Überschneidung. Top-Paare als Liste unten.",
        achten: "Orangene/rote Felder zeigen Meetings mit fast gleichen Teilnehmergruppen – Kandidaten für Zusammenlegung.",
@@ -1565,16 +1565,12 @@ function renderSankey() {
   const abtIdx = {};
   abtList.forEach((a,i) => abtIdx[a] = i);
 
-  // ── Gerichtete Flüsse: Verantwortliche/r → Teilnehmer-Abteilungen (Sankey)
-  const flussDir  = {};
-  // ── Symmetrische Flüsse: alle Paare (Chord)
+  // ── Bidirektionale Flüsse (Sankey): alle Abteilungspaare die gemeinsam in Meetings sitzen
   const flussSymm = {};
 
   aktive.forEach(m => {
     const w = FREQ_W[m.rhythmus_klasse] || 0.5;
     const normAbt = (m.abteilung || "").trim();
-
-    // Alle Abteilungen im Meeting
     const allAbts = new Set();
     m.teilnehmer.forEach(t => {
       const a = effectivePersonAbt[t];
@@ -1583,21 +1579,6 @@ function renderSankey() {
     if (m.teilnehmer.some(t => t.toLowerCase() === "extern")) allAbts.add("Extern");
     if (abtList.includes(normAbt)) allAbts.add(normAbt);
 
-    // Sankey: Verantwortlich-Abt → alle anderen
-    const vera = m.verantwortlich;
-    const veraAbt = vera && effectivePersonAbt[vera]
-      ? effectivePersonAbt[vera]
-      : (abtList.includes(normAbt) ? normAbt : null);
-    if (veraAbt) {
-      allAbts.forEach(tAbt => {
-        if (tAbt !== veraAbt) {
-          const key = veraAbt + "||" + tAbt;
-          flussDir[key] = (flussDir[key] || 0) + w;
-        }
-      });
-    }
-
-    // Chord: alle Paare symmetrisch
     const al = [...allAbts].sort();
     for (let i = 0; i < al.length; i++)
       for (let j = i+1; j < al.length; j++) {
@@ -1606,19 +1587,31 @@ function renderSankey() {
       }
   });
 
+  // Nodes nach Gesamtvolumen sortieren: kommunikativste Abteilungen zuerst
+  const vol = {};
+  abtList.forEach(a => vol[a] = 0);
+  Object.entries(flussSymm).forEach(([key,v]) => {
+    const [a,b] = key.split("||");
+    vol[a] = (vol[a]||0) + v;
+    vol[b] = (vol[b]||0) + v;
+  });
+  const sortedAbtList = [...abtList].sort((a,b) => vol[b] - vol[a]);
+  const sortedIdx = {};
+  sortedAbtList.forEach((a,i) => sortedIdx[a] = i);
+
   // ── Sankey rendern ────────────────────────────────────────────────────────
-  if (Object.keys(flussDir).length === 0) {
+  if (Object.keys(flussSymm).length === 0) {
     document.getElementById("chart-sankey").innerHTML =
       `<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:.95rem">
         Keine abteilungsübergreifenden Meetings in den Daten.</div>`;
   } else {
     const srcs=[],tgts=[],vals=[],lbls=[],linkColors=[];
-    Object.entries(flussDir).forEach(([key,v]) => {
+    Object.entries(flussSymm).forEach(([key,v]) => {
       const [a,b] = key.split("||");
-      if (abtIdx[a] === undefined || abtIdx[b] === undefined) return;
-      srcs.push(abtIdx[a]); tgts.push(abtIdx[b]);
+      if (sortedIdx[a] === undefined || sortedIdx[b] === undefined) return;
+      srcs.push(sortedIdx[a]); tgts.push(sortedIdx[b]);
       vals.push(Math.round(v*10)/10);
-      lbls.push(`${a} → ${b}: ${v.toFixed(1)} Freq.-Punkte`);
+      lbls.push(`${a} ↔ ${b}: ${v.toFixed(1)} Freq.-Punkte`);
       const hex = (effectiveAbtFarben[a]||"#9ca3af").replace("#","");
       const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),bv=parseInt(hex.slice(4,6),16);
       linkColors.push(`rgba(${r},${g},${bv},0.25)`);
@@ -1626,15 +1619,16 @@ function renderSankey() {
     const trace = {
       type:"sankey",
       node:{ pad:24, thickness:24, line:{color:"white",width:0.5},
-             label:abtList, color:abtList.map(a=>effectiveAbtFarben[a]||"#9ca3af"),
+             label:sortedAbtList,
+             color:sortedAbtList.map(a=>effectiveAbtFarben[a]||"#9ca3af"),
              hovertemplate:"<b>%{label}</b><extra></extra>" },
       link:{ source:srcs, target:tgts, value:vals,
              customdata:lbls, hovertemplate:"<b>%{customdata}</b><extra></extra>",
              color:linkColors }
     };
     Plotly.newPlot("chart-sankey", [trace], {
-      title:{text:"Kommunikationsinitiative – wer ruft Meetings mit anderen Abteilungen ein?",
-             font:{size:14,family:"DM Sans, system-ui, sans-serif"}},
+      title:{text:"Kommunikationsintensität – sortiert nach Vernetzungsgrad (oben = am stärksten vernetzt)",
+             font:{size:13,family:"DM Sans, system-ui, sans-serif"}},
       font:{family:"DM Sans, system-ui, sans-serif"},
       height:440, margin:{l:20,r:20,t:60,b:30}
     }, {responsive:true, displayModeBar:false});
