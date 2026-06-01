@@ -86,8 +86,18 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
 .tab-btn:hover{color:#59B2A5}
 .tab-btn.active{color:#59B2A5;border-bottom-color:#59B2A5}
-.panel{display:none;padding:20px 36px 30px}
+.panel{display:none;padding:20px 36px 30px;position:relative}
 .panel.active{display:block}
+.tab-info-btn{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1.5px solid #59B2A5;background:white;color:#59B2A5;font-size:13px;font-weight:700;line-height:23px;text-align:center;cursor:pointer;z-index:10;transition:all .15s;font-family:inherit}
+.tab-info-btn:hover{background:#59B2A5;color:white}
+.tab-info-modal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9000;display:flex;align-items:center;justify-content:center}
+.tab-info-box{background:white;border-radius:14px;padding:28px 32px;max-width:480px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.18);position:relative}
+.tab-info-box h3{margin:0 0 18px;font-size:1rem;color:#59B2A5}
+.tab-info-section{margin-bottom:14px}
+.tab-info-section:last-child{margin-bottom:0}
+.tab-info-section h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin:0 0 3px}
+.tab-info-section p{margin:0;font-size:.88rem;color:#374151;line-height:1.55}
+.tab-info-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;color:#9ca3af;cursor:pointer}
 .chart-card{background:white;border-radius:10px;padding:16px;
   box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #f1f5f9}
 .hint{font-size:.78rem;color:#7a9e9a;margin-top:8px;padding-left:4px}
@@ -242,22 +252,27 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
 
   <div id="panel-0" class="panel" data-tab="1">
+    <button class="tab-info-btn" onclick="showTabInfo(1)">ℹ</button>
     <div class="chart-card" id="chart-netzwerk"></div>
     <p class="hint" id="hint-netzwerk">Knotengröße = Meeting-Anzahl · Liniendicke = Frequenz · Farbe = Abteilung · Klick = Verbindungen hervorheben · Doppelklick = FK-Status umschalten</p>
   </div>
   <div id="panel-1" class="panel" data-tab="3">
+    <button class="tab-info-btn" onclick="showTabInfo(3)">ℹ</button>
     <div class="chart-card" id="chart-kalender"></div>
     <p class="hint">Bubble-Größe = Anzahl Meetings · Farbe = Abteilung · Legende rechts · Hover = Meeting-Namen</p>
   </div>
   <div id="panel-2" class="panel" data-tab="5">
+    <button class="tab-info-btn" onclick="showTabInfo(5)">ℹ</button>
     <div class="chart-card" id="chart-overlap"></div>
     <div class="overlap-legend">
       <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
       <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → verschiedene Teilnehmer. Fehlende Meetings erkennst du besser im Netzwerk-Tab.</span>
     </div>
     <p class="hint">Zellwert = Jaccard-Index (0 = keine, 1 = identische Teilnehmergruppe) · Hover = Überschneidende Personen</p>
+    <div id="top-paare-list" style="margin-top:20px"></div>
   </div>
   <div id="panel-3" class="panel" data-tab="2">
+    <button class="tab-info-btn" onclick="showTabInfo(2)">ℹ</button>
     <div class="toggle-grp">
       <button id="abt-btn-anzahl" class="active" onclick="setAbtMode('anzahl')">Anzahl</button>
       <button id="abt-btn-freq" onclick="setAbtMode('freq')">Freq./Monat</button>
@@ -270,10 +285,12 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Balkenhöhe = Anzahl Meeting-Formate je Rhythmus-Klasse · Farbe = Kategorie · von hochfrequent (links) nach selten (rechts)</p>
   </div>
   <div id="panel-4" class="panel" data-tab="4">
+    <button class="tab-info-btn" onclick="showTabInfo(4)">ℹ</button>
     <div class="chart-card" id="chart-sankey"></div>
     <p class="hint">Flussdicke = gewichtete Meeting-Häufigkeit zwischen Abteilungen · Farbe = Quell-Abteilung · Hover = Details</p>
   </div>
   <div id="panel-5" class="panel" data-tab="9">
+    <button class="tab-info-btn" onclick="showTabInfo(9)">ℹ</button>
     <div class="table-toolbar">
       <input type="text" id="table-search" placeholder="Meeting, Person, Abteilung …" oninput="filterTable()">
       <div class="table-meta" id="table-count"></div>
@@ -293,6 +310,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Echtzeit-Suche über Meeting-Name, Teilnehmer und Abteilung</p>
   </div>
   <div id="panel-6" class="panel" data-tab="10">
+    <button class="tab-info-btn" onclick="showTabInfo(10)">ℹ</button>
     <div class="findings-placeholder">
       <div class="findings-placeholder-icon">🤖</div>
       <h2>KI-Analyse</h2>
@@ -302,6 +320,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
 
   <div id="panel-7" class="panel active" data-tab="0">
+    <button class="tab-info-btn" onclick="showTabInfo(0)">ℹ</button>
     <p class="hint" style="margin-bottom:14px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
     <div class="personen-grid" id="personen-grid"></div>
     <div class="personen-actions" id="personen-actions" style="display:none">
@@ -312,6 +331,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
 
   <div id="panel-8" class="panel" data-tab="6">
+    <button class="tab-info-btn" onclick="showTabInfo(6)">ℹ</button>
     <div class="chart-card" id="chart-engpass"></div>
     <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf, inkl. Vorbereitung) · Grün = als Teilnehmer/in · Hover = Details · Sortiert nach Gesamtlast</p>
     <div class="chart-card" id="chart-zeitlast" style="margin-top:20px"></div>
@@ -319,15 +339,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
 
   <div id="panel-9" class="panel" data-tab="7">
-    <p style="font-size:0.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px">Variante A · Treemap mit abgerundeten Ecken</p>
+    <button class="tab-info-btn" onclick="showTabInfo(7)">ℹ</button>
     <div class="chart-card" id="chart-treemap"></div>
     <p class="hint" id="hint-treemap">Fläche = monatliche Personen-Stunden · Äußerer Rahmen = Kategorie (dunkler) · Innen = Meeting (heller) · Klick = Drill-down</p>
-    <p style="font-size:0.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin:28px 0 6px">Variante B · Sunburst zum Vergleich</p>
-    <div class="chart-card" id="chart-sunburst" style="height:500px"></div>
-    <p class="hint">Gleiche Daten kreisförmig · Innerer Ring = Kategorie · Äußerer Ring = Meeting · Hover = Details · Klick zum Auf-/Zuklappen</p>
   </div>
 
   <div id="panel-10" class="panel" data-tab="8">
+    <button class="tab-info-btn" onclick="showTabInfo(8)">ℹ</button>
     <div class="chart-card" id="chart-wirkung" style="height:480px"></div>
     <p class="hint">Nur Meetings mit Dauer- UND Wirkungsangabe · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Hover = Details · X-Trennlinie = Median der Zeitlast</p>
   </div>
@@ -346,7 +364,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "31.05.2026 15:45";
+const APP_VERSION = "01.06.2026 10:00";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -886,6 +904,79 @@ function toggleWarning() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Tab Info Overlay – ℹ-Erklärungsbox pro Tab
+// ══════════════════════════════════════════════════════════════════════════════
+const TAB_INFO = {
+  0: { title: "Personen & Abteilungen",
+       was: "Alle erkannten Personen und ihre automatisch abgeleitete Abteilungszugehörigkeit. Gelber Punkt = unsichere Zuordnung (Algorithmus &lt; 70% sicher).",
+       achten: "Prüfe gelb markierte Personen und korrigiere per Klick. Alle anderen Tabs bauen auf dieser Zuordnung auf – Fehler hier pflanzen sich fort.",
+       folgefragen: "Welche Personen sind in mehreren Abteilungen aktiv? Sind alle Führungskräfte (★) korrekt markiert?" },
+  1: { title: "Kommunikationsnetzwerk",
+       was: "Jeder Knoten = Person. Verbindungen = gemeinsame Meetings. Knotengröße = Anzahl Meetings, Liniendicke = Häufigkeit.",
+       achten: "Zentrale, stark vernetzte Knoten sind Informations-Hubs. Isolierte Knoten am Rand haben kaum Vernetzung.",
+       folgefragen: "Gibt es Einzelpersonen als einzige Brücke zwischen zwei Gruppen? Was passiert, wenn diese Person ausfällt?" },
+  2: { title: "Meeting-Dichte pro Abteilung",
+       was: "Balkenlänge = Anzahl Meetings (oder Freq./Monat per Toggle). Farbe = Häufigkeitsgruppe von Hochfrequent bis Variabel.",
+       achten: "Abteilungen mit langen Hochfrequent-Balken investieren viel Zeit in regelmäßige Synchronisation. Vergleiche das Verhältnis zwischen den Abteilungen.",
+       folgefragen: "Welche Abteilung hat unverhältnismäßig viele Meetings? Wo fehlt Struktur (viele Variabel-Meetings)?" },
+  3: { title: "Meeting-Kalender",
+       was: "X-Achse = Wochentag, Y-Achse = Rhythmusklasse. Bubble-Größe = Anzahl Meetings, Farbe = Abteilung.",
+       achten: "Volle Spalten an bestimmten Tagen = Meeting-Stau. Überlagerte Bubbles = Kollisionsrisiko für Personen in mehreren Abteilungen.",
+       folgefragen: "Gibt es Tage mit zu vielen parallelen Meetings? Sind bestimmte Abteilungen an bestimmten Tagen überlastet?" },
+  4: { title: "Kommunikationsflüsse (Sankey)",
+       was: "Flussbreite = gewichtete Meeting-Häufigkeit zwischen Abteilungen. Farbe = Quell-Abteilung.",
+       achten: "Breite Flüsse = starke Vernetzung. Dünne oder fehlende Verbindungen zeigen Kommunikationssilos.",
+       folgefragen: "Welche Abteilungen kommunizieren kaum miteinander? Sind die Flüsse zu den richtigen Partnern?" },
+  5: { title: "Teilnehmer-Überschneidungen",
+       was: "Jaccard-Index: 0% = keine gemeinsamen Teilnehmer, 100% = identische Gruppe. Warme Farben = hohe Überschneidung. Top-Paare als Liste unten.",
+       achten: "Orangene/rote Felder zeigen Meetings mit fast gleichen Teilnehmergruppen – Kandidaten für Zusammenlegung.",
+       folgefragen: "Warum haben diese zwei Meetings fast dieselben Teilnehmer? Könnten sie zusammengelegt oder besser abgestimmt werden?" },
+  6: { title: "Meeting-Last pro Person (Engpass)",
+       was: "Balken = Stunden/Monat. Blau = als Verantwortliche/r (inkl. geschätzter Vorbereitungszeit), Teal = als Teilnehmer/in.",
+       achten: "Sehr lange Balken signalisieren Überlastungsrisiko. Viel Blau = hohe Verantwortungslast durch Meetingführung.",
+       folgefragen: "Wer ist am stärksten belastet? Ist die Last fair verteilt? Welche Meetings könnten delegiert werden?" },
+  7: { title: "Zeitverteilung (Personen-Stunden/Monat)",
+       was: "Fläche = monatliche Personen-Stunden: Dauer × Häufigkeit × Teilnehmerzahl. Größer = mehr kollektive Zeit der gesamten Organisation.",
+       achten: "Die größten Flächen sind die teuersten Meetings der Organisation – entweder weil sie wertvoll sind, oder weil sie überdimensioniert sind.",
+       folgefragen: "Welche Meeting-Kategorie verschlingt die meiste Organisationszeit? Stimmt dieses Verhältnis mit der strategischen Priorität überein?" },
+  8: { title: "Wirkungsmatrix",
+       was: "X = Zeitaufwand h/Monat, Y = empfundene Wirkung (1–4). Bubble-Größe = Teilnehmerzahl. Wirkung kann in Tab 'Alle Meetings' eingetragen werden.",
+       achten: "Rechts unten = viel Zeit, wenig Wirkung → 'Optimieren'. Links oben = wenig Zeit, hohe Wirkung → 'Bereichernd'. Rechts oben = 'Effizient halten'.",
+       folgefragen: "Welche Meetings liegen im Optimieren-Quadranten? Können sie gekürzt, seltener abgehalten oder abgeschafft werden?" },
+  9: { title: "Alle Meetings (Tabelle)",
+       was: "Vollständige Datentabelle aller Meetings mit Echtzeit-Suche. Die Wirkungsspalte (●●○○) ist direkt per Klick editierbar.",
+       achten: "Meetings ohne Wirkungsbewertung fehlen in der Wirkungsmatrix. Nutze die Suche, um alle Meetings einer Person oder Abteilung zu finden.",
+       folgefragen: "Welche Meetings haben noch keine Wirkungsbewertung? Gibt es Meetings, die nicht mehr stattfinden, aber noch als Aktiv geführt sind?" },
+  10: { title: "KI-Analyse",
+        was: "Reserviert für kommentierte Befunde – erkannte Muster, Redundanzen und Handlungsempfehlungen aus einer KI-gestützten Analyse.",
+        achten: "Dieser Tab ist aktuell leer. Sinnvolle Insights erfordern Mustererkennung über die Daten – das ist eine KI-Aufgabe.",
+        folgefragen: "Welche Muster sind in dieser Organisation besonders auffällig? Welche Maßnahmen werden empfohlen?" }
+};
+
+function showTabInfo(idx) {
+  closeTabInfo();
+  const info = TAB_INFO[idx];
+  if (!info) return;
+  const modal = document.createElement("div");
+  modal.className = "tab-info-modal";
+  modal.id = "_tab-info-modal";
+  modal.innerHTML = `
+    <div class="tab-info-box">
+      <button class="tab-info-close" onclick="closeTabInfo()">✕</button>
+      <h3>ℹ ${info.title}</h3>
+      <div class="tab-info-section"><h4>Was zeigt dieses Chart?</h4><p>${info.was}</p></div>
+      <div class="tab-info-section"><h4>Worauf achten?</h4><p>${info.achten}</p></div>
+      <div class="tab-info-section"><h4>Folgefragen</h4><p>${info.folgefragen}</p></div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", e => { if (e.target === modal) closeTabInfo(); });
+}
+function closeTabInfo() {
+  const m = document.getElementById("_tab-info-modal");
+  if (m) m.remove();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Tab Navigation
 // ══════════════════════════════════════════════════════════════════════════════
 function showTab(idx) {
@@ -1267,6 +1358,36 @@ function renderOverlap() {
     yaxis:{tickfont:{size:9}}
   };
   Plotly.newPlot("chart-overlap", [trace], layout, {responsive:true, displayModeBar:false});
+
+  // ── Top-Paare mit höchster Überschneidung ────────────────────────────────
+  const pairs = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = i+1; j < n; j++) {
+      if (matrix[i][j] >= 0.25) {
+        const gem = [...sets[i]].filter(x => sets[j].has(x));
+        pairs.push({ a: namen[i], b: namen[j], score: matrix[i][j], gem });
+      }
+    }
+  }
+  pairs.sort((a, b) => b.score - a.score);
+  const top = pairs.slice(0, 10);
+  const topEl = document.getElementById("top-paare-list");
+  if (topEl) topEl.innerHTML = top.length
+    ? `<p style="font-size:.82rem;font-weight:700;color:#374151;margin:0 0 8px">Top-Paare mit höchster Teilnehmer-Überschneidung</p>` +
+      top.map((p, i) => {
+        const badge = p.score >= 0.6
+          ? "background:#fee2e2;color:#c94040" : "background:#fef3c7;color:#92400e";
+        return `<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid #f1f5f9">
+          <span style="color:#9ca3af;font-size:.75rem;min-width:18px;padding-top:2px">${i+1}.</span>
+          <div>
+            <strong style="font-size:.84rem">${p.a}</strong>
+            <span style="color:#9ca3af;margin:0 4px">↔</span>
+            <strong style="font-size:.84rem">${p.b}</strong>
+            <span style="margin-left:8px;${badge};padding:1px 8px;border-radius:10px;font-size:.74rem">${Math.round(p.score*100)}%</span>
+            <br><span style="font-size:.77rem;color:#6b7280">Gemeinsam: ${p.gem.slice(0,5).join(", ")}${p.gem.length > 5 ? ` +${p.gem.length-5}` : ""}</span>
+          </div></div>`;
+      }).join("")
+    : `<p style="font-size:.84rem;color:#9ca3af">Keine Überschneidungen über 25% gefunden.</p>`;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2108,22 +2229,6 @@ function renderTreemap() {
     });
   }, 200);
 
-  // ── Variante B: Sunburst ──────────────────────────────────────────────────
-  Plotly.react("chart-sunburst", [{
-    type: "sunburst",
-    ids, labels, parents, values,
-    branchvalues: "total",
-    marker: { colors, line: { width: 1, color: "white" } },
-    customdata, hovertemplate: htmpl,
-    insidetextfont: { size: 11, family: "DM Sans, system-ui, sans-serif" },
-    textinfo: "label"
-  }], {
-    font: { family: "DM Sans, system-ui, sans-serif", size: 12, color: "#374151" },
-    margin: { l: 10, r: 10, t: 10, b: 10 },
-    height: 500,
-    plot_bgcolor: "white",
-    paper_bgcolor: "white"
-  }, { responsive: true, displayModeBar: false });
 }
 
 // ── FK-Toggle ─────────────────────────────────────────────────────────────────
