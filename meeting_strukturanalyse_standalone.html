@@ -366,7 +366,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "01.06.2026 19:30";
+const APP_VERSION = "01.06.2026 20:00";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1673,10 +1673,11 @@ function renderChord(flussSymm, abtList, abtIdx) {
     if (i !== undefined && j !== undefined) { matrix[i][j] += v; matrix[j][i] += v; }
   });
 
-  // Größe aus dem Container – chart-card padding (16px) abziehen
+  // Größe: 145px Platz für Labels (Gap + längster Name) auf jeder Seite
   const W = Math.max(el.clientWidth - 32, 600);
-  const H = Math.max(Math.round(W * 0.7), 440);
-  const outerR = Math.min(W, H) / 2 - 95;
+  const H = Math.max(Math.round(W * 0.72), 450);
+  const labelSpace = 148;
+  const outerR = Math.min(W / 2 - labelSpace, H / 2 - 30);
   const innerR = outerR - 26;
 
   const chord  = d3.chord().padAngle(0.04).sortSubgroups(d3.descending)(matrix);
@@ -1691,7 +1692,7 @@ function renderChord(flussSymm, abtList, abtIdx) {
     .style("border-radius","8px").style("padding","8px 12px")
     .style("font-size","12px").style("font-family","DM Sans, system-ui, sans-serif")
     .style("box-shadow","0 2px 10px rgba(0,0,0,.12)").style("opacity",0)
-    .style("transition","opacity .15s").style("max-width","220px")
+    .style("transition","opacity .12s").style("max-width","220px")
     .style("z-index","100");
 
   const showTip = (event, html) => {
@@ -1703,46 +1704,62 @@ function renderChord(flussSymm, abtList, abtIdx) {
 
   const svg = d3.select(el).append("svg")
     .attr("width", W).attr("height", H)
-    .style("font-family","DM Sans, system-ui, sans-serif");
+    .style("font-family","DM Sans, system-ui, sans-serif")
+    .style("overflow","visible"); // Labels dürfen leicht über SVG-Rand hinaus
 
   const root = svg.append("g")
     .attr("transform", `translate(${W/2},${H/2})`);
 
-  // Bänder
-  root.append("g").attr("fill-opacity", 0.65)
-    .selectAll("path").data(chord).join("path")
-      .attr("d", ribbon)
-      .attr("fill", d => color(d.source.index))
-      .attr("stroke","white").attr("stroke-width",0.5)
-      .on("mouseover", (event, d) => showTip(event,
+  // ── Bänder mit Hover-Highlight ────────────────────────────────────────────
+  const ribbonG = root.append("g");
+  const ribbons = ribbonG.selectAll("path").data(chord).join("path")
+    .attr("d", ribbon)
+    .attr("fill", d => color(d.source.index))
+    .attr("stroke","white").attr("stroke-width",0.5)
+    .style("fill-opacity", 0.65)
+    .style("transition","fill-opacity .15s")
+    .on("mouseover", function(event, d) {
+      ribbons.style("fill-opacity", r => r === d ? 0.92 : 0.08);
+      showTip(event,
         `<strong>${abtList[d.source.index]} ↔ ${abtList[d.target.index]}</strong><br>
-         ${d.source.value.toFixed(1)} Freq.-Punkte`))
-      .on("mousemove", (event, d) => showTip(event,
-        `<strong>${abtList[d.source.index]} ↔ ${abtList[d.target.index]}</strong><br>
-         ${d.source.value.toFixed(1)} Freq.-Punkte`))
-      .on("mouseout", hideTip);
+         ${d.source.value.toFixed(1)} Freq.-Punkte`);
+    })
+    .on("mousemove", (event, d) => showTip(event,
+      `<strong>${abtList[d.source.index]} ↔ ${abtList[d.target.index]}</strong><br>
+       ${d.source.value.toFixed(1)} Freq.-Punkte`))
+    .on("mouseout", function() {
+      ribbons.style("fill-opacity", 0.65);
+      hideTip();
+    });
 
-  // Außenbögen + Labels
+  // ── Außenbögen + Labels ───────────────────────────────────────────────────
   const g = root.append("g").selectAll("g").data(chord.groups).join("g");
 
   g.append("path")
     .attr("d", arc)
     .attr("fill", d => color(d.index))
     .attr("stroke","white").attr("stroke-width",1)
-    .on("mouseover", (event, d) => showTip(event,
-      `<strong>${abtList[d.index]}</strong><br>
-       Gesamt: ${d.value.toFixed(1)} Freq.-Punkte`))
+    .on("mouseover", function(event, d) {
+      // Alle Bänder dieser Abteilung hervorheben
+      ribbons.style("fill-opacity", r =>
+        r.source.index === d.index || r.target.index === d.index ? 0.92 : 0.08
+      );
+      showTip(event,
+        `<strong>${abtList[d.index]}</strong><br>Gesamt: ${d.value.toFixed(1)} Freq.-Punkte`);
+    })
     .on("mousemove", (event, d) => showTip(event,
-      `<strong>${abtList[d.index]}</strong><br>
-       Gesamt: ${d.value.toFixed(1)} Freq.-Punkte`))
-    .on("mouseout", hideTip);
+      `<strong>${abtList[d.index]}</strong><br>Gesamt: ${d.value.toFixed(1)} Freq.-Punkte`))
+    .on("mouseout", function() {
+      ribbons.style("fill-opacity", 0.65);
+      hideTip();
+    });
 
   g.append("text")
     .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
     .attr("dy","0.35em")
     .attr("transform", d => [
       `rotate(${d.angle * 180 / Math.PI - 90})`,
-      `translate(${outerR + 12})`,
+      `translate(${outerR + 14})`,
       d.angle > Math.PI ? "rotate(180)" : ""
     ].join(""))
     .attr("text-anchor", d => d.angle > Math.PI ? "end" : "start")
