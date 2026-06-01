@@ -287,7 +287,9 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-4" class="panel" data-tab="4">
     <button class="tab-info-btn" onclick="showTabInfo(4)">ℹ</button>
     <div class="chart-card" id="chart-sankey"></div>
-    <p class="hint">Flussdicke = gewichtete Meeting-Häufigkeit zwischen Abteilungen · Farbe = Quell-Abteilung · Hover = Details</p>
+    <p class="hint">Pfeilrichtung = Verantwortliche/r → beteiligte Abteilungen · Flussdicke = Meeting-Häufigkeit · zeigt wer Meetings initiiert</p>
+    <div class="chart-card" id="chart-chord" style="margin-top:20px"></div>
+    <p class="hint">Chord-Diagramm: Bogengröße = Gesamtkommunikation der Abteilung · Bandbreite = bidirektionale Meeting-Häufigkeit · Hover = Details</p>
   </div>
   <div id="panel-5" class="panel" data-tab="9">
     <button class="tab-info-btn" onclick="showTabInfo(9)">ℹ</button>
@@ -364,7 +366,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "01.06.2026 16:00";
+const APP_VERSION = "01.06.2026 18:30";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1552,9 +1554,7 @@ function renderRhythmusChart() {
 // ══════════════════════════════════════════════════════════════════════════════
 function renderSankey() {
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
-  // Extern nur hinzufügen wenn ein Teilnehmer exakt "Extern" heißt (nicht bei Platzhaltern wie "externer Prüfer")
   const hasExtern = aktive.some(m => m.teilnehmer.some(t => t.toLowerCase() === "extern"));
-  // Sonder-Kategorien hinzufügen, sobald mindestens eine Person dort zugeordnet ist
   const usedSpecialDepts = SPECIAL_DEPTS.map(sd => sd.key)
     .filter(k => Object.values(effectivePersonAbt).includes(k));
   const abtList = [...new Set([
@@ -1565,88 +1565,157 @@ function renderSankey() {
   const abtIdx = {};
   abtList.forEach((a,i) => abtIdx[a] = i);
 
-  const fluss = {};
+  // ── Gerichtete Flüsse: Verantwortliche/r → Teilnehmer-Abteilungen (Sankey)
+  const flussDir  = {};
+  // ── Symmetrische Flüsse: alle Paare (Chord)
+  const flussSymm = {};
 
   aktive.forEach(m => {
-    const abts = new Set();
-    m.teilnehmer.forEach(t => {
-      if (effectivePersonAbt[t]) abts.add(effectivePersonAbt[t]);
-    });
-    if (m.teilnehmer.some(t => t.toLowerCase() === "extern")) abts.add("Extern");
-    const normAbt = (m.abteilung || "").trim();
-    if (abtList.includes(normAbt)) abts.add(normAbt);
-
-    const al = [...abts].filter(a => abtList.includes(a)).sort();
     const w = FREQ_W[m.rhythmus_klasse] || 0.5;
-    for (let i=0;i<al.length;i++) {
-      for (let j=i+1;j<al.length;j++) {
-        const key = al[i] + "||" + al[j];
-        fluss[key] = (fluss[key] || 0) + w;
-      }
+    const normAbt = (m.abteilung || "").trim();
+
+    // Alle Abteilungen im Meeting
+    const allAbts = new Set();
+    m.teilnehmer.forEach(t => {
+      const a = effectivePersonAbt[t];
+      if (a && abtList.includes(a)) allAbts.add(a);
+    });
+    if (m.teilnehmer.some(t => t.toLowerCase() === "extern")) allAbts.add("Extern");
+    if (abtList.includes(normAbt)) allAbts.add(normAbt);
+
+    // Sankey: Verantwortlich-Abt → alle anderen
+    const vera = m.verantwortlich;
+    const veraAbt = vera && effectivePersonAbt[vera]
+      ? effectivePersonAbt[vera]
+      : (abtList.includes(normAbt) ? normAbt : null);
+    if (veraAbt) {
+      allAbts.forEach(tAbt => {
+        if (tAbt !== veraAbt) {
+          const key = veraAbt + "||" + tAbt;
+          flussDir[key] = (flussDir[key] || 0) + w;
+        }
+      });
     }
+
+    // Chord: alle Paare symmetrisch
+    const al = [...allAbts].sort();
+    for (let i = 0; i < al.length; i++)
+      for (let j = i+1; j < al.length; j++) {
+        const key = al[i] + "||" + al[j];
+        flussSymm[key] = (flussSymm[key] || 0) + w;
+      }
   });
 
-  // Keine abteilungsübergreifenden Meetings → Hinweis statt leeres Diagramm
-  if (Object.keys(fluss).length === 0) {
+  // ── Sankey rendern ────────────────────────────────────────────────────────
+  if (Object.keys(flussDir).length === 0) {
     document.getElementById("chart-sankey").innerHTML =
       `<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:.95rem">
-        Keine abteilungsübergreifenden Meetings in den Daten.<br>
-        <span style="font-size:.8rem">Das Sankey-Diagramm zeigt nur Verbindungen zwischen verschiedenen Abteilungen.</span>
-      </div>`;
+        Keine abteilungsübergreifenden Meetings in den Daten.</div>`;
+  } else {
+    const srcs=[],tgts=[],vals=[],lbls=[],linkColors=[];
+    Object.entries(flussDir).forEach(([key,v]) => {
+      const [a,b] = key.split("||");
+      if (abtIdx[a] === undefined || abtIdx[b] === undefined) return;
+      srcs.push(abtIdx[a]); tgts.push(abtIdx[b]);
+      vals.push(Math.round(v*10)/10);
+      lbls.push(`${a} → ${b}: ${v.toFixed(1)} Freq.-Punkte`);
+      const hex = (effectiveAbtFarben[a]||"#9ca3af").replace("#","");
+      const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),bv=parseInt(hex.slice(4,6),16);
+      linkColors.push(`rgba(${r},${g},${bv},0.25)`);
+    });
+    const trace = {
+      type:"sankey",
+      node:{ pad:24, thickness:24, line:{color:"white",width:0.5},
+             label:abtList, color:abtList.map(a=>effectiveAbtFarben[a]||"#9ca3af"),
+             hovertemplate:"<b>%{label}</b><extra></extra>" },
+      link:{ source:srcs, target:tgts, value:vals,
+             customdata:lbls, hovertemplate:"<b>%{customdata}</b><extra></extra>",
+             color:linkColors }
+    };
+    Plotly.newPlot("chart-sankey", [trace], {
+      title:{text:"Kommunikationsinitiative – wer ruft Meetings mit anderen Abteilungen ein?",
+             font:{size:14,family:"DM Sans, system-ui, sans-serif"}},
+      font:{family:"DM Sans, system-ui, sans-serif"},
+      height:440, margin:{l:20,r:20,t:60,b:30}
+    }, {responsive:true, displayModeBar:false});
+
+    const sankeyEl = document.getElementById("chart-sankey");
+    const baseColors = [...linkColors];
+    const toOp = (c,op) => c.replace(/,[\d.]+\)$/, ","+op+")");
+    sankeyEl.on("plotly_hover", ev => {
+      const pt = ev?.points?.[0];
+      if (!pt || pt.source === undefined) return;
+      Plotly.restyle(sankeyEl, {"link.color":[baseColors.map((c,i)=>toOp(c,i===pt.pointNumber?.0.92:0.04))]}, [0]);
+    });
+    sankeyEl.on("plotly_unhover", () => Plotly.restyle(sankeyEl, {"link.color":[baseColors]}, [0]));
+  }
+
+  // ── Chord-Diagramm (D3) ───────────────────────────────────────────────────
+  renderChord(flussSymm, abtList, abtIdx);
+}
+
+function renderChord(flussSymm, abtList, abtIdx) {
+  const el = document.getElementById("chart-chord");
+  if (!el) return;
+  el.innerHTML = "";
+
+  if (!Object.keys(flussSymm).length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8;font-size:.9rem">Keine Daten.</div>`;
     return;
   }
 
-  const srcs=[],tgts=[],vals=[],lbls=[],linkColors=[];
-  Object.entries(fluss).forEach(([key,v]) => {
+  const n = abtList.length;
+  const matrix = Array.from({length:n}, () => Array(n).fill(0));
+  Object.entries(flussSymm).forEach(([key,v]) => {
     const [a,b] = key.split("||");
-    srcs.push(abtIdx[a]);
-    tgts.push(abtIdx[b]);
-    vals.push(Math.round(v*10)/10);
-    lbls.push(`${a} ↔ ${b}: ${v.toFixed(1)} Freq.-Punkte`);
-    const hex = (effectiveAbtFarben[a]||"#9ca3af").replace("#","");
-    const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),bv=parseInt(hex.slice(4,6),16);
-    linkColors.push(`rgba(${r},${g},${bv},0.25)`);
+    const i = abtIdx[a], j = abtIdx[b];
+    if (i !== undefined && j !== undefined) { matrix[i][j] += v; matrix[j][i] += v; }
   });
 
-  const trace = {
-    type:"sankey",
-    node:{
-      pad:24, thickness:24,
-      line:{color:"white",width:0.5},
-      label:abtList,
-      color:abtList.map(a => effectiveAbtFarben[a]||"#9ca3af"),
-      hovertemplate:"<b>%{label}</b><extra></extra>"
-    },
-    link:{
-      source:srcs, target:tgts, value:vals,
-      customdata:lbls,
-      hovertemplate:"<b>%{customdata}</b><extra></extra>",
-      color:linkColors
-    }
-  };
-  const layout = {
-    title:{text:"Kommunikationsintensität zwischen Abteilungen · Flussdicke = wie oft sitzen Abteilungen gemeinsam in Meetings (gewichtet nach Rhythmus)",
-      font:{size:15,family:"DM Sans, system-ui, sans-serif"}},
-    font:{family:"DM Sans, system-ui, sans-serif"},
-    height:440, margin:{l:20,r:20,t:60,b:30}
-  };
-  Plotly.newPlot("chart-sankey", [trace], layout, {responsive:true, displayModeBar:false});
+  const W = el.offsetWidth || 700;
+  const H = 500;
+  const outerR = Math.min(W, H) / 2 - 90;
+  const innerR = outerR - 22;
 
-  // Hover-Kontrast verstärken
-  const sankeyEl = document.getElementById("chart-sankey");
-  const baseColors = [...linkColors]; // Kopie
-  function toOp(c, op) { return c.replace(/,[\d.]+\)$/, ","+op+")"); }
-  sankeyEl.on("plotly_hover", function(ev) {
-    if (!ev || !ev.points || !ev.points.length) return;
-    const pt = ev.points[0];
-    if (pt.source === undefined) return;
-    const idx = pt.pointNumber;
-    const cols = baseColors.map((c,i) => toOp(c, i===idx ? 0.92 : 0.04));
-    Plotly.restyle(sankeyEl, {"link.color": [cols]}, [0]);
-  });
-  sankeyEl.on("plotly_unhover", function() {
-    Plotly.restyle(sankeyEl, {"link.color": [baseColors]}, [0]);
-  });
+  const chord  = d3.chord().padAngle(0.04).sortSubgroups(d3.descending)(matrix);
+  const arc    = d3.arc().innerRadius(innerR).outerRadius(outerR);
+  const ribbon = d3.ribbon().radius(innerR - 1);
+  const color  = i => effectiveAbtFarben[abtList[i]] || PALETTE[i % PALETTE.length];
+
+  const svg = d3.select(el).append("svg")
+    .attr("width","100%").attr("height",H)
+    .attr("viewBox",`${-W/2} ${-H/2} ${W} ${H}`)
+    .style("font-family","DM Sans, system-ui, sans-serif");
+
+  // Bänder
+  svg.append("g").attr("fill-opacity",0.65)
+    .selectAll("path").data(chord).join("path")
+      .attr("d", ribbon)
+      .attr("fill", d => color(d.source.index))
+      .attr("stroke","white").attr("stroke-width",0.5)
+    .append("title")
+      .text(d => `${abtList[d.source.index]} ↔ ${abtList[d.target.index]}\n${d.source.value.toFixed(1)} Freq.-Punkte`);
+
+  // Außenbögen + Labels
+  const g = svg.append("g").selectAll("g").data(chord.groups).join("g");
+  g.append("path")
+    .attr("d", arc)
+    .attr("fill", d => color(d.index))
+    .attr("stroke","white").attr("stroke-width",1)
+   .append("title")
+    .text(d => `${abtList[d.index]}: ${d.value.toFixed(1)} Freq.-Punkte gesamt`);
+
+  g.append("text")
+    .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
+    .attr("dy","0.35em")
+    .attr("transform", d => [
+      `rotate(${d.angle * 180 / Math.PI - 90})`,
+      `translate(${outerR + 10})`,
+      d.angle > Math.PI ? "rotate(180)" : ""
+    ].join(""))
+    .attr("text-anchor", d => d.angle > Math.PI ? "end" : "start")
+    .attr("font-size","11px").attr("fill","#374151")
+    .text(d => abtList[d.index]);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2219,8 +2288,9 @@ function renderTreemap() {
     branchvalues: "total",
     marker:       { colors, line: { width: 1, color: "white" }, cornerradius: 6 },
     customdata, hovertemplate: htmpl,
-    texttemplate:  "<b>%{label}</b><br>%{value} h",
-    insidetextfont: { size: 11, family: "DM Sans, system-ui, sans-serif" }
+    texttemplate:  "%{label}",
+    insidetextfont: { size: 13, family: "DM Sans, system-ui, sans-serif", color: "auto" },
+    uniformtext:   { mode: "hide", minsize: 12 }
   }], {
     font:         { family: "DM Sans, system-ui, sans-serif" },
     margin:       { l: 0, r: 0, t: 10, b: 10 },
