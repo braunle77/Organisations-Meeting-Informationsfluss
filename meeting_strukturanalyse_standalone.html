@@ -231,7 +231,10 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <h1>Organisations-Meeting &amp; Informationsfluss</h1>
       <p id="header-meta">Interaktives Dashboard</p>
     </div>
-    <button class="btn-reload" onclick="resetToImport()">↩ Neue Daten laden</button>
+    <div style="display:flex;align-items:center;gap:14px;position:relative;z-index:1">
+      <img src="data:image/webp;base64,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" alt="Colenet – messbar schneller" style="height:38px;background:rgba(255,255,255,0.95);border-radius:7px;padding:4px 10px;display:block">
+      <button class="btn-reload" onclick="resetToImport()">↩ Neue Daten laden</button>
+    </div>
   </div>
 
   <div class="stats" id="stats-bar"></div>
@@ -366,7 +369,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "01.06.2026 20:30";
+const APP_VERSION = "01.06.2026 21:00";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
