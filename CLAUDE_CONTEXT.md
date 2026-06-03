@@ -290,6 +290,7 @@ main  ←  feat/<name>  (gh pr create → squash merge)
 | #28 | Sankey: bidirektional zurück, Nodes nach Vernetzungsgrad |
 | #29–#31 | Colenet-Logo: Base64-PNG, Safari-Fix, Position |
 | #32 | Personen-Tab: adaptives Layout, Sortierung, 2-Spalten, kein Duplikat |
+| #33 | Flight Levels: Tab 10, 5 Diagnose-Visualisierungen (F1–F5), Auto-Klassifikation, ~-Badge |
 
 ---
 
