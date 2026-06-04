@@ -521,8 +521,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
   <div id="panel-8" class="panel" data-tab="6">
     <button class="tab-info-btn" onclick="showTabInfo(6)">ℹ</button>
+    <div class="toggle-grp" style="margin-bottom:12px">
+      <button id="eng-btn-alle" class="active" onclick="setEngpassMode('alle')">Alle</button>
+      <button id="eng-btn-fk"   onclick="setEngpassMode('fk')">★ Führungskräfte</button>
+      <button id="eng-btn-ma"   onclick="setEngpassMode('ma')">Mitarbeitende</button>
+    </div>
     <div class="chart-card" id="chart-engpass"></div>
-    <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf, inkl. Vorbereitung) · Grün = als Teilnehmer/in · Hover = Details · Sortiert nach Gesamtlast</p>
+    <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf) · Grün = als Teilnehmer/in · Hover = Details · Sortiert nach Gesamtlast</p>
     <div class="chart-card" id="chart-zeitlast" style="margin-top:20px"></div>
     <p class="hint" id="hint-zeitlast">Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit</p>
   </div>
@@ -668,6 +673,7 @@ let personConfidence   = {};  // { person: { autoDept, score, alternatives } }
 let sankeyRendered     = false;
 let abtRendered        = false;
 let abtMode            = "anzahl"; // "anzahl" | "freq"
+let engpassMode        = "alle";  // "alle" | "fk" | "ma"
 
 // Abteilungstypen (aus localStorage, gepflegt im Datenpflege-Tab)
 let deptFunktionen = {};  // { "Vertrieb": "operativ", "Management": "strategisch" }
@@ -1156,6 +1162,7 @@ function resetToImport() {
   sankeyRendered = false;
   abtRendered    = false;
   abtMode        = "anzahl";
+  engpassMode    = "alle";
   document.getElementById("personen-grid").innerHTML = "";
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = "none";
@@ -2530,6 +2537,15 @@ function assignPerson(person, newDept) {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 9: Engpass-Karte (D3)
 // ══════════════════════════════════════════════════════════════════════════════
+function setEngpassMode(mode) {
+  engpassMode = mode;
+  ['alle','fk','ma'].forEach(m => {
+    const btn = document.getElementById('eng-btn-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  renderEngpass();
+}
+
 function renderEngpass() {
   if (!MEETINGS.length) return;
 
@@ -2545,9 +2561,12 @@ function renderEngpass() {
     });
   });
 
-  // Alle Personen sammeln, nach Gesamtlast absteigend sortieren
+  // Alle Personen sammeln, nach FK-Mode filtern, nach Gesamtlast sortieren
   const allP = new Set([...Object.keys(kopfCount), ...Object.keys(teilnCount)]);
-  const persons = [...allP].sort((a, b) =>
+  let persons = [...allP];
+  if (engpassMode === 'fk') persons = persons.filter(p => fkSet.has(p));
+  if (engpassMode === 'ma') persons = persons.filter(p => !fkSet.has(p));
+  persons.sort((a, b) =>
     ((kopfCount[b]||0) + (teilnCount[b]||0)) - ((kopfCount[a]||0) + (teilnCount[a]||0))
   );
 
@@ -2618,7 +2637,10 @@ function renderZeitlast() {
   }
 
   const allP = new Set([...Object.keys(kopfMin), ...Object.keys(teilnMin)]);
-  const persons = [...allP].sort((a, b) =>
+  let persons = [...allP];
+  if (engpassMode === 'fk') persons = persons.filter(p => fkSet.has(p));
+  if (engpassMode === 'ma') persons = persons.filter(p => !fkSet.has(p));
+  persons.sort((a, b) =>
     ((kopfMin[b]||0) + (teilnMin[b]||0)) - ((kopfMin[a]||0) + (teilnMin[a]||0))
   );
 
