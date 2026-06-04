@@ -18,17 +18,27 @@ body{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2c
 .import-card{background:white;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.1);
   padding:36px 40px;max-width:680px;width:100%}
 .import-logo{font-size:1.7rem;font-weight:700;color:#246b61;margin-bottom:4px;letter-spacing:-0.5px}
-.import-sub{font-size:.85rem;color:#64748b;margin-bottom:28px}
-.import-section-title{font-size:.8rem;font-weight:600;color:#94a3b8;letter-spacing:.06em;
-  text-transform:uppercase;margin-bottom:10px;margin-top:22px}
+.import-sub{font-size:.85rem;color:#64748b;margin-bottom:24px}
+/* Methoden-Toggle */
+.import-method-toggle{display:flex;gap:8px;margin-bottom:24px}
+.import-method-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 16px;border:2px solid #e2e8f0;border-radius:10px;background:#f9fafb;
+  cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:500;color:#6b7280;
+  transition:all .15s;line-height:1.2}
+.import-method-btn:hover{border-color:#59B2A5;color:#59B2A5;background:#f0faf8}
+.import-method-btn.active{border-color:#59B2A5;background:#f0faf8;color:#246b61;font-weight:700}
+.import-method-icon{font-size:1.1rem;flex-shrink:0}
+/* Instruktionstexte */
 .import-instructions{background:#f0faf8;border:1px solid #b2ddd8;border-radius:8px;
-  padding:12px 16px;margin-bottom:18px;font-size:.84rem;color:#246b61;line-height:1.6}
+  padding:12px 16px;margin-bottom:16px;font-size:.84rem;color:#246b61;line-height:1.6}
 .import-instructions code{background:#c8e6e0;padding:1px 5px;border-radius:3px;font-size:.83em}
-textarea#paste-area{width:100%;min-height:180px;border:2px solid #e2e8f0;border-radius:8px;
+/* Textarea */
+textarea#paste-area{width:100%;min-height:160px;border:2px solid #e2e8f0;border-radius:8px;
   padding:12px;font-family:"DM Sans",system-ui,monospace;font-size:.82rem;color:#374151;
-  resize:vertical;outline:none;transition:border .15s}
+  resize:vertical;outline:none;transition:border .15s;box-sizing:border-box}
 textarea#paste-area:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.18)}
 textarea#paste-area::placeholder{color:#cbd5e1}
+/* Buttons */
 .toggle-grp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:8px}
 .toggle-grp button{padding:4px 14px;border:1px solid #d1d5db;border-radius:20px;background:#f9fafb;font-family:inherit;font-size:0.8rem;cursor:pointer;color:#6b7280;transition:all .15s}
 .toggle-grp button.active{background:#59B2A5;border-color:#59B2A5;color:#fff;font-weight:600}
@@ -37,13 +47,18 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   padding:10px 22px;font-family:inherit;font-size:.88rem;font-weight:600;
   cursor:pointer;transition:background .15s;margin-top:12px}
 .btn-primary:hover{background:#4a9e92}
-.import-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#94a3b8;font-size:.8rem}
-.import-divider::before,.import-divider::after{content:"";flex:1;border-top:1px solid #e2e8f0}
+/* Drag & Drop Upload-Bereich */
+.upload-drop-area{border:2px dashed #cbd5e1;border-radius:10px;padding:28px 20px;
+  text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.upload-drop-area:hover,.upload-drop-area.drag-over{border-color:#59B2A5;background:#f0faf8}
+.upload-drop-area svg{color:#59B2A5;margin-bottom:8px}
+.upload-drop-text{font-size:.9rem;color:#374151;margin:0 0 14px;font-weight:500}
+.upload-hint-text{font-size:.76rem;color:#94a3b8;margin:12px 0 0}
+#file-input{display:none}
 .file-upload-label{display:inline-flex;align-items:center;gap:8px;border:2px dashed #cbd5e1;
   border-radius:8px;padding:12px 18px;cursor:pointer;font-size:.85rem;color:#64748b;
   transition:all .15s;width:100%}
 .file-upload-label:hover{border-color:#59B2A5;color:#59B2A5;background:#f0faf8}
-#file-input{display:none}
 .import-status{margin-top:16px;padding:10px 14px;border-radius:8px;font-size:.85rem;
   font-weight:500;display:none}
 .import-status.ok{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;display:block}
@@ -255,24 +270,50 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="import-logo">Meeting Strukturanalyse</div>
     <div class="import-sub">Standalone Dashboard · läuft komplett im Browser · kein Python, kein Server <span id="version-badge" style="opacity:.45;font-size:.78rem">v1.6</span></div>
 
-    <div class="import-section-title">Schritt 1: Daten aus Confluence kopieren</div>
-    <div class="import-instructions">
-      Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> (alles markieren) → <code>⌘C</code> (kopieren) →
-      unten in das Textfeld einfügen (<code>⌘V</code>).<br>
-      Alternativ kannst du auch eine <strong>CSV-Datei</strong> hochladen (gleiche Spaltenstruktur).
+    <!-- Methoden-Auswahl: zwei gleichwertige Optionen -->
+    <div class="import-method-toggle">
+      <button id="btn-method-confluence" class="import-method-btn active" onclick="setImportMethod('confluence')">
+        <span class="import-method-icon">📋</span>
+        <span>Aus Confluence<br><span style="font-weight:400;font-size:.78rem;color:inherit;opacity:.75">Tabelle kopieren &amp; einfügen</span></span>
+      </button>
+      <button id="btn-method-csv" class="import-method-btn" onclick="setImportMethod('csv')">
+        <span class="import-method-icon">📁</span>
+        <span>CSV / TSV-Datei<br><span style="font-weight:400;font-size:.78rem;color:inherit;opacity:.75">Datei hochladen oder ablegen</span></span>
+      </button>
     </div>
 
-    <div class="import-section-title">Schritt 2: Einfügen oder hochladen</div>
-    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A in Confluence → ⌘C → hier ⌘V)...&#10;&#10;Erwartet wird eine Tab-getrennte Tabelle mit diesen Spalten (in beliebiger Reihenfolge):&#10;Abteilung · Meetingname · Kategorie · Zweck · Verantwortlich · Personen · Rhythmus · Dauer · Informationsfluss · Wirkung (1–4) · Status · Abteilungsübergreifend · Platzhalter · Learnings&#10;&#10;Optionale Spalten (Dauer, Wirkung) können leer bleiben."></textarea>
-    <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
+    <!-- Panel: Confluence -->
+    <div id="import-panel-confluence" class="import-panel">
+      <div class="import-instructions">
+        Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> (alles markieren) → <code>⌘C</code> (kopieren) → hier einfügen (<code>⌘V</code>).
+        Die App erkennt HTML-Tabellen direkt beim Einfügen.
+      </div>
+      <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A → ⌘C → ⌘V) …&#10;&#10;Erwartet: Tab-getrennte Tabelle mit Spalten wie:&#10;Abteilung · Meetingname · Kategorie · Personen · Rhythmus · Status&#10;&#10;Optionale Spalten: Dauer · Wirkung (1–4) · Flugebene (FL1/FL2/FL3)"></textarea>
+      <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
+    </div>
 
-    <div class="import-divider">oder</div>
-
-    <label class="file-upload-label" for="file-input">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      CSV-Datei wählen (.csv, .tsv, .txt)
+    <!-- Panel: CSV/TSV-Datei -->
+    <div id="import-panel-csv" class="import-panel" style="display:none">
+      <div class="import-instructions">
+        Exportiere die Meeting-Tabelle aus Confluence als CSV oder TSV, oder verwende eine lokal gespeicherte Datei mit gleicher Spaltenstruktur.
+      </div>
+      <div class="upload-drop-area" id="upload-drop-area"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleFileDrop(event)">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="upload-drop-text">Datei hier ablegen</p>
+        <button class="btn-primary" type="button" style="margin-top:0"
+                onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+          Datei auswählen
+        </button>
+        <p class="upload-hint-text">CSV · TSV · TXT (beliebige Größe)</p>
+      </div>
       <input type="file" id="file-input" accept=".csv,.tsv,.txt" onchange="loadFromFile(this)">
-    </label>
+    </div>
 
     <div id="import-status" class="import-status"></div>
   </div>
@@ -498,7 +539,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "04.06.2026 17:30";
+const APP_VERSION = "04.06.2026 19:00";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -981,7 +1022,8 @@ function loadFromFile(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => tryLoad(e.target.result);
+  reader.onload  = e => tryLoad(e.target.result);
+  reader.onerror = () => showStatus("Datei konnte nicht gelesen werden. Bitte prüfe Dateiformat und Zugriffsrechte.", false);
   reader.readAsText(file, "UTF-8");
 }
 
@@ -992,8 +1034,11 @@ function tryLoad(text) {
     const aktive = meetings.filter(m => m.status === "Aktiv");
     const abts = new Set(meetings.map(m => m.abteilung)).size;
     showStatus(`✅ ${meetings.length} Meetings erkannt · ${abts} Abteilungen · ${aktive.length} aktiv`, true);
-    // Auto-proceed
-    setTimeout(() => showDashboard(), 400);
+    // Auto-proceed (in separatem try-catch, da setTimeout den äußeren catch nicht erreicht)
+    setTimeout(() => {
+      try { showDashboard(); }
+      catch(err) { showStatus("Fehler beim Laden des Dashboards: " + err.message, false); }
+    }, 400);
   } catch(e) {
     showStatus("Fehler: " + e.message, false);
   }
@@ -1058,6 +1103,25 @@ function showDashboard() {
   showTab(0);
 }
 
+function setImportMethod(method) {
+  const confluence = method === 'confluence';
+  document.getElementById('import-panel-confluence').style.display = confluence ? '' : 'none';
+  document.getElementById('import-panel-csv').style.display = confluence ? 'none' : '';
+  document.getElementById('btn-method-confluence').classList.toggle('active', confluence);
+  document.getElementById('btn-method-csv').classList.toggle('active', !confluence);
+}
+
+function handleFileDrop(event) {
+  event.preventDefault();
+  document.getElementById('upload-drop-area').classList.remove('drag-over');
+  const file = event.dataTransfer && event.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload  = e => tryLoad(e.target.result);
+  reader.onerror = () => showStatus("Datei konnte nicht gelesen werden.", false);
+  reader.readAsText(file, "UTF-8");
+}
+
 function resetToImport() {
   MEETINGS = [];
   document.getElementById("dashboard").style.display = "none";
@@ -1065,6 +1129,7 @@ function resetToImport() {
   document.getElementById("paste-area").value = "";
   document.getElementById("import-status").className = "import-status";
   document.getElementById("import-status").textContent = "";
+  setImportMethod('confluence'); // Methode auf Standard zurücksetzen
   // Clear chart divs
   ["chart-netzwerk","chart-kalender","chart-overlap","chart-abt","chart-sankey"].forEach(id => {
     document.getElementById(id).innerHTML = "";
@@ -2007,8 +2072,8 @@ function renderTable() {
     const learning = m.learning || "–";
     const platzh = m.ist_platzhalter
       ? ' <span class="platzh-badge">⚠ Platzhalter</span>' : "";
-    const grupBadge = m.hatGruppenTeilnehmer
-      ? ` <span title="Gruppen-Teilnehmer erkannt: ${m.gruppenTeilnehmer.join(', ')}" style="color:#d97706;cursor:help;font-size:.85rem">⚑</span>` : "";
+    const grupBadge = (m.hatGruppenTeilnehmer && m.gruppenTeilnehmer && m.gruppenTeilnehmer.length > 0)
+      ? ` <span title="Gruppen-Teilnehmer: ${m.gruppenTeilnehmer.join(', ')}" style="color:#d97706;cursor:help;font-size:.85rem">⚑</span>` : "";
     const wertDisplay = m.wert
       ? '●'.repeat(m.wert) + '○'.repeat(4 - m.wert)
       : '–';
@@ -3290,10 +3355,10 @@ function saveConfig() {
     if (m.flugebene && !m.flugebeneAuto)
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
-  // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
-  const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
   try {
+    // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
+    const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
     localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, wertOverrides, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
