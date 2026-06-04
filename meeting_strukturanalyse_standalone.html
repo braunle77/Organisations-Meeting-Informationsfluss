@@ -1002,9 +1002,10 @@ function loadFromPaste() {
 function loadFromFile(input) {
   const file = input.files[0];
   if (!file) return;
+  showStatus("⏳ Lese: " + file.name + " (" + Math.round(file.size/1024) + " KB)…", true);
   const reader = new FileReader();
   reader.onload  = e => tryLoad(e.target.result);
-  reader.onerror = () => showStatus("Datei konnte nicht gelesen werden. Bitte prüfe Dateiformat und Zugriffsrechte.", false);
+  reader.onerror = () => showStatus("❌ Datei konnte nicht gelesen werden.", false);
   reader.readAsText(file, "UTF-8");
 }
 
