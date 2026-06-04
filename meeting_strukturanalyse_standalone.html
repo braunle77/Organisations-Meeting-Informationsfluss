@@ -54,7 +54,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .upload-drop-area svg{color:#59B2A5;margin-bottom:8px}
 .upload-drop-text{font-size:.9rem;color:#374151;margin:0 0 14px;font-weight:500}
 .upload-hint-text{font-size:.76rem;color:#94a3b8;margin:12px 0 0}
-#file-input{display:none}
+#file-input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
 .file-upload-label{display:inline-flex;align-items:center;gap:8px;border:2px dashed #cbd5e1;
   border-radius:8px;padding:12px 18px;cursor:pointer;font-size:.85rem;color:#64748b;
   transition:all .15s;width:100%}
@@ -297,20 +297,18 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <div class="import-instructions">
         Exportiere die Meeting-Tabelle aus Confluence als CSV oder TSV, oder verwende eine lokal gespeicherte Datei mit gleicher Spaltenstruktur.
       </div>
-      <div class="upload-drop-area" id="upload-drop-area"
-           ondragover="event.preventDefault();this.classList.add('drag-over')"
-           ondragleave="this.classList.remove('drag-over')"
-           ondrop="handleFileDrop(event)">
-        <label for="file-input" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#59B2A5" stroke-width="1.5">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <p class="upload-drop-text" style="margin:0">Datei hier ablegen oder klicken zum Auswählen</p>
-          <span class="btn-primary" style="display:inline-block;margin-top:0;cursor:pointer">Datei auswählen</span>
-        </label>
+      <label class="upload-drop-area" id="upload-drop-area"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleFileDrop(event)">
+        <input type="file" id="file-input" accept=".csv,.tsv,.txt" onchange="loadFromFile(this)">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#59B2A5" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p class="upload-drop-text">Datei hier ablegen oder klicken zum Auswählen</p>
+        <span class="btn-primary" style="display:inline-block;margin-top:0;pointer-events:none">Datei auswählen</span>
         <p class="upload-hint-text">CSV · TSV · TXT (beliebige Größe)</p>
-      </div>
-      <input type="file" id="file-input" accept=".csv,.tsv,.txt" onchange="loadFromFile(this)" style="display:none">
+      </label>
     </div>
 
     <div id="import-status" class="import-status"></div>
