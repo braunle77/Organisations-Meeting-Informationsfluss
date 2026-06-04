@@ -79,6 +79,27 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   color:white;border-radius:7px;padding:7px 14px;font-family:inherit;font-size:.8rem;
   cursor:pointer;transition:background .15s;white-space:nowrap;position:relative;z-index:1}
 .btn-reload:hover{background:rgba(255,255,255,.25)}
+/* Zeitverteilung Executive Briefing */
+.treemap-briefing{background:white;border-radius:10px;padding:16px 20px;
+  margin-bottom:16px;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(89,178,165,.06)}
+.tbr-header{display:flex;justify-content:space-between;align-items:baseline;
+  margin-bottom:10px;flex-wrap:wrap;gap:4px}
+.tbr-title{font-size:.77rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:#1a2e2b}
+.tbr-sub{font-size:.75rem;color:#6b7280}
+.tbr-row{display:flex;gap:8px;padding:5px 0;border-top:1px solid #f1f5f9;align-items:center}
+.tbr-rank{color:#9ca3af;font-size:.71rem;min-width:16px;flex-shrink:0}
+.tbr-body{flex:1;min-width:0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.tbr-name{font-size:.82rem;font-weight:600;color:#1a2e2b;flex-shrink:0;max-width:220px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbr-cost{font-size:.79rem;font-weight:700;color:#59B2A5;flex-shrink:0}
+.tbr-pers{font-size:.75rem;color:#9ca3af;flex-shrink:0}
+.tbr-fk{font-size:.72rem;font-weight:700;color:#d97706;background:#fef3c7;
+  padding:1px 6px;border-radius:8px;flex-shrink:0}
+.tbr-insight{margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9;
+  font-size:.78rem;color:#4a6b67;display:flex;gap:12px;flex-wrap:wrap}
+.tbr-insight-item{display:flex;align-items:center;gap:5px}
+/* Tabelle Summary */
 .table-summary{font-size:.78rem;color:#6b7280;padding:2px 0 10px;
   display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .table-summary .s-warn{color:#d97706;font-weight:600}
@@ -535,6 +556,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
   <div id="panel-9" class="panel" data-tab="7">
     <button class="tab-info-btn" onclick="showTabInfo(7)">ℹ</button>
+    <div id="treemap-briefing"></div>
     <div class="chart-card" id="chart-treemap"></div>
     <p class="hint" id="hint-treemap">Fläche = monatliche Personen-Stunden · Äußerer Rahmen = Kategorie (dunkler) · Innen = Meeting (heller) · Klick = Drill-down</p>
   </div>
@@ -2715,6 +2737,54 @@ function renderZeitlast() {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 10: Zeitverteilung – Treemap (A2)
 // ══════════════════════════════════════════════════════════════════════════════
+function _renderTreemapBriefing(withHours) {
+  var el = document.getElementById("treemap-briefing");
+  if (!el) return;
+  if (!withHours || withHours.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  var sorted = withHours.slice().sort(function(a,b){ return b.mH - a.mH; });
+  var totalH = sorted.reduce(function(s,x){ return s + x.mH; }, 0);
+  var TOP = 5;
+  var top = sorted.slice(0, TOP);
+  var topH = top.reduce(function(s,x){ return s + x.mH; }, 0);
+  var topPct = totalH > 0 ? Math.round(topH / totalH * 100) : 0;
+  var fkMeetings = top.filter(function(x){ return x.m.teilnehmer.some(function(t){ return fkSet.has(t); }); }).length;
+
+  var rows = top.map(function(x, i) {
+    var m = x.m;
+    var fkCount = m.teilnehmer.filter(function(t){ return fkSet.has(t); }).length;
+    var farbe = effectiveAbtFarben[m.abteilung] || '#9ca3af';
+    var pct = totalH > 0 ? Math.round(x.mH / totalH * 100) : 0;
+    var name = m.name.length > 32 ? m.name.slice(0, 31) + '…' : m.name;
+    return '<div class="tbr-row">'
+      + '<span class="tbr-rank">' + (i+1) + '.</span>'
+      + '<div class="tbr-body">'
+      + '<span class="tbr-name" title="' + m.name + '">' + name + '</span>'
+      + '<span class="abt-badge" style="font-size:.68rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '</span>'
+      + '<span class="tbr-cost">' + x.mH.toFixed(1) + ' h/Mo</span>'
+      + '<span class="tbr-pers">' + m.teilnehmer.length + ' Pers. · ' + pct + '%</span>'
+      + (fkCount > 0 ? '<span class="tbr-fk">★ ' + fkCount + ' FK' + (fkCount > 1 ? 's' : '') + '</span>' : '')
+      + '</div></div>';
+  }).join('');
+
+  var insight = '';
+  if (fkMeetings > 0) {
+    insight += '<span class="tbr-insight-item" style="color:#d97706">★ ' + fkMeetings + ' dieser Meetings haben FK-Beteiligung – tatsächlicher Kostenfaktor höher</span>';
+  }
+
+  el.innerHTML = '<div class="treemap-briefing">'
+    + '<div class="tbr-header">'
+    + '<span class="tbr-title">Zeitaufwand – Executive Briefing</span>'
+    + '<span class="tbr-sub">Gesamtaufwand: ' + totalH.toFixed(1) + ' h/Mo · Top-' + TOP + ' = ' + topPct + '% der Gesamtzeit</span>'
+    + '</div>'
+    + rows
+    + (insight ? '<div class="tbr-insight">' + insight + '</div>' : '')
+    + '</div>';
+}
+
 function renderTreemap() {
   if (!MEETINGS.length) return;
 
@@ -2730,6 +2800,9 @@ function renderTreemap() {
     const mH     = toH(m.dauer * freq * nPers);
     withHours.push({ m, mH });
   });
+
+  // Executive Briefing befüllen (auch wenn withHours leer)
+  _renderTreemapBriefing(withHours);
 
   // Noch keine Dauer-Daten → Hinweis
   if (withHours.length === 0) {
