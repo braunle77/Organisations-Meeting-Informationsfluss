@@ -143,6 +143,20 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .findings-placeholder p{font-size:.88rem;color:#4a6b67;max-width:520px;margin:0 auto 8px;line-height:1.65}
 .findings-placeholder-sub{color:#7a9e9a !important;font-size:.83rem !important}
 /* Overlap legend */
+/* Überschneidungen Tab */
+.top-paare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+@media(max-width:680px){.top-paare-grid{grid-template-columns:1fr}}
+.top-paare-title{font-size:.82rem;font-weight:700;color:#374151;margin:0 0 6px}
+.pair-item{display:flex;gap:8px;padding:7px 0;border-top:1px solid #f1f5f9;align-items:flex-start}
+.pair-rank{color:#9ca3af;font-size:.72rem;min-width:16px;padding-top:3px}
+.pair-body{flex:1;min-width:0}
+.pair-names{font-size:.83rem;line-height:1.35}
+.pair-gem{font-size:.74rem;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.overlap-toggle-btn{background:#f8faf9;border:1.5px solid #e2e8f0;border-radius:8px;
+  padding:8px 16px;font-family:inherit;font-size:.84rem;font-weight:600;color:#4a6b67;
+  cursor:pointer;transition:all .15s;width:100%}
+.overlap-toggle-btn:hover{background:#f0faf8;border-color:#59B2A5;color:#246b61}
+.overlap-toggle-btn.active{background:#f0faf8;border-color:#59B2A5;color:#246b61}
 .overlap-legend{display:flex;flex-direction:column;gap:8px;margin-top:12px;
   background:white;border-radius:8px;padding:12px 16px;border:1px solid #f1f5f9;
   font-size:.83rem;color:#374151}
@@ -367,13 +381,20 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
   <div id="panel-2" class="panel" data-tab="5">
     <button class="tab-info-btn" onclick="showTabInfo(5)">ℹ</button>
-    <div id="top-paare-list" style="margin-bottom:24px"></div>
-    <div class="chart-card" id="chart-overlap"></div>
-    <div class="overlap-legend">
-      <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
-      <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → verschiedene Teilnehmer. Fehlende Meetings erkennst du besser im Netzwerk-Tab.</span>
+    <div id="top-paare-list"></div>
+    <div id="overlap-expand-bar" style="margin:14px 0 0">
+      <button id="overlap-toggle-btn" class="overlap-toggle-btn" onclick="toggleOverlapHeatmap()">
+        ▸ Vollständige Heatmap anzeigen
+      </button>
     </div>
-    <p class="hint">Zellwert = Jaccard-Index (0 = keine, 1 = identische Teilnehmergruppe) · Hover = Überschneidende Personen</p>
+    <div id="overlap-chart-wrap" style="display:none;margin-top:14px">
+      <div class="chart-card" id="chart-overlap"></div>
+      <div class="overlap-legend">
+        <span class="ol-item"><span class="ol-dot" style="background:#c25050"></span><b>Hohe Überschneidung (Terrakotta)</b> → ähnliche Teilnehmergruppe → mögliche Redundanz</span>
+        <span class="ol-item"><span class="ol-dot" style="background:#c8e6e0"></span><b>Keine Überschneidung (Mint)</b> → verschiedene Teilnehmer.</span>
+      </div>
+      <p class="hint">Zellwert = Jaccard-Index (0 = keine, 1 = identische Teilnehmergruppe) · Hover = Überschneidende Personen</p>
+    </div>
   </div>
   <div id="panel-3" class="panel" data-tab="2">
     <button class="tab-info-btn" onclick="showTabInfo(2)">ℹ</button>
@@ -1595,80 +1616,118 @@ function renderKalender() {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 3: Überschneidungen (Jaccard Heatmap)
 // ══════════════════════════════════════════════════════════════════════════════
+// Overlap-Daten gecacht damit Heatmap beim Aufklappen ohne Re-Berechnung geht
+var _overlapCache = null;
+
 function renderOverlap() {
-  const ml = MEETINGS.filter(m => m.status === "Aktiv" && m.teilnehmer.length >= 2);
-  const kurz = n => n.length > 22 ? n.slice(0,22)+"…" : n;
-  const namen = ml.map(m => m.name);
-  const namen_kurz = ml.map(m => kurz(m.name));
-  const sets  = ml.map(m => new Set(m.teilnehmer));
+  const ml = MEETINGS.filter(function(m){ return m.status === "Aktiv" && m.teilnehmer.length >= 2; });
+  const kurz = function(n){ return n.length > 22 ? n.slice(0,22)+'…' : n; };
+  const namen = ml.map(function(m){ return m.name; });
+  const sets  = ml.map(function(m){ return new Set(m.teilnehmer); });
   const n = ml.length;
 
+  // Matrix berechnen + cachen
   const matrix=[], hover=[];
-  for (let i=0;i<n;i++) {
-    const mr=[],hr=[];
-    for (let j=0;j<n;j++) {
-      let v;
+  for (var i=0;i<n;i++) {
+    var mr=[],hr=[];
+    for (var j=0;j<n;j++) {
+      var v;
       if (i===j) { v=1.0; }
       else {
-        const inter = [...sets[i]].filter(x => sets[j].has(x));
-        const union = new Set([...sets[i], ...sets[j]]);
+        var inter = [...sets[i]].filter(function(x){ return sets[j].has(x); });
+        var union = new Set([...sets[i], ...sets[j]]);
         v = union.size ? Math.round(inter.length/union.size*100)/100 : 0;
       }
       mr.push(v);
-      const gem = [...sets[i]].filter(x => sets[j].has(x));
-      hr.push(`<b>${namen[i]}</b> ↔ <b>${namen[j]}</b><br>Ähnlichkeit: ${(v*100).toFixed(0)}%<br>Gemeinsam: ${gem.sort().join(", ") || "–"}`);
+      var gem2 = [...sets[i]].filter(function(x){ return sets[j].has(x); });
+      hr.push('<b>'+namen[i]+'</b> ↔ <b>'+namen[j]+'</b><br>Ähnlichkeit: '+(v*100).toFixed(0)+'%<br>Gemeinsam: '+(gem2.sort().join(', ') || '–'));
     }
     matrix.push(mr); hover.push(hr);
   }
+  _overlapCache = { ml, namen, namen_kurz: ml.map(function(m){ return kurz(m.name); }), matrix, hover };
 
-  const trace = {
-    type:"heatmap",
-    z:matrix, x:namen_kurz, y:namen_kurz,
-    text:matrix.map(r => r.map(v => v>0 ? `${(v*100).toFixed(0)}%` : "")),
-    texttemplate:"%{text}", textfont:{size:8, color:"#374151"},
-    colorscale:[[0,"#f0faf8"],[0.25,"#c8e6e0"],[0.55,"#f5c97a"],[0.80,"#e08060"],[1,"#c25050"]],
-    zmin:0, zmax:1,
-    hovertext:hover, hoverinfo:"text",
-    colorbar:{title:{text:"Jaccard<br>Ähnlichkeit"}}
-  };
-  const layout = {
-    title:{text:"Teilnehmer-Überschneidung – Welche Meetings sind ähnlich?",font:{size:16,family:"DM Sans, system-ui, sans-serif"}},
-    font:{family:"DM Sans, system-ui, sans-serif"},
-    height:Math.max(520, ml.length * 22), margin:{l:210,r:100,t:60,b:180},
-    xaxis:{tickangle:-45,tickfont:{size:9}},
-    yaxis:{tickfont:{size:9}}
-  };
-  Plotly.newPlot("chart-overlap", [trace], layout, {responsive:true, displayModeBar:false});
-
-  // ── Top-Paare mit höchster Überschneidung ────────────────────────────────
+  // ── Top-Paare: 2-Spalten-Grid ────────────────────────────────────────────
   const pairs = [];
-  for (let i = 0; i < n; i++) {
-    for (let j = i+1; j < n; j++) {
-      if (matrix[i][j] >= 0.25) {
-        const gem = [...sets[i]].filter(x => sets[j].has(x));
-        pairs.push({ a: namen[i], b: namen[j], score: matrix[i][j], gem });
+  for (var ii = 0; ii < n; ii++) {
+    for (var jj = ii+1; jj < n; jj++) {
+      if (matrix[ii][jj] >= 0.25) {
+        var gem = [...sets[ii]].filter(function(x){ return sets[jj].has(x); });
+        pairs.push({ a: namen[ii], b: namen[jj], score: matrix[ii][jj], gem: gem });
       }
     }
   }
-  pairs.sort((a, b) => b.score - a.score);
+  pairs.sort(function(a, b){ return b.score - a.score; });
   const top = pairs.slice(0, 10);
+
   const topEl = document.getElementById("top-paare-list");
-  if (topEl) topEl.innerHTML = top.length
-    ? `<p style="font-size:.82rem;font-weight:700;color:#374151;margin:0 0 8px">Top-Paare mit höchster Teilnehmer-Überschneidung</p>` +
-      top.map((p, i) => {
-        const badge = p.score >= 0.6
-          ? "background:#fee2e2;color:#c94040" : "background:#fef3c7;color:#92400e";
-        return `<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid #f1f5f9">
-          <span style="color:#9ca3af;font-size:.75rem;min-width:18px;padding-top:2px">${i+1}.</span>
-          <div>
-            <strong style="font-size:.84rem">${p.a}</strong>
-            <span style="color:#9ca3af;margin:0 4px">↔</span>
-            <strong style="font-size:.84rem">${p.b}</strong>
-            <span style="margin-left:8px;${badge};padding:1px 8px;border-radius:10px;font-size:.74rem">${Math.round(p.score*100)}%</span>
-            <br><span style="font-size:.77rem;color:#6b7280">Gemeinsam: ${p.gem.slice(0,5).join(", ")}${p.gem.length > 5 ? " +" + (p.gem.length-5) : ""}</span>
-          </div></div>`;
-      }).join("")
-    : `<p style="font-size:.84rem;color:#9ca3af">Keine Überschneidungen über 25% gefunden.</p>`;
+  const btn   = document.getElementById("overlap-toggle-btn");
+  if (btn) btn.textContent = '▸ Vollständige Heatmap anzeigen (' + n + ' Meetings × ' + n + ')';
+
+  if (!topEl) return;
+  if (!top.length) {
+    topEl.innerHTML = '<p style="font-size:.84rem;color:#9ca3af">Keine Überschneidungen über 25% gefunden.</p>';
+    return;
+  }
+
+  var pairHTML = function(p, idx) {
+    var badge = p.score >= 0.6 ? 'background:#fee2e2;color:#c94040' : 'background:#fef3c7;color:#92400e';
+    var gemStr = p.gem.slice(0,4).join(', ') + (p.gem.length > 4 ? ' +' + (p.gem.length-4) : '');
+    return '<div class="pair-item">'
+      + '<span class="pair-rank">' + (idx+1) + '.</span>'
+      + '<div class="pair-body">'
+      + '<span class="pair-names"><strong>' + p.a + '</strong>'
+      + '<span style="color:#9ca3af;margin:0 4px">↔</span>'
+      + '<strong>' + p.b + '</strong>'
+      + '<span style="margin-left:6px;' + badge + ';padding:1px 7px;border-radius:10px;font-size:.72rem">' + Math.round(p.score*100) + '%</span></span>'
+      + '<div class="pair-gem">Gemeinsam: ' + gemStr + '</div>'
+      + '</div></div>';
+  };
+
+  var half = Math.ceil(top.length / 2);
+  var left  = top.slice(0, half).map(function(p,i){ return pairHTML(p, i); }).join('');
+  var right = top.slice(half).map(function(p,i){ return pairHTML(p, i+half); }).join('');
+
+  topEl.innerHTML = '<p class="top-paare-title">Top-Paare mit höchster Teilnehmer-Überschneidung</p>'
+    + '<div class="top-paare-grid"><div>' + left + '</div><div>' + right + '</div></div>';
+}
+
+function toggleOverlapHeatmap() {
+  var wrap = document.getElementById("overlap-chart-wrap");
+  var btn  = document.getElementById("overlap-toggle-btn");
+  if (!wrap) return;
+  if (wrap.style.display === "none") {
+    wrap.style.display = "";
+    btn.textContent = "▾ Heatmap ausblenden";
+    btn.classList.add("active");
+    _renderOverlapHeatmap();
+  } else {
+    wrap.style.display = "none";
+    var n = _overlapCache ? _overlapCache.ml.length : 0;
+    btn.textContent = "▸ Vollständige Heatmap anzeigen (" + n + " Meetings × " + n + ")";
+    btn.classList.remove("active");
+  }
+}
+
+function _renderOverlapHeatmap() {
+  if (!_overlapCache) return;
+  var c = _overlapCache;
+  var n = c.ml.length;
+  var trace = {
+    type:"heatmap",
+    z:c.matrix, x:c.namen_kurz, y:c.namen_kurz,
+    text:c.matrix.map(function(r){ return r.map(function(v){ return v>0 ? (v*100).toFixed(0)+'%' : ''; }); }),
+    texttemplate:"%{text}", textfont:{size:8, color:"#374151"},
+    colorscale:[[0,"#f0faf8"],[0.25,"#c8e6e0"],[0.55,"#f5c97a"],[0.80,"#e08060"],[1,"#c25050"]],
+    zmin:0, zmax:1,
+    hovertext:c.hover, hoverinfo:"text",
+    colorbar:{title:{text:"Jaccard"}}
+  };
+  Plotly.newPlot("chart-overlap", [trace], {
+    font:{family:"DM Sans, system-ui, sans-serif"},
+    height:Math.max(520, n * 22), margin:{l:210,r:80,t:20,b:180},
+    xaxis:{tickangle:-45,tickfont:{size:9}},
+    yaxis:{tickfont:{size:9}}
+  }, {responsive:true, displayModeBar:false});
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
