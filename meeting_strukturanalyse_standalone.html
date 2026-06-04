@@ -2873,7 +2873,7 @@ function renderQualitaetsCockpit() {
     { label: "Wirkung bewertet",
       count: MEETINGS.filter(m => m.wert !== null).length, tot: total,
       hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Diagnose F3.",
-      action: "Im Tab „Alle Meetings" per Klick eintragen.", color: "#2176ae" },
+      action: "Im Tab 'Alle Meetings' per Klick eintragen.", color: "#2176ae" },
     { label: "Infofluss dokumentiert",
       count: MEETINGS.filter(m => m.infofluss && m.infofluss.trim()).length, tot: total,
       hint: "Dokumentiert wohin Informationen fließen.",
@@ -2885,7 +2885,7 @@ function renderQualitaetsCockpit() {
     { label: "Flugebene bestätigt",
       count: MEETINGS.filter(m => m.flugebene && !m.flugebeneAuto).length, tot: total,
       hint: "~-Badges sind auto-vorgeschlagen. Manuelle Bestätigung erhöht Präzision.",
-      action: "Im Tab „Alle Meetings" ~-Badges prüfen.", color: "#d4a843" },
+      action: "Im Tab 'Alle Meetings' ~-Badges pruefen.", color: "#d4a843" },
     { label: "Ohne Gruppen-Teilnehmer",
       count: MEETINGS.filter(m => !m.hatGruppenTeilnehmer).length, tot: total,
       hint: "Meetings mit Gruppen-Platzhaltern können nicht personengenau analysiert werden.",
@@ -2894,7 +2894,7 @@ function renderQualitaetsCockpit() {
       count: knownPersons.filter(p => (personConfidence[p]?.score || 1) >= 0.7).length,
       tot: knownPersons.length || 1,
       hint: "Unsichere Personen (gelber Punkt) können Charts verzerren.",
-      action: "Im Tab „Personen" gelbe Punkte prüfen.", color: "#c25050" },
+      action: "Im Tab 'Personen' gelbe Punkte pruefen.", color: "#c25050" },
   ];
 
   grid.innerHTML = metrics.map(m => {
