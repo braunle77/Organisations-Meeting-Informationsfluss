@@ -578,6 +578,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
   <div id="panel-10" class="panel" data-tab="8">
     <button class="tab-info-btn" onclick="showTabInfo(8)">ℹ</button>
+    <div id="wirkung-briefing"></div>
     <div class="chart-card" id="chart-wirkung" style="height:480px"></div>
     <p class="hint">Nur Meetings mit Dauer- UND Wirkungsangabe · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Hover = Details · X-Trennlinie = Median der Zeitlast</p>
   </div>
@@ -2987,88 +2988,178 @@ function renderWirkungsMatrix() {
   const el = document.getElementById("chart-wirkung");
   if (!el) return;
 
-  const data = MEETINGS.filter(m => m.dauer !== null && m.wert !== null && !m.ist_platzhalter);
+  const data = MEETINGS.filter(function(m){ return m.dauer !== null && m.wert !== null && !m.ist_platzhalter; });
 
   if (!data.length) {
-    el.innerHTML = `<div style="padding:40px;text-align:center;color:#9ca3af;font-size:.9rem">
-      Noch keine Meetings mit Dauer- UND Wirkungsangabe vorhanden.<br>
-      Wirkung kann in Tab „Alle Meetings" per Klick eingetragen werden.
-    </div>`;
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:#9ca3af;font-size:.9rem">'
+      + 'Noch keine Meetings mit Dauer- UND Wirkungsangabe vorhanden.</div>';
+    _renderWirkungsBriefing([], [], 0);
     return;
   }
 
   // X = Stunden/Monat
-  const xVals = data.map(m => Math.round(m.dauer * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5) / 60 * 100) / 100);
+  const xVals = data.map(function(m){ return Math.round(m.dauer * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5) / 60 * 100) / 100; });
 
   // Median für X-Trennlinie
-  const sorted = [...xVals].sort((a, b) => a - b);
-  const xMedian = sorted.length % 2 === 0
-    ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
-    : sorted[Math.floor(sorted.length / 2)];
+  const sortedX = xVals.slice().sort(function(a,b){ return a-b; });
+  const xMedian = sortedX.length % 2 === 0
+    ? (sortedX[sortedX.length/2-1] + sortedX[sortedX.length/2]) / 2
+    : sortedX[Math.floor(sortedX.length/2)];
+
+  // Y-Jitter: Meetings mit gleichem Wert vertikal spreizen (±0.22 max)
+  const wertGroups = {};
+  data.forEach(function(m, i) {
+    var w = m.wert;
+    if (!wertGroups[w]) wertGroups[w] = [];
+    wertGroups[w].push(i);
+  });
+  const yJitter = new Array(data.length).fill(0);
+  Object.values(wertGroups).forEach(function(indices) {
+    var count = indices.length;
+    if (count <= 1) return;
+    var spread = Math.min(0.22, count * 0.055);
+    indices.forEach(function(idx, pos) {
+      yJitter[idx] = (count === 1) ? 0 : (pos / (count - 1) - 0.5) * spread * 2;
+    });
+  });
 
   // Kategorien + Farben
-  const katList = [...new Set(data.map(m => m.kategorie || "Sonstige"))].sort();
+  const katList = [...new Set(data.map(function(m){ return m.kategorie || "Sonstige"; }))].sort();
   const katColor = {};
-  katList.forEach((k, i) => { katColor[k] = PALETTE[i % PALETTE.length]; });
+  katList.forEach(function(k, i){ katColor[k] = PALETTE[i % PALETTE.length]; });
 
-  // Einen Trace pro Kategorie (für Legende)
-  const traces = katList.map(kat => {
-    const items = data.map((m, i) => ({ m, x: xVals[i] })).filter(({m}) => (m.kategorie || "Sonstige") === kat);
+  const dataWithIdx = data.map(function(m, i){ return { m: m, i: i, x: xVals[i] }; });
+
+  const traces = katList.map(function(kat) {
+    const items = dataWithIdx.filter(function(d){ return (d.m.kategorie || "Sonstige") === kat; });
     return {
-      type: "scatter",
-      mode: "markers",
-      name: kat,
-      x: items.map(({x}) => x),
-      y: items.map(({m}) => m.wert),
-      text: items.map(({m, x}) =>
-        `<b>${m.name}</b><br>Abteilung: ${m.abteilung}<br>Kategorie: ${m.kategorie}<br>` +
-        `Rhythmus: ${m.rhythmus_klasse}<br>Dauer: ${m.dauer} min<br>` +
-        `Zeit/Monat: ${x} h<br>Wirkung: ${'●'.repeat(m.wert)}${'○'.repeat(4 - m.wert)}<br>` +
-        `Teilnehmer: ${m.teilnehmer.length || 1}`
-      ),
+      type: "scatter", mode: "markers", name: kat,
+      x: items.map(function(d){ return d.x; }),
+      y: items.map(function(d){ return d.m.wert + yJitter[d.i]; }),
+      text: items.map(function(d) {
+        var m = d.m;
+        return '<b>' + m.name + '</b><br>Abteilung: ' + m.abteilung
+          + '<br>Kategorie: ' + m.kategorie
+          + '<br>Rhythmus: ' + m.rhythmus_klasse
+          + '<br>Dauer: ' + m.dauer + ' min'
+          + '<br>Zeit/Monat: ' + d.x + ' h'
+          + '<br>Wirkung: ' + '●'.repeat(m.wert) + '○'.repeat(4-m.wert)
+          + '<br>Teilnehmer: ' + (m.teilnehmer.length || 1);
+      }),
       hovertemplate: "%{text}<extra></extra>",
       marker: {
         color: katColor[kat],
-        size: items.map(({m}) => Math.max(m.teilnehmer.length || 1, 1) * 6 + 8),
+        size: items.map(function(d){ return Math.max(d.m.teilnehmer.length || 1, 1) * 6 + 8; }),
         opacity: 0.82
       }
     };
   });
 
-  const xMax = Math.max(...xVals) * 1.15 || 10;
+  const xMax = Math.max.apply(null, xVals) * 1.15 || 10;
 
-  // Quadranten-Labels
   const annotations = [
-    { x: xMedian / 2,           y: 3.6, text: "Bereichernd",     font: { color: "#059669", size: 11 } },
-    { x: (xMedian + xMax) / 2,  y: 3.6, text: "Effizient halten",font: { color: "#2563eb", size: 11 } },
-    { x: xMedian / 2,           y: 1.4, text: "Hinterfragen",    font: { color: "#9ca3af", size: 11 } },
-    { x: (xMedian + xMax) / 2,  y: 1.4, text: "Optimieren",      font: { color: "#dc2626", size: 11 } },
-  ].map(a => ({
-    ...a, xref: "x", yref: "y", showarrow: false,
-    font: { ...a.font, family: "inherit" }, opacity: 0.6
-  }));
+    { x: xMedian/2,          y: 3.6, text: "Bereichernd",     font: { color: "#059669", size: 11 } },
+    { x: (xMedian+xMax)/2,   y: 3.6, text: "Effizient halten",font: { color: "#2563eb", size: 11 } },
+    { x: xMedian/2,          y: 1.4, text: "Hinterfragen",    font: { color: "#9ca3af", size: 11 } },
+    { x: (xMedian+xMax)/2,   y: 1.4, text: "Optimieren",      font: { color: "#dc2626", size: 11 } },
+  ].map(function(a){ return Object.assign({}, a, { xref:"x", yref:"y", showarrow:false, font: Object.assign({}, a.font, {family:"inherit"}), opacity:0.6 }); });
 
   const shapes = [
-    // vertikale Trennlinie (Median)
-    { type: "line", x0: xMedian, x1: xMedian, y0: 0.5, y1: 4.5,
-      line: { color: "#cbd5e1", width: 1.5, dash: "dot" }, xref: "x", yref: "y" },
-    // horizontale Trennlinie (y=2.5)
-    { type: "line", x0: 0, x1: xMax, y0: 2.5, y1: 2.5,
-      line: { color: "#cbd5e1", width: 1.5, dash: "dot" }, xref: "x", yref: "y" },
+    // Quadrant-Hintergründe (subtile Füllung)
+    { type:"rect", x0:0,       x1:xMedian, y0:2.5, y1:4.5, fillcolor:"rgba(5,150,105,0.05)",  line:{width:0}, xref:"x", yref:"y" },
+    { type:"rect", x0:xMedian, x1:xMax,    y0:2.5, y1:4.5, fillcolor:"rgba(37,99,235,0.05)",  line:{width:0}, xref:"x", yref:"y" },
+    { type:"rect", x0:0,       x1:xMedian, y0:0.5, y1:2.5, fillcolor:"rgba(100,116,139,0.04)",line:{width:0}, xref:"x", yref:"y" },
+    { type:"rect", x0:xMedian, x1:xMax,    y0:0.5, y1:2.5, fillcolor:"rgba(220,38,38,0.07)",  line:{width:0}, xref:"x", yref:"y" },
+    // Trennlinien
+    { type:"line", x0:xMedian, x1:xMedian, y0:0.5, y1:4.5, line:{color:"#cbd5e1",width:1.5,dash:"dot"}, xref:"x", yref:"y" },
+    { type:"line", x0:0,       x1:xMax,    y0:2.5, y1:2.5, line:{color:"#cbd5e1",width:1.5,dash:"dot"}, xref:"x", yref:"y" },
   ];
 
   Plotly.react(el, traces, {
     margin: { t: 64, r: 24, b: 56, l: 56 },
     xaxis: { title: "Zeitaufwand h/Monat", zeroline: false, gridcolor: "#f1f5f9", range: [0, xMax] },
     yaxis: { title: "Wirkung", tickvals: [1,2,3,4], ticktext: ["1","2","3","4"], range: [0.5, 4.5], gridcolor: "#f1f5f9" },
-    shapes,
-    annotations,
+    shapes, annotations,
     legend: { orientation: "h", y: 1.08, x: 0.5, xanchor: "center" },
-    plot_bgcolor: "#fff",
-    paper_bgcolor: "#fff",
+    plot_bgcolor: "#fff", paper_bgcolor: "#fff",
     font: { family: "Inter, system-ui, sans-serif", size: 12, color: "#374151" },
     hovermode: "closest"
   }, { responsive: true, displayModeBar: false });
+
+  _renderWirkungsBriefing(data, xVals, xMedian);
+}
+
+function _renderWirkungsBriefing(data, xVals, xMedian) {
+  var el = document.getElementById("wirkung-briefing");
+  if (!el) return;
+  if (!data.length) { el.innerHTML = ''; return; }
+
+  var total = MEETINGS.filter(function(m){ return m.dauer !== null && !m.ist_platzhalter; }).length;
+  var bewertet = data.length;
+  var ohneWert = total - bewertet;
+
+  // Quadrant-Zuweisung
+  var optimieren  = [], hinterfragen = [];
+  data.forEach(function(m, i) {
+    var x = xVals[i];
+    if (m.wert <= 2) {
+      if (x > xMedian) optimieren.push({ m: m, x: x });
+      else             hinterfragen.push({ m: m, x: x });
+    }
+  });
+
+  // Optimieren nach Dringlichkeit sortieren: höchste Zeit × niedrigste Wirkung
+  optimieren.sort(function(a,b){ return (b.x * (3-b.m.wert)) - (a.x * (3-a.m.wert)); });
+  hinterfragen.sort(function(a,b){ return a.m.wert - b.m.wert || b.x - a.x; });
+
+  var topOpt = optimieren.slice(0, 4);
+
+  // Kein Handlungsbedarf
+  if (!optimieren.length && !hinterfragen.length) {
+    el.innerHTML = '<div class="treemap-briefing">'
+      + '<div class="tbr-header"><span class="tbr-title">Wirkung – Executive Briefing</span>'
+      + '<span class="tbr-sub">' + bewertet + ' Meetings bewertet' + (ohneWert ? ' · ' + ohneWert + ' noch ohne Wirkungsangabe' : '') + '</span></div>'
+      + '<div style="color:#059669;font-size:.84rem;padding:6px 0">✓ Alle bewerteten Meetings haben Wirkung ≥ 3 – kein akuter Handlungsbedarf erkennbar.</div>'
+      + '</div>';
+    return;
+  }
+
+  var optRows = topOpt.map(function(item, i) {
+    var m = item.m;
+    var fkCount = m.teilnehmer.filter(function(t){ return fkSet.has(t); }).length;
+    var name = m.name.length > 36 ? m.name.slice(0,35)+'…' : m.name;
+    var farbe = effectiveAbtFarben[m.abteilung] || '#9ca3af';
+    return '<div class="tbr-row">'
+      + '<span class="tbr-rank">' + (i+1) + '.</span>'
+      + '<div class="tbr-body">'
+      + '<span class="tbr-name" title="' + m.name + '">' + name + '</span>'
+      + '<span class="abt-badge" style="font-size:.68rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '</span>'
+      + '<span class="tbr-cost" style="color:#dc2626">' + item.x.toFixed(1) + ' h/Mo</span>'
+      + '<span class="tbr-pers">' + '●'.repeat(m.wert) + '○'.repeat(4-m.wert) + '</span>'
+      + (fkCount > 0 ? '<span class="tbr-fk">★ ' + fkCount + ' FK' + (fkCount>1?'s':'') + '</span>' : '')
+      + '</div></div>';
+  }).join('');
+
+  var moreOpt = optimieren.length > 4 ? '<div style="font-size:.75rem;color:#9ca3af;padding:2px 0 0 24px">+ ' + (optimieren.length-4) + ' weitere</div>' : '';
+
+  var hintLine = hinterfragen.length
+    ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;font-size:.78rem;color:#6b7280">'
+      + '<span style="font-weight:600;color:#6b7280">? Hinterfragen (' + hinterfragen.length + ')</span>'
+      + ' – geringer Zeitaufwand, aber Wirkung ≤ 2: '
+      + hinterfragen.slice(0,3).map(function(d){ return d.m.name.length>22 ? d.m.name.slice(0,21)+'…' : d.m.name; }).join(', ')
+      + (hinterfragen.length > 3 ? ' +' + (hinterfragen.length-3) + ' weitere' : '')
+      + '</div>'
+    : '';
+
+  el.innerHTML = '<div class="treemap-briefing">'
+    + '<div class="tbr-header">'
+    + '<span class="tbr-title">Wirkung – Executive Briefing</span>'
+    + '<span class="tbr-sub">' + bewertet + ' Meetings bewertet' + (ohneWert ? ' · ' + ohneWert + ' noch ohne Wirkungsangabe' : '') + '</span>'
+    + '</div>'
+    + (optimieren.length ? '<div style="font-size:.75rem;font-weight:700;color:#dc2626;margin-bottom:4px">⚠ OPTIMIEREN (' + optimieren.length + ') – hoher Zeitaufwand, Wirkung ≤ 2</div>'
+        + optRows + moreOpt : '')
+    + hintLine
+    + '</div>';
 }
 
 // ── Datenpflege-Funktionen in separatem Block (Safari-Kompatibilität) ─────────
