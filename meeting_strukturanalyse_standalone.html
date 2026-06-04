@@ -2907,15 +2907,16 @@ function saveGruppenAufloesung(btn) {
 
 function exportConfig() {
   const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "meeting-config.json";
+  const json = JSON.stringify(cfg, null, 2);
+  // data: URI ist in Safari (file://) zuverlässiger als createObjectURL
+  const uri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(json);
+  const a = document.createElement('a');
+  a.href = uri;
+  a.download = 'meeting-config.json';
+  a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(function() { document.body.removeChild(a); }, 100);
   showToast("Konfiguration exportiert ↓");
 }
 
