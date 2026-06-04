@@ -598,7 +598,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "04.06.2026 22:00";
+const APP_VERSION = "04.06.2026 23:30";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1284,7 +1284,7 @@ const TAB_INFO = {
        achten: "Rechts unten = viel Zeit, wenig Wirkung → 'Optimieren'. Links oben = wenig Zeit, hohe Wirkung → 'Bereichernd'. Rechts oben = 'Effizient halten'.",
        folgefragen: "Welche Meetings liegen im Optimieren-Quadranten? Können sie gekürzt, seltener abgehalten oder abgeschafft werden?" },
   9: { title: "Alle Meetings (Tabelle)",
-       was: "Vollständige Datentabelle aller Meetings mit Echtzeit-Suche. Die Wirkungsspalte (●●○○) ist direkt per Klick editierbar.",
+       was: "Vollständige Datentabelle aller Meetings mit Echtzeit-Suche und Filter. Read-only Ansicht – alle Werte kommen aus der Confluence-Quelltabelle.",
        achten: "Meetings ohne Wirkungsbewertung fehlen in der Wirkungsmatrix. Nutze die Suche, um alle Meetings einer Person oder Abteilung zu finden.",
        folgefragen: "Welche Meetings haben noch keine Wirkungsbewertung? Gibt es Meetings, die nicht mehr stattfinden, aber noch als Aktiv geführt sind?" },
   10: { title: "Flight Levels – Kommunikationsfluss-Diagnose",
@@ -2282,7 +2282,7 @@ function renderTable() {
       <td><span class="kat-pill">${m.kategorie}</span></td>
       <td><span class="rhy-dot" style="background:${RHY_FARBEN[m.rhythmus_klasse]||'#9ca3af'}"></span>${m.rhythmus_klasse}</td>
       <td style="text-align:right;color:${m.dauer?'inherit':'#c0ccc9'}">${m.dauer ? m.dauer+'′' : '–'}</td>
-      <td class="wert-cell" data-idx="${idx}" title="Klicken zum Bearbeiten" style="text-align:center;cursor:pointer;letter-spacing:1px;color:${m.wert?'#59B2A5':'#c0ccc9'}">${wertDisplay}</td>
+      <td style="text-align:center;letter-spacing:1px;color:${m.wert?'#59B2A5':'#c0ccc9'}">${wertDisplay}</td>
       <td>${vera}</td>
       <td class="teiln-cell">${teilnStr}</td>
       <td><span class="badge ${statusCls}">${m.status}</span></td>
@@ -2295,37 +2295,7 @@ function renderTable() {
   updateTableCount();
 }
 
-function handleWertClick(e) {
-  const td = e.target.closest(".wert-cell");
-  if (!td) return;
-  if (td.querySelector("select")) return; // bereits offen
-  const idx = parseInt(td.dataset.idx, 10);
-  const m = MEETINGS[idx];
-  const sel = document.createElement("select");
-  sel.style.cssText = "font-size:0.85em;border:1px solid #59B2A5;border-radius:4px;padding:1px 2px;background:#fff;color:#1a2e2b;cursor:pointer";
-  [["–", ""], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"]].forEach(([label, val]) => {
-    const opt = document.createElement("option");
-    opt.value = val;
-    opt.textContent = label;
-    if ((m.wert != null ? String(m.wert) : "") === val) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  td.textContent = "";
-  td.appendChild(sel);
-  sel.focus();
-  const commit = () => {
-    const newVal = sel.value === "" ? null : parseInt(sel.value, 10);
-    m.wert = newVal;
-    const wertDisplay = m.wert ? '●'.repeat(m.wert) + '○'.repeat(4 - m.wert) : '–';
-    td.textContent = wertDisplay;
-    td.style.color = m.wert ? '#59B2A5' : '#c0ccc9';
-    saveConfig();
-  };
-  sel.addEventListener("change", commit);
-  sel.addEventListener("blur", () => { if (td.contains(sel)) commit(); });
-}
-
-document.addEventListener("click", handleWertClick);
+// Wirkung ist read-only – kommt aus Confluence-Quelltabelle (kein Override im Tool)
 
 function handleFlightLevelClick(e) {
   const td = e.target.closest(".fl-cell");
@@ -3360,7 +3330,7 @@ function importConfigFile(input) {
   reader.onload = e => {
     try {
       const cfg = JSON.parse(e.target.result);
-      const VALID = ["personAbt","fkList","wertOverrides","flugebeneOverrides","deptFunktionen","gruppenAufloesungen"];
+      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","gruppenAufloesungen"];
       const sanitized = {};
       VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
       localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
@@ -3815,10 +3785,7 @@ function saveConfig() {
     if (d !== autoVal || htmlVal) personAbt[p] = d; // abweichend oder explizit gesetzt
   });
   const fkArr = [...fkSet].sort();
-  const wertOverrides = {};
-  MEETINGS.forEach((m, i) => {
-    if (m.wert !== null) wertOverrides[m.abteilung + "||" + m.name + "||" + i] = m.wert;
-  });
+  // Wirkung kommt aus Confluence-Quelle, kein Tool-Override
   // flugebeneOverrides: nur manuell gesetzte Werte, stabiler Schlüssel ohne idx
   const flugebeneOverrides = {};
   MEETINGS.forEach(m => {
@@ -3829,7 +3796,7 @@ function saveConfig() {
     // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
     const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
     const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, wertOverrides, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
@@ -3857,12 +3824,7 @@ function applyStoredConfig() {
     if (cfg.fkList) {
       cfg.fkList.forEach(p => { if (knownPersons.has(p)) fkSet.add(p); });
     }
-    if (cfg.wertOverrides) {
-      MEETINGS.forEach((m, i) => {
-        const key = m.abteilung + "||" + m.name + "||" + i;
-        if (cfg.wertOverrides[key] != null) m.wert = cfg.wertOverrides[key];
-      });
-    }
+    // wertOverrides: nicht mehr im Tool pflegbar – Wirkung kommt aus Confluence
     // flugebeneOverrides überleben neue Imports (stabiler Schlüssel ohne idx)
     if (cfg.flugebeneOverrides) {
       MEETINGS.forEach(m => {
