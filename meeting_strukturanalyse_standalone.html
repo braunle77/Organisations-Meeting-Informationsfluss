@@ -79,21 +79,9 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   color:white;border-radius:7px;padding:7px 14px;font-family:inherit;font-size:.8rem;
   cursor:pointer;transition:background .15s;white-space:nowrap;position:relative;z-index:1}
 .btn-reload:hover{background:rgba(255,255,255,.25)}
-.stats{display:flex;gap:12px;padding:16px 36px;flex-wrap:wrap}
-.stat{background:white;border-radius:10px;padding:14px 20px;flex:1;min-width:120px;
-  text-align:center;box-shadow:0 1px 4px rgba(89,178,165,0.08);border:1px solid #f1f5f9}
-.stat .val{font-size:1.9rem;font-weight:700;color:#59B2A5;line-height:1;
-  font-family:"DM Mono",monospace}
-.stat .lbl{font-size:.75rem;color:#4a6b67;margin-top:3px}
-.stat-warn{border-color:#fcd34d;background:#fffbeb}
-.stat-warn .val{color:#b83232}
-.warnings{margin:0 36px 12px;background:#fffbeb;border:1px solid #fcd34d;
-  border-left:4px solid #f59e0b;border-radius:6px;padding:8px 14px;font-size:.82rem}
-.warn-toggle{background:none;border:none;cursor:pointer;font-family:inherit;
-  font-size:.82rem;font-weight:600;color:#92400e;padding:2px 0;display:block;width:100%}
-.warn-toggle:hover{color:#78350f}
-.warnings ul{padding-left:16px;margin-top:6px}
-.warnings li{margin-bottom:2px}
+.table-summary{font-size:.78rem;color:#6b7280;padding:2px 0 10px;
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.table-summary .s-warn{color:#d97706;font-weight:600}
 .tab-bar{display:flex;gap:0;padding:0 36px;background:#f8faf9;align-items:flex-end;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;z-index:100;flex-wrap:wrap}
 .tab-group{display:flex;align-items:flex-end;gap:2px}
@@ -344,9 +332,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     </div>
   </div>
 
-  <div class="stats" id="stats-bar"></div>
-  <div id="warnings-bar"></div>
-
   <div class="tab-bar">
     <div class="tab-group">
       <span class="tab-group-label">Analyse</span>
@@ -412,6 +397,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
   <div id="panel-5" class="panel" data-tab="9">
     <button class="tab-info-btn" onclick="showTabInfo(9)">ℹ</button>
+    <div id="table-summary" class="table-summary"></div>
     <div class="table-toolbar">
       <input type="text" id="table-search" placeholder="Meeting, Person, Abteilung …" oninput="filterTable()">
       <div class="table-meta" id="table-count"></div>
@@ -1163,48 +1149,29 @@ const renderedTabs = new Set();
 function renderStats() {
   const m = MEETINGS;
   const aktive = m.filter(x => x.status === "Aktiv");
-  const nOhneInfo = m.filter(x => !x.infofluss).length;
   const nUG    = m.filter(x => x.abteilungsuebergreifend).length;
   const nEinzel = m.filter(x => /einzelgespräch|1:1|jf/i.test(x.kategorie)).length;
   const nPlatz = m.filter(x => x.ist_platzhalter).length;
-
-  const ohne_info_class = nOhneInfo > 0 ? "stat stat-warn" : "stat";
-  const platz_class = nPlatz > 0 ? "stat stat-warn" : "stat";
-
-  document.getElementById("stats-bar").innerHTML = `
-    <div class="stat"><div class="val">${aktive.length}</div><div class="lbl">Aktive Meetings</div></div>
-    <div class="${ohne_info_class}"><div class="val">${nOhneInfo}</div><div class="lbl">Ohne Infofluss-Doku</div></div>
-    <div class="stat"><div class="val">${nUG}</div><div class="lbl">Abt.übergreifend</div></div>
-    <div class="stat"><div class="val">${nEinzel}</div><div class="lbl">Einzelgespräche</div></div>
-    <div class="${platz_class}"><div class="val">${nPlatz}</div><div class="lbl">⚠ Platzhalter</div></div>
-  `;
+  const nOhneInfo = m.filter(x => !x.infofluss).length;
 
   document.getElementById("header-meta").textContent =
-    `Interaktives Dashboard · Stand: ${new Date().toLocaleDateString("de-DE")} · ${m.length} Meetings`;
+    'Interaktives Dashboard · Stand: ' + new Date().toLocaleDateString("de-DE") + ' · ' + m.length + ' Meetings';
   document.getElementById("footer-text").textContent =
-    `${m.length} Meetings · Stand: ${new Date().toLocaleDateString("de-DE")} · v${APP_VERSION}`;
+    m.length + ' Meetings · Stand: ' + new Date().toLocaleDateString("de-DE") + ' · v' + APP_VERSION;
 
-  // Warnings (collapsible)
-  const warns = [];
-  if (nPlatz) warns.push(`<b>${nPlatz} Meetings</b> mit Platzhalter-Teilnehmern (⚠)`);
-  if (nOhneInfo) warns.push(`<b>${nOhneInfo} Meetings</b> ohne Informationsfluss-Dokumentation`);
-  if (warns.length) {
-    const warnCount = warns.length;
-    const hinweis = warnCount === 1 ? "Hinweis" : "Hinweise";
-    document.getElementById("warnings-bar").innerHTML =
-      '<div class="warnings"><button class="warn-toggle" onclick="toggleWarning()">⚠ ' + warnCount + ' ' + hinweis + ' ▾<\/button><ul id="warn-list">' + warns.map(function(w){return '<li>'+w+'<\/li>';}).join("") + '<\/ul><\/div>';
-  } else {
-    document.getElementById("warnings-bar").innerHTML = "";
+  // Kompakte Summary im Alle-Meetings-Tab
+  const summaryEl = document.getElementById("table-summary");
+  if (summaryEl) {
+    var parts = [
+      aktive.length + ' aktiv',
+      nUG + ' übergreifend',
+      nEinzel + ' Einzelgespräche'
+    ];
+    var warns = [];
+    if (nPlatz)   warns.push('<span class="s-warn">⚠ ' + nPlatz + ' Platzhalter</span>');
+    if (nOhneInfo) warns.push('<span class="s-warn">⚠ ' + nOhneInfo + ' ohne Infofluss</span>');
+    summaryEl.innerHTML = parts.map(function(p){ return '<span>' + p + '</span>'; }).join('<span style="color:#e2e8f0">·</span>') + (warns.length ? '<span style="color:#e2e8f0">·</span>' + warns.join('<span style="color:#e2e8f0">·</span>') : '');
   }
-}
-
-function toggleWarning() {
-  const list = document.getElementById("warn-list");
-  const btn = document.querySelector(".warn-toggle");
-  if (!list) return;
-  const open = list.style.display !== "none";
-  list.style.display = open ? "none" : "";
-  if (btn) btn.textContent = btn.textContent.replace(open ? "▾" : "▸", open ? "▸" : "▾");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
