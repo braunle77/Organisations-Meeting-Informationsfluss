@@ -527,8 +527,9 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <button id="eng-btn-ma"   onclick="setEngpassMode('ma')">Mitarbeitende</button>
     </div>
     <div class="chart-card" id="chart-engpass"></div>
-    <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf) · Grün = als Teilnehmer/in · Hover = Details · Sortiert nach Gesamtlast</p>
-    <div class="chart-card" id="chart-zeitlast" style="margin-top:20px"></div>
+    <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf) · Grün = als Teilnehmer/in · Sortiert nach Gesamtlast</p>
+    <div id="engpass-expand-bar" style="margin:10px 0"></div>
+    <div class="chart-card" id="chart-zeitlast" style="margin-top:4px"></div>
     <p class="hint" id="hint-zeitlast">Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit</p>
   </div>
 
@@ -674,6 +675,8 @@ let sankeyRendered     = false;
 let abtRendered        = false;
 let abtMode            = "anzahl"; // "anzahl" | "freq"
 let engpassMode        = "alle";  // "alle" | "fk" | "ma"
+let engpassExpanded    = false;
+const ENGPASS_TOP      = 10;
 
 // Abteilungstypen (aus localStorage, gepflegt im Datenpflege-Tab)
 let deptFunktionen = {};  // { "Vertrieb": "operativ", "Management": "strategisch" }
@@ -1163,6 +1166,7 @@ function resetToImport() {
   abtRendered    = false;
   abtMode        = "anzahl";
   engpassMode    = "alle";
+  engpassExpanded = false;
   document.getElementById("personen-grid").innerHTML = "";
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = "none";
@@ -2539,10 +2543,16 @@ function assignPerson(person, newDept) {
 // ══════════════════════════════════════════════════════════════════════════════
 function setEngpassMode(mode) {
   engpassMode = mode;
+  engpassExpanded = false; // beim Moduswechsel zurück auf Top-10
   ['alle','fk','ma'].forEach(m => {
     const btn = document.getElementById('eng-btn-' + m);
     if (btn) btn.classList.toggle('active', m === mode);
   });
+  renderEngpass();
+}
+
+function toggleEngpassExpand() {
+  engpassExpanded = !engpassExpanded;
   renderEngpass();
 }
 
@@ -2570,28 +2580,44 @@ function renderEngpass() {
     ((kopfCount[b]||0) + (teilnCount[b]||0)) - ((kopfCount[a]||0) + (teilnCount[a]||0))
   );
 
-  const HEIGHT = Math.max(420, persons.length * 26 + 140);
+  const totalPersons = persons.length;
+  const display = engpassExpanded ? persons : persons.slice(0, ENGPASS_TOP);
+
+  // Toggle-Button aktualisieren
+  const expandBar = document.getElementById("engpass-expand-bar");
+  if (expandBar) {
+    if (totalPersons > ENGPASS_TOP) {
+      const rest = totalPersons - ENGPASS_TOP;
+      expandBar.innerHTML = '<button class="overlap-toggle-btn" onclick="toggleEngpassExpand()">'
+        + (engpassExpanded ? '▾ Nur Top ' + ENGPASS_TOP + ' anzeigen' : '▸ Alle ' + totalPersons + ' anzeigen (' + rest + ' weitere)')
+        + '</button>';
+    } else {
+      expandBar.innerHTML = '';
+    }
+  }
+
+  const HEIGHT = Math.max(280, display.length * 26 + 120);
 
   Plotly.newPlot("chart-engpass", [
     {
       type: "bar", orientation: "h",
       name: "als Verantwortliche/r (Kopf)",
-      y: persons,
-      x: persons.map(p => kopfCount[p] || 0),
+      y: display,
+      x: display.map(p => kopfCount[p] || 0),
       marker: { color: "#2176ae" },
       hovertemplate: "<b>%{y}</b><br>%{x} Meetings als Verantwortliche/r<extra></extra>"
     },
     {
       type: "bar", orientation: "h",
       name: "als Teilnehmer/in",
-      y: persons,
-      x: persons.map(p => teilnCount[p] || 0),
+      y: display,
+      x: display.map(p => teilnCount[p] || 0),
       marker: { color: "#59B2A5" },
       hovertemplate: "<b>%{y}</b><br>%{x} Meetings als Teilnehmer/in<extra></extra>"
     }
   ], {
     barmode: "group",
-    title: { text: "Meeting-Last pro Person", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
+    title: { text: "Meeting-Last pro Person" + (engpassExpanded ? "" : " (Top " + ENGPASS_TOP + ")"), font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Anzahl Meetings", showgrid: true, gridcolor: "#f3f4f6", dtick: 1 },
     yaxis: { autorange: "reversed", automargin: true },
@@ -2644,9 +2670,11 @@ function renderZeitlast() {
     ((kopfMin[b]||0) + (teilnMin[b]||0)) - ((kopfMin[a]||0) + (teilnMin[a]||0))
   );
 
+  const displayZ = engpassExpanded ? persons : persons.slice(0, ENGPASS_TOP);
+
   // Minuten → Stunden, auf 1 Stelle runden
   const toH = min => Math.round(min / 60 * 10) / 10;
-  const HEIGHT = Math.max(420, persons.length * 26 + 140);
+  const HEIGHT = Math.max(280, displayZ.length * 26 + 120);
 
   const suffix = missingDauer > 0
     ? ` (${missingDauer} Meeting${missingDauer>1?"s":""} ohne Dauer-Angabe nicht berücksichtigt)`
@@ -2658,16 +2686,16 @@ function renderZeitlast() {
     {
       type: "bar", orientation: "h",
       name: "als Verantwortliche/r (Kopf)",
-      y: persons,
-      x: persons.map(p => toH(kopfMin[p] || 0)),
+      y: displayZ,
+      x: displayZ.map(p => toH(kopfMin[p] || 0)),
       marker: { color: "#2176ae" },
       hovertemplate: "<b>%{y}</b><br>%{x} h/Monat als Verantwortliche/r<extra></extra>"
     },
     {
       type: "bar", orientation: "h",
       name: "als Teilnehmer/in",
-      y: persons,
-      x: persons.map(p => toH(teilnMin[p] || 0)),
+      y: displayZ,
+      x: displayZ.map(p => toH(teilnMin[p] || 0)),
       marker: { color: "#59B2A5" },
       hovertemplate: "<b>%{y}</b><br>%{x} h/Monat als Teilnehmer/in<extra></extra>"
     }
