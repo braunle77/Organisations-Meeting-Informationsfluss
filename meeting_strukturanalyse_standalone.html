@@ -274,6 +274,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="import-logo">Meeting Strukturanalyse</div>
     <div class="import-sub">Standalone Dashboard · läuft komplett im Browser · kein Python, kein Server <span id="version-badge" style="opacity:.45;font-size:.78rem">v1.6</span></div>
 
+    <div id="import-status" class="import-status"></div>
+
     <!-- Option A: Confluence -->
     <div class="import-section-title">Option 1 – Aus Confluence einfügen</div>
     <div class="import-instructions">
@@ -293,7 +295,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
            onchange="loadFromFile(this)" class="file-btn-native"
            style="display:block;width:100%;box-sizing:border-box">
 
-    <div id="import-status" class="import-status"></div>
   </div>
 </div>
 
@@ -986,8 +987,10 @@ let MEETINGS = [];
 
 function showStatus(msg, ok) {
   const el = document.getElementById("import-status");
+  if (!el) { console.error("import-status not found:", msg); return; }
   el.textContent = msg;
   el.className = "import-status " + (ok ? "ok" : "err");
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function loadFromPaste() {
@@ -1012,10 +1015,17 @@ function tryLoad(text) {
     const aktive = meetings.filter(m => m.status === "Aktiv");
     const abts = new Set(meetings.map(m => m.abteilung)).size;
     showStatus(`✅ ${meetings.length} Meetings erkannt · ${abts} Abteilungen · ${aktive.length} aktiv`, true);
-    // Auto-proceed (in separatem try-catch, da setTimeout den äußeren catch nicht erreicht)
+    // Auto-proceed
     setTimeout(() => {
-      try { showDashboard(); }
-      catch(err) { showStatus("Fehler beim Laden des Dashboards: " + err.message, false); }
+      try {
+        showDashboard();
+      } catch(err) {
+        console.error("showDashboard Fehler:", err);
+        // Import-Screen wieder einblenden und Fehler zeigen
+        document.getElementById("import-screen").style.display = "flex";
+        document.getElementById("dashboard").style.display = "none";
+        showStatus("Fehler: " + err.message + " — bitte prüfe die Browser-Konsole (F12) für Details.", false);
+      }
     }, 400);
   } catch(e) {
     showStatus("Fehler: " + e.message, false);
