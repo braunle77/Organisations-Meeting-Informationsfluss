@@ -3018,6 +3018,8 @@ function importConfigFile(input) {
       renderTable();
       renderPersonenTab();
       renderedTabs.add(0); renderedTabs.add(9);
+      // Konfiguration-Tab sofort neu rendern (User ist noch darauf)
+      if (typeof renderDatapflege === 'function') renderDatapflege();
       showToast("Konfiguration importiert ✓");
     } catch(err) {
       showToast("Fehler beim Import: " + err.message);
