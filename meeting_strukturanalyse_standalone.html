@@ -274,46 +274,24 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="import-logo">Meeting Strukturanalyse</div>
     <div class="import-sub">Standalone Dashboard · läuft komplett im Browser · kein Python, kein Server <span id="version-badge" style="opacity:.45;font-size:.78rem">v1.6</span></div>
 
-    <!-- Methoden-Auswahl: zwei gleichwertige Optionen -->
-    <div class="import-method-toggle">
-      <button id="btn-method-confluence" class="import-method-btn active" onclick="setImportMethod('confluence')">
-        <span class="import-method-icon">📋</span>
-        <span>Aus Confluence<br><span style="font-weight:400;font-size:.78rem;color:inherit;opacity:.75">Tabelle kopieren &amp; einfügen</span></span>
-      </button>
-      <button id="btn-method-csv" class="import-method-btn" onclick="setImportMethod('csv')">
-        <span class="import-method-icon">📁</span>
-        <span>CSV / TSV-Datei<br><span style="font-weight:400;font-size:.78rem;color:inherit;opacity:.75">Datei hochladen oder ablegen</span></span>
-      </button>
+    <!-- Option A: Confluence -->
+    <div class="import-section-title">Option 1 – Aus Confluence einfügen</div>
+    <div class="import-instructions">
+      Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> → <code>⌘C</code> → hier einfügen (<code>⌘V</code>)
     </div>
+    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen …&#10;&#10;Erwartet: Tabelle mit Spalten wie Abteilung · Meetingname · Personen · Rhythmus · Status&#10;Optionale Spalten: Dauer · Wirkung (1–4) · Flugebene (FL1/FL2/FL3)"></textarea>
+    <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
 
-    <!-- Panel: Confluence -->
-    <div id="import-panel-confluence" class="import-panel">
-      <div class="import-instructions">
-        Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> (alles markieren) → <code>⌘C</code> (kopieren) → hier einfügen (<code>⌘V</code>).
-        Die App erkennt HTML-Tabellen direkt beim Einfügen.
-      </div>
-      <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A → ⌘C → ⌘V) …&#10;&#10;Erwartet: Tab-getrennte Tabelle mit Spalten wie:&#10;Abteilung · Meetingname · Kategorie · Personen · Rhythmus · Status&#10;&#10;Optionale Spalten: Dauer · Wirkung (1–4) · Flugebene (FL1/FL2/FL3)"></textarea>
-      <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
-    </div>
+    <div class="import-divider">oder</div>
 
-    <!-- Panel: CSV/TSV-Datei -->
-    <div id="import-panel-csv" class="import-panel" style="display:none">
-      <div class="import-instructions">
-        Exportiere die Meeting-Tabelle aus Confluence als CSV oder TSV, oder verwende eine lokal gespeicherte Datei mit gleicher Spaltenstruktur.
-      </div>
-      <div class="upload-drop-area" id="upload-drop-area"
-           ondragover="event.preventDefault();this.classList.add('drag-over')"
-           ondragleave="this.classList.remove('drag-over')"
-           ondrop="handleFileDrop(event)">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#59B2A5" stroke-width="1.5">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <p class="upload-drop-text">Datei hier ablegen oder auswählen</p>
-        <input type="file" id="file-input" accept=".csv,.tsv,.txt"
-               onchange="loadFromFile(this)" class="file-btn-native">
-        <p class="upload-hint-text">CSV · TSV · TXT</p>
-      </div>
+    <!-- Option B: Datei -->
+    <div class="import-section-title">Option 2 – CSV / TSV-Datei hochladen</div>
+    <div class="import-instructions">
+      CSV, TSV oder TXT-Datei mit gleicher Spaltenstruktur direkt auswählen.
     </div>
+    <input type="file" id="file-input" accept=".csv,.tsv,.txt"
+           onchange="loadFromFile(this)" class="file-btn-native"
+           style="display:block;width:100%;box-sizing:border-box">
 
     <div id="import-status" class="import-status"></div>
   </div>
