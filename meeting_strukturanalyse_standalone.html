@@ -30,14 +30,15 @@ body{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2c
   text-transform:uppercase;letter-spacing:.07em}
 .import-option-sub{font-size:.74rem;color:#94a3b8;margin-top:1px}
 .import-hint-box{font-size:.8rem;color:#246b61;line-height:1.55;
-  background:#f0faf8;border:1px solid #b2ddd8;border-radius:7px;padding:9px 12px}
+  background:#f0faf8;border:1px solid #b2ddd8;border-radius:7px;padding:9px 12px;
+  flex:0 0 auto}
 .import-hint-box code{background:#c8e6e0;padding:1px 4px;border-radius:3px;font-size:.8em}
 textarea#paste-area{width:100%;min-height:130px;border:1.5px solid #e2e8f0;border-radius:7px;
   padding:10px 12px;font-family:"DM Sans",system-ui,monospace;font-size:.81rem;color:#374151;
   resize:vertical;outline:none;transition:border .15s;box-sizing:border-box;flex:1}
 textarea#paste-area:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.15)}
 textarea#paste-area::placeholder{color:#cbd5e1}
-.import-upload-area{flex:1;border:1.5px dashed #cbd5e1;border-radius:7px;
+.import-upload-area{flex:1;min-height:0;border:1.5px dashed #cbd5e1;border-radius:7px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:8px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .15s;
   color:#6b7280;min-height:130px}
@@ -283,7 +284,10 @@ textarea#paste-area::placeholder{color:#cbd5e1}
           </div>
         </div>
         <div class="import-hint-box">
-          In Confluence → <code>⌘A</code> → <code>⌘C</code> → hier <code>⌘V</code>
+          Tabelle in Confluence öffnen → alles markieren
+          (<code>Strg+A</code> / <code>⌘A</code>) → kopieren
+          (<code>Strg+C</code> / <code>⌘C</code>) → hier einfügen
+          (<code>Strg+V</code> / <code>⌘V</code>)
         </div>
         <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen…&#10;&#10;Erwartet: Abteilung · Meetingname · Personen · Rhythmus · Status&#10;Optional: Dauer · Wirkung (1–4) · Flugebene (FL1/FL2/FL3)"></textarea>
         <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
@@ -299,7 +303,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
           </div>
         </div>
         <div class="import-hint-box">
-          CSV, TSV oder TXT mit gleicher Spaltenstruktur wie die Confluence-Tabelle.
+          CSV, TSV oder TXT-Datei mit gleicher Spaltenstruktur.
+          Datei auswählen oder per Drag &amp; Drop in den Upload-Bereich ablegen.
         </div>
         <label class="import-upload-area" for="file-input"
                ondragover="event.preventDefault();this.classList.add('drag-active')"
