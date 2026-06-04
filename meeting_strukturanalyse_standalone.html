@@ -1118,7 +1118,6 @@ function resetToImport() {
   document.getElementById("paste-area").value = "";
   document.getElementById("import-status").className = "import-status";
   document.getElementById("import-status").textContent = "";
-  setImportMethod('confluence'); // Methode auf Standard zurücksetzen
   // Clear chart divs
   ["chart-netzwerk","chart-kalender","chart-overlap","chart-abt","chart-sankey"].forEach(id => {
     document.getElementById(id).innerHTML = "";
@@ -2816,7 +2815,7 @@ function renderDeptTypenGrid() {
     ).join("");
     return `<div class="dp-dept-row">
       <span class="abt-badge" style="background:${farbe}22;color:${farbe};border:1px solid ${farbe}55;min-width:100px;justify-content:center">${dept}</span>
-      <select class="dp-typ-sel" data-dept="${dept.replace(/"/g,'&quot;')}" onchange="setDeptTyp(this)">${opts}</select>
+      <select class="dp-typ-sel" data-dept="${dept.split('"').join('&#34;')}" onchange="setDeptTyp(this)">${opts}</select>
     </div>`;
   }).join("") || '<p class="hint">Keine Abteilungen geladen.</p>';
 }
