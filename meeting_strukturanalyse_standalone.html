@@ -18,27 +18,17 @@ body{font-family:"DM Sans",system-ui,sans-serif;background:#f8faf9;color:#1a2e2c
 .import-card{background:white;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.1);
   padding:36px 40px;max-width:680px;width:100%}
 .import-logo{font-size:1.7rem;font-weight:700;color:#246b61;margin-bottom:4px;letter-spacing:-0.5px}
-.import-sub{font-size:.85rem;color:#64748b;margin-bottom:24px}
-/* Methoden-Toggle */
-.import-method-toggle{display:flex;gap:8px;margin-bottom:24px}
-.import-method-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
-  padding:12px 16px;border:2px solid #e2e8f0;border-radius:10px;background:#f9fafb;
-  cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:500;color:#6b7280;
-  transition:all .15s;line-height:1.2}
-.import-method-btn:hover{border-color:#59B2A5;color:#59B2A5;background:#f0faf8}
-.import-method-btn.active{border-color:#59B2A5;background:#f0faf8;color:#246b61;font-weight:700}
-.import-method-icon{font-size:1.1rem;flex-shrink:0}
-/* Instruktionstexte */
+.import-sub{font-size:.85rem;color:#64748b;margin-bottom:28px}
+.import-section-title{font-size:.8rem;font-weight:600;color:#94a3b8;letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:10px;margin-top:22px}
 .import-instructions{background:#f0faf8;border:1px solid #b2ddd8;border-radius:8px;
-  padding:12px 16px;margin-bottom:16px;font-size:.84rem;color:#246b61;line-height:1.6}
+  padding:12px 16px;margin-bottom:18px;font-size:.84rem;color:#246b61;line-height:1.6}
 .import-instructions code{background:#c8e6e0;padding:1px 5px;border-radius:3px;font-size:.83em}
-/* Textarea */
-textarea#paste-area{width:100%;min-height:160px;border:2px solid #e2e8f0;border-radius:8px;
+textarea#paste-area{width:100%;min-height:180px;border:2px solid #e2e8f0;border-radius:8px;
   padding:12px;font-family:"DM Sans",system-ui,monospace;font-size:.82rem;color:#374151;
-  resize:vertical;outline:none;transition:border .15s;box-sizing:border-box}
+  resize:vertical;outline:none;transition:border .15s}
 textarea#paste-area:focus{border-color:#59B2A5;box-shadow:0 0 0 3px rgba(89,178,165,0.18)}
 textarea#paste-area::placeholder{color:#cbd5e1}
-/* Buttons */
 .toggle-grp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:8px}
 .toggle-grp button{padding:4px 14px;border:1px solid #d1d5db;border-radius:20px;background:#f9fafb;font-family:inherit;font-size:0.8rem;cursor:pointer;color:#6b7280;transition:all .15s}
 .toggle-grp button.active{background:#59B2A5;border-color:#59B2A5;color:#fff;font-weight:600}
@@ -47,22 +37,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   padding:10px 22px;font-family:inherit;font-size:.88rem;font-weight:600;
   cursor:pointer;transition:background .15s;margin-top:12px}
 .btn-primary:hover{background:#4a9e92}
-/* Drag & Drop Upload-Bereich */
-.upload-drop-area{border:2px dashed #cbd5e1;border-radius:10px;padding:28px 20px;
-  text-align:center;cursor:pointer;transition:all .15s;user-select:none}
-.upload-drop-area:hover,.upload-drop-area.drag-over{border-color:#59B2A5;background:#f0faf8}
-.upload-drop-area svg{color:#59B2A5;margin-bottom:8px}
-.upload-drop-text{font-size:.9rem;color:#374151;margin:0 0 14px;font-weight:500}
-.upload-hint-text{font-size:.76rem;color:#94a3b8;margin:12px 0 0}
-.file-btn-native{display:block;margin:8px auto 0;font-family:inherit;font-size:.85rem;cursor:pointer;max-width:280px}
-.file-btn-native::file-selector-button{background:#59B2A5;color:white;border:none;
-  padding:9px 22px;border-radius:8px;font-family:inherit;font-size:.88rem;font-weight:600;
-  cursor:pointer;transition:background .15s;margin-right:10px}
-.file-btn-native:hover::file-selector-button{background:#4a9e92}
+.import-divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:#94a3b8;font-size:.8rem}
+.import-divider::before,.import-divider::after{content:"";flex:1;border-top:1px solid #e2e8f0}
 .file-upload-label{display:inline-flex;align-items:center;gap:8px;border:2px dashed #cbd5e1;
   border-radius:8px;padding:12px 18px;cursor:pointer;font-size:.85rem;color:#64748b;
   transition:all .15s;width:100%}
 .file-upload-label:hover{border-color:#59B2A5;color:#59B2A5;background:#f0faf8}
+#file-input{display:none}
 .import-status{margin-top:16px;padding:10px 14px;border-radius:8px;font-size:.85rem;
   font-weight:500;display:none}
 .import-status.ok{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;display:block}
@@ -274,27 +255,26 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="import-logo">Meeting Strukturanalyse</div>
     <div class="import-sub">Standalone Dashboard · läuft komplett im Browser · kein Python, kein Server <span id="version-badge" style="opacity:.45;font-size:.78rem">v1.6</span></div>
 
-    <div id="import-status" class="import-status"></div>
-
-    <!-- Option A: Confluence -->
-    <div class="import-section-title">Option 1 – Aus Confluence einfügen</div>
+    <div class="import-section-title">Schritt 1: Daten aus Confluence kopieren</div>
     <div class="import-instructions">
-      Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> → <code>⌘C</code> → hier einfügen (<code>⌘V</code>)
+      Öffne die Meeting-Tabelle in Confluence → <code>⌘A</code> (alles markieren) → <code>⌘C</code> (kopieren) →
+      unten in das Textfeld einfügen (<code>⌘V</code>).<br>
+      Alternativ kannst du auch eine <strong>CSV-Datei</strong> hochladen (gleiche Spaltenstruktur).
     </div>
-    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen …&#10;&#10;Erwartet: Tabelle mit Spalten wie Abteilung · Meetingname · Personen · Rhythmus · Status&#10;Optionale Spalten: Dauer · Wirkung (1–4) · Flugebene (FL1/FL2/FL3)"></textarea>
+
+    <div class="import-section-title">Schritt 2: Einfügen oder hochladen</div>
+    <textarea id="paste-area" placeholder="Confluence-Tabelle hier einfügen (⌘A in Confluence → ⌘C → hier ⌘V)...&#10;&#10;Erwartet wird eine Tab-getrennte Tabelle mit diesen Spalten (in beliebiger Reihenfolge):&#10;Abteilung · Meetingname · Kategorie · Zweck · Verantwortlich · Personen · Rhythmus · Dauer · Informationsfluss · Wirkung (1–4) · Status · Abteilungsübergreifend · Platzhalter · Learnings&#10;&#10;Optionale Spalten (Dauer, Wirkung) können leer bleiben."></textarea>
     <button class="btn-primary" onclick="loadFromPaste()">Prüfen &amp; Laden</button>
 
     <div class="import-divider">oder</div>
 
-    <!-- Option B: Datei -->
-    <div class="import-section-title">Option 2 – CSV / TSV-Datei hochladen</div>
-    <div class="import-instructions">
-      CSV, TSV oder TXT-Datei mit gleicher Spaltenstruktur direkt auswählen.
-    </div>
-    <input type="file" id="file-input" accept=".csv,.tsv,.txt"
-           onchange="loadFromFile(this)" class="file-btn-native"
-           style="display:block;width:100%;box-sizing:border-box">
+    <label class="file-upload-label" for="file-input">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      CSV-Datei wählen (.csv, .tsv, .txt)
+      <input type="file" id="file-input" accept=".csv,.tsv,.txt" onchange="loadFromFile(this)">
+    </label>
 
+    <div id="import-status" class="import-status"></div>
   </div>
 </div>
 
@@ -1002,7 +982,6 @@ function loadFromPaste() {
 function loadFromFile(input) {
   const file = input.files[0];
   if (!file) return;
-  showStatus("⏳ Lese: " + file.name + " (" + Math.round(file.size/1024) + " KB)…", true);
   const reader = new FileReader();
   reader.onload  = e => tryLoad(e.target.result);
   reader.onerror = () => showStatus("❌ Datei konnte nicht gelesen werden.", false);
@@ -1090,25 +1069,6 @@ function showDashboard() {
   renderTable();
   // Personen-Tab zuerst öffnen (Nutzer reviewt Zuordnungen, bevor er Charts sieht)
   showTab(0);
-}
-
-function setImportMethod(method) {
-  const confluence = method === 'confluence';
-  document.getElementById('import-panel-confluence').style.display = confluence ? '' : 'none';
-  document.getElementById('import-panel-csv').style.display = confluence ? 'none' : '';
-  document.getElementById('btn-method-confluence').classList.toggle('active', confluence);
-  document.getElementById('btn-method-csv').classList.toggle('active', !confluence);
-}
-
-function handleFileDrop(event) {
-  event.preventDefault();
-  document.getElementById('upload-drop-area').classList.remove('drag-over');
-  const file = event.dataTransfer && event.dataTransfer.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload  = e => tryLoad(e.target.result);
-  reader.onerror = () => showStatus("Datei konnte nicht gelesen werden.", false);
-  reader.readAsText(file, "UTF-8");
 }
 
 function resetToImport() {
