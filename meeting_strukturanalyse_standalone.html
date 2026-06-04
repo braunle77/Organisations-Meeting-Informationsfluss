@@ -79,8 +79,14 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .warn-toggle:hover{color:#78350f}
 .warnings ul{padding-left:16px;margin-top:6px}
 .warnings li{margin-bottom:2px}
-.tab-bar{display:flex;gap:2px;padding:0 36px;background:#f8faf9;
+.tab-bar{display:flex;gap:0;padding:0 36px;background:#f8faf9;align-items:flex-end;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.tab-group{display:flex;align-items:flex-end;gap:2px}
+.tab-group-sep{width:1px;background:#d1d5db;height:22px;margin:0 10px;align-self:center;flex-shrink:0}
+.tab-group-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;
+  color:#b0bec5;padding:0 4px 14px;align-self:flex-end;user-select:none;white-space:nowrap}
+.tab-group-admin .tab-btn:hover{color:#6b7280}
+.tab-group-admin .tab-btn.active{color:#6b7280;border-bottom-color:#9ca3af}
 .tab-btn{padding:10px 16px;border:none;background:none;cursor:pointer;
   font-family:inherit;font-size:.83rem;font-weight:500;color:#4a6b67;
   border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
@@ -191,6 +197,35 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   background:#1a2e2c;color:white;padding:8px 18px;border-radius:8px;
   font-size:.82rem;z-index:10000;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.visible{opacity:1}
+/* ── Datenpflege-Tab ────────────────────────────────────────────────────── */
+.dp-section{background:white;border-radius:10px;padding:20px 24px;margin-bottom:16px;
+  box-shadow:0 2px 8px rgba(89,178,165,.06);border:1px solid #f1f5f9}
+.dp-section-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:#1a2e2b;margin:0 0 4px}
+.dp-section-desc{font-size:.82rem;color:#4a6b67;margin:0 0 14px;line-height:1.55}
+.dp-dept-grid{display:flex;flex-direction:column;gap:7px}
+.dp-dept-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dp-typ-sel{font-family:inherit;font-size:.8rem;border:1px solid #e2e8f0;border-radius:6px;
+  padding:5px 8px;background:#f9fafb;color:#374151;cursor:pointer;flex:1;max-width:320px}
+.dp-typ-sel:focus{outline:none;border-color:#59B2A5}
+.dp-quality-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:4px}
+.dp-qual-card{background:#f8faf9;border-radius:8px;padding:11px 13px;border:1px solid #e8f0ee}
+.dp-qual-header{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.dp-qual-label{font-size:.79rem;font-weight:600;color:#1a2e2b;flex:1}
+.dp-qual-val{font-size:.77rem;font-weight:600;white-space:nowrap}
+.dp-qual-bar{height:5px;background:#e8f0ee;border-radius:3px;overflow:hidden;margin-bottom:5px}
+.dp-qual-fill{height:100%;border-radius:3px;transition:width .3s}
+.dp-qual-hint{font-size:.74rem;color:#7a9e9a;line-height:1.4}
+.dp-gruppen-row{background:#f8faf9;border-radius:8px;padding:10px 12px;margin-bottom:7px;
+  border:1px solid #e8f0ee}
+.dp-gruppen-meeting{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap}
+.dp-gruppen-assign{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.dp-gruppen-sel{font-family:inherit;font-size:.79rem;border:1px solid #e2e8f0;border-radius:6px;
+  min-width:160px;max-width:260px;background:#fff;padding:2px}
+.dp-count-badge{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 7px;
+  border-radius:10px;margin-left:7px;vertical-align:middle}
+.dp-count-ok{background:#d1fae5;color:#065f46}
+.dp-count-warn{background:#fef3c7;color:#92400e}
 /* ── Flight Levels Tab ─────────────────────────────────────────────────── */
 .fl-kpi-row{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap}
 .fl-kpi-card{flex:1;min-width:140px;border-radius:10px;padding:14px 18px}
@@ -264,18 +299,26 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="warnings-bar"></div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="0" onclick="showTab(0)">Personen</button>
-    <button class="tab-btn" data-tab="1" onclick="showTab(1)">Netzwerk</button>
-    <button class="tab-btn" data-tab="2" onclick="showTab(2)">Abteilungen</button>
-    <button class="tab-btn" data-tab="3" onclick="showTab(3)">Kalender</button>
-    <button class="tab-btn" data-tab="4" onclick="showTab(4)">Kommunikation</button>
-    <button class="tab-btn" data-tab="5" onclick="showTab(5)">Überschneidungen</button>
-    <button class="tab-btn" data-tab="6" onclick="showTab(6)">Engpass</button>
-    <button class="tab-btn" data-tab="7" onclick="showTab(7)">Zeitverteilung</button>
-    <button class="tab-btn" data-tab="8" onclick="showTab(8)">Wirkung</button>
-    <button class="tab-btn" data-tab="9" onclick="showTab(9)">Alle Meetings</button>
-    <button class="tab-btn" data-tab="10" onclick="showTab(10)">Flight Levels</button>
-    <button class="tab-btn" data-tab="11" onclick="showTab(11)">KI Analyse</button>
+    <div class="tab-group">
+      <span class="tab-group-label">Analyse</span>
+      <button class="tab-btn" data-tab="1" onclick="showTab(1)">Netzwerk</button>
+      <button class="tab-btn" data-tab="2" onclick="showTab(2)">Abteilungen</button>
+      <button class="tab-btn" data-tab="3" onclick="showTab(3)">Kalender</button>
+      <button class="tab-btn" data-tab="4" onclick="showTab(4)">Kommunikation</button>
+      <button class="tab-btn" data-tab="5" onclick="showTab(5)">Überschneidungen</button>
+      <button class="tab-btn" data-tab="6" onclick="showTab(6)">Engpass</button>
+      <button class="tab-btn" data-tab="7" onclick="showTab(7)">Zeitverteilung</button>
+      <button class="tab-btn" data-tab="8" onclick="showTab(8)">Wirkung</button>
+      <button class="tab-btn" data-tab="10" onclick="showTab(10)">Flight Levels</button>
+      <button class="tab-btn" data-tab="11" onclick="showTab(11)">KI Analyse</button>
+    </div>
+    <div class="tab-group-sep"></div>
+    <div class="tab-group tab-group-admin">
+      <span class="tab-group-label">Datenpflege</span>
+      <button class="tab-btn active" data-tab="0" onclick="showTab(0)">Personen</button>
+      <button class="tab-btn" data-tab="9" onclick="showTab(9)">Alle Meetings</button>
+      <button class="tab-btn" data-tab="12" onclick="showTab(12)">Datenpflege</button>
+    </div>
   </div>
 
   <div id="panel-0" class="panel" data-tab="1">
@@ -379,6 +422,37 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     </div>
   </div>
 
+  <div id="panel-dp" class="panel" data-tab="12">
+    <button class="tab-info-btn" onclick="showTabInfo(12)">ℹ</button>
+
+    <div class="dp-section">
+      <p class="dp-section-title">Abteilungstypen</p>
+      <p class="dp-section-desc">Ordne jeder Abteilung einen funktionalen Typ zu. Verbessert die Flight-Level-Klassifikation signifikant und bereitet die KI-Analyse vor.</p>
+      <div class="dp-dept-grid" id="dp-dept-grid"></div>
+    </div>
+
+    <div class="dp-section">
+      <p class="dp-section-title">Datenqualität</p>
+      <p class="dp-section-desc">Je vollständiger die Daten, desto präziser die Analyse. Hier siehst du, wo Datenpflege den größten Mehrwert schafft.</p>
+      <div class="dp-quality-grid" id="dp-quality-grid"></div>
+    </div>
+
+    <div class="dp-section" id="dp-gruppen-section"></div>
+
+    <div class="dp-section">
+      <p class="dp-section-title">Konfiguration exportieren / importieren</p>
+      <p class="dp-section-desc">Alle manuellen Zuordnungen, Abteilungstypen und Korrekturen als JSON sichern und auf anderen Geräten oder im Team wiederverwenden.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-primary" onclick="exportConfig()">↓ Konfiguration exportieren (.json)</button>
+        <label class="file-upload-label" style="margin:0;cursor:pointer">
+          ↑ Konfiguration importieren (.json)
+          <input type="file" accept=".json" onchange="importConfigFile(this)" style="display:none">
+        </label>
+      </div>
+      <p class="hint" style="margin-top:8px">Enthält: Personenzuordnungen · FK-Markierungen · Abteilungstypen · Flight-Level-Korrekturen · Gruppen-Teilnehmer-Auflösungen</p>
+    </div>
+  </div>
+
   <div id="panel-7" class="panel active" data-tab="0">
     <button class="tab-info-btn" onclick="showTabInfo(0)">ℹ</button>
     <p class="hint" style="margin-bottom:14px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
@@ -424,7 +498,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "04.06.2026 10:00";
+const APP_VERSION = "04.06.2026 17:30";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -540,6 +614,9 @@ let sankeyRendered     = false;
 let abtRendered        = false;
 let abtMode            = "anzahl"; // "anzahl" | "freq"
 
+// Abteilungstypen (aus localStorage, gepflegt im Datenpflege-Tab)
+let deptFunktionen = {};  // { "Vertrieb": "operativ", "Management": "strategisch" }
+
 // Netzwerk: FK-Set (klickbar im Chart togglebar) + Positions-Cache
 let fkSet    = new Set(FK_LIST);   // wird bei neuem Daten-Load auf FK_LIST zurückgesetzt
 let netCache = null;               // { pos, edges, connectedPersons, isolatedCount }
@@ -589,12 +666,40 @@ function normalizeAlias(raw) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Gruppen-Teilnehmer-Erkennung
+// ══════════════════════════════════════════════════════════════════════════════
+function isGruppenParticipant(name) {
+  if (!name) return false;
+  if (/^[a-zäöü]/.test(name)) return true;                       // Kleinbuchstabe = generisch
+  if (name.length > 30) return true;                             // Zu lang für einen Namen
+  if (allDepts.includes(name)) return true;                      // Passt zu bekanntem Abt.-Namen
+  if (SPECIAL_DEPTS.find(s => s.key === name)) return true;      // Sonderkategorie
+  if (/\balle\b|\bteam\b|\bgruppe\b|\bdept\b/i.test(name)) return true;
+  return false;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Flight Levels – Auto-Klassifikation
 // ══════════════════════════════════════════════════════════════════════════════
 function suggestFlightLevel(m) {
   let s1 = 0, s2 = 0, s3 = 0;
 
-  // Abteilungsübergreifend (stärkstes Signal)
+  // Stärkstes Signal: Abteilungstyp (gepflegt im Datenpflege-Tab)
+  const ownTyp = deptFunktionen[m.abteilung];
+  if (ownTyp === "strategisch")   s3 += 5;
+  if (ownTyp === "koordination")  s2 += 5;
+  if (ownTyp === "operativ")      s1 += 5;
+  // Unterstützend / Extern: kein starkes FL-Signal → neutral
+
+  // Teilnehmer-Abteilungstypen bei übergreifenden Meetings
+  if (m.abteilungsuebergreifend) {
+    const deptTyps = [...new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean))]
+      .map(abt => deptFunktionen[abt]).filter(Boolean);
+    if (deptTyps.includes("strategisch"))   s3 += 3;
+    if (deptTyps.includes("koordination"))  s2 += 2;
+  }
+
+  // Abteilungsübergreifend (zweitstärkstes Signal wenn kein Typ gesetzt)
   if (m.abteilungsuebergreifend) { s2 += 3; s3 += 1; }
   else { s1 += 3; }
 
@@ -939,6 +1044,12 @@ function showDashboard() {
     }
   });
 
+  // Gruppen-Teilnehmer erkennen (nach allDepts + effectivePersonAbt aufgebaut)
+  MEETINGS.forEach(m => {
+    m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+    m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+  });
+
   document.getElementById("import-screen").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
   renderStats();
@@ -1075,7 +1186,11 @@ const TAB_INFO = {
   11: { title: "KI-Analyse",
         was: "Reserviert für kommentierte Befunde – erkannte Muster, Redundanzen und Handlungsempfehlungen aus einer KI-gestützten Analyse.",
         achten: "Dieser Tab ist aktuell leer. Sinnvolle Insights erfordern Mustererkennung über die Daten – das ist eine KI-Aufgabe.",
-        folgefragen: "Welche Muster sind in dieser Organisation besonders auffällig? Welche Maßnahmen werden empfohlen?" }
+        folgefragen: "Welche Muster sind in dieser Organisation besonders auffällig? Welche Maßnahmen werden empfohlen?" },
+  12: { title: "Datenpflege",
+        was: "Zentraler Admin-Bereich: Abteilungstypen pflegen, Datenqualität überwachen, Gruppen-Teilnehmer auflösen, Konfiguration exportieren/importieren.",
+        achten: "Abteilungstypen verbessern die Flight-Level-Klassifikation erheblich. Je mehr Felder gepflegt sind (Dauer, Wirkung, Infofluss), desto aussagekräftiger sind die Analyse-Tabs.",
+        folgefragen: "Welche Abteilungen haben noch keinen Typ? Wie viele Meetings haben Gruppen-Platzhalter als Teilnehmer? Ist die Konfiguration gesichert?" }
 };
 
 function showTabInfo(idx) {
@@ -1122,6 +1237,7 @@ function showTab(idx) {
     if (idx === 7) renderTreemap();
     if (idx === 8) renderWirkungsMatrix();
     if (idx === 10) renderFlightLevels();
+    if (idx === 12) renderDatapflege();
   }
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = idx === 0 ? "flex" : "none";
@@ -1891,6 +2007,8 @@ function renderTable() {
     const learning = m.learning || "–";
     const platzh = m.ist_platzhalter
       ? ' <span class="platzh-badge">⚠ Platzhalter</span>' : "";
+    const grupBadge = m.hatGruppenTeilnehmer
+      ? ` <span title="Gruppen-Teilnehmer erkannt: ${m.gruppenTeilnehmer.join(', ')}" style="color:#d97706;cursor:help;font-size:.85rem">⚑</span>` : "";
     const wertDisplay = m.wert
       ? '●'.repeat(m.wert) + '○'.repeat(4 - m.wert)
       : '–';
@@ -1906,7 +2024,7 @@ function renderTable() {
     tr.setAttribute("data-teiln", teilnStr);
     tr.innerHTML = `
       <td><span class="abt-badge" style="background:${abtCol}22;color:${abtCol};border:1px solid ${abtCol}55">${m.abteilung}</span></td>
-      <td class="meeting-name">${m.name}${platzh}</td>
+      <td class="meeting-name">${m.name}${platzh}${grupBadge}</td>
       <td><span class="kat-pill">${m.kategorie}</span></td>
       <td><span class="rhy-dot" style="background:${RHY_FARBEN[m.rhythmus_klasse]||'#9ca3af'}"></span>${m.rhythmus_klasse}</td>
       <td style="text-align:right;color:${m.dauer?'inherit':'#c0ccc9'}">${m.dauer ? m.dauer+'′' : '–'}</td>
@@ -2613,6 +2731,216 @@ function renderWirkungsMatrix() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Tab 12: Datenpflege – Abteilungstypen, Datenqualität, Gruppen-Teilnehmer
+// ══════════════════════════════════════════════════════════════════════════════
+const DEPT_TYP_OPTS = [
+  { val: "",             label: "— Kein Typ gesetzt —",      hint: "",          color: "#9ca3af" },
+  { val: "strategisch",  label: "Strategisch / Führung",     hint: "→ FL3",     color: "#7c6bab" },
+  { val: "koordination", label: "Koordination / Steuerung",  hint: "→ FL2",     color: "#2176ae" },
+  { val: "operativ",     label: "Operativ / Delivery",       hint: "→ FL1",     color: "#59B2A5" },
+  { val: "unterstützend",label: "Unterstützend",             hint: "HR, Finance …", color: "#d4a843" },
+  { val: "extern",       label: "Extern / Partner",          hint: "",          color: "#6b7280" },
+];
+
+function renderDatapflege() {
+  renderDeptTypenGrid();
+  renderQualitaetsCockpit();
+  renderGruppenTeilnehmerSection();
+}
+
+function renderDeptTypenGrid() {
+  const grid = document.getElementById("dp-dept-grid");
+  if (!grid) return;
+  const allActiveDepts = [...allDepts, ...SPECIAL_DEPTS.map(s => s.key)
+    .filter(k => !allDepts.includes(k) && Object.values(effectivePersonAbt).includes(k))];
+
+  grid.innerHTML = allActiveDepts.map(dept => {
+    const farbe = effectiveAbtFarben[dept] || "#9ca3af";
+    const curTyp = deptFunktionen[dept] || "";
+    const opts = DEPT_TYP_OPTS.map(o =>
+      `<option value="${o.val}"${o.val === curTyp ? " selected" : ""}>${o.label}${o.hint ? " ("+o.hint+")" : ""}</option>`
+    ).join("");
+    return `<div class="dp-dept-row">
+      <span class="abt-badge" style="background:${farbe}22;color:${farbe};border:1px solid ${farbe}55;min-width:100px;justify-content:center">${dept}</span>
+      <select class="dp-typ-sel" data-dept="${dept.replace(/"/g,'&quot;')}" onchange="setDeptTyp(this)">${opts}</select>
+    </div>`;
+  }).join("") || '<p class="hint">Keine Abteilungen geladen.</p>';
+}
+
+function setDeptTyp(sel) {
+  const dept = sel.dataset.dept;
+  if (sel.value) deptFunktionen[dept] = sel.value;
+  else delete deptFunktionen[dept];
+  saveConfig();
+  // FL auto-suggestions für betroffene Meetings aktualisieren
+  MEETINGS.forEach(m => {
+    if (m.flugebeneAuto && (m.abteilung === dept ||
+        m.teilnehmer.some(t => effectivePersonAbt[t] === dept))) {
+      m.flugebene = suggestFlightLevel(m);
+    }
+  });
+  renderedTabs.delete(10);
+  showToast("Abteilungstyp gespeichert");
+}
+
+function renderQualitaetsCockpit() {
+  const grid = document.getElementById("dp-quality-grid");
+  if (!grid) return;
+  const total = MEETINGS.length;
+  if (total === 0) { grid.innerHTML = ""; return; }
+
+  const knownPersons = Object.keys(effectivePersonAbt);
+  const metrics = [
+    { label: "Dauer erfasst",
+      count: MEETINGS.filter(m => m.dauer !== null).length, tot: total,
+      hint: "Nötig für Zeitlastberechnung, Engpass und Treemap.",
+      action: "Dauern in Confluence eintragen.", color: "#59B2A5" },
+    { label: "Wirkung bewertet",
+      count: MEETINGS.filter(m => m.wert !== null).length, tot: total,
+      hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Diagnose F3.",
+      action: "Im Tab „Alle Meetings" per Klick eintragen.", color: "#2176ae" },
+    { label: "Infofluss dokumentiert",
+      count: MEETINGS.filter(m => m.infofluss && m.infofluss.trim()).length, tot: total,
+      hint: "Dokumentiert wohin Informationen fließen.",
+      action: "In Confluence-Tabelle befüllen.", color: "#7c9e44" },
+    { label: "Abteilungstypen gepflegt",
+      count: allDepts.filter(d => deptFunktionen[d]).length, tot: allDepts.length || 1,
+      hint: "Verbessert Flight-Level-Klassifikation erheblich.",
+      action: "Hier oben in 'Abteilungstypen' eintragen.", color: "#7c6bab" },
+    { label: "Flugebene bestätigt",
+      count: MEETINGS.filter(m => m.flugebene && !m.flugebeneAuto).length, tot: total,
+      hint: "~-Badges sind auto-vorgeschlagen. Manuelle Bestätigung erhöht Präzision.",
+      action: "Im Tab „Alle Meetings" ~-Badges prüfen.", color: "#d4a843" },
+    { label: "Ohne Gruppen-Teilnehmer",
+      count: MEETINGS.filter(m => !m.hatGruppenTeilnehmer).length, tot: total,
+      hint: "Meetings mit Gruppen-Platzhaltern können nicht personengenau analysiert werden.",
+      action: "Unten in 'Gruppen-Teilnehmer' auflösen.", color: "#e05c2a" },
+    { label: "Personen klar zugeordnet",
+      count: knownPersons.filter(p => (personConfidence[p]?.score || 1) >= 0.7).length,
+      tot: knownPersons.length || 1,
+      hint: "Unsichere Personen (gelber Punkt) können Charts verzerren.",
+      action: "Im Tab „Personen" gelbe Punkte prüfen.", color: "#c25050" },
+  ];
+
+  grid.innerHTML = metrics.map(m => {
+    const pct = m.tot > 0 ? Math.round(m.count / m.tot * 100) : 100;
+    const good = pct >= 80;
+    const ic = good ? "✓" : "⚠";
+    const ic_color = good ? "#059669" : "#d97706";
+    return `<div class="dp-qual-card">
+      <div class="dp-qual-header">
+        <span style="color:${ic_color};font-weight:700;font-size:.88rem">${ic}</span>
+        <span class="dp-qual-label">${m.label}</span>
+        <span class="dp-qual-val" style="color:${ic_color}">${m.count}/${m.tot} (${pct}%)</span>
+      </div>
+      <div class="dp-qual-bar"><div class="dp-qual-fill" style="width:${pct}%;background:${good ? m.color : '#fbbf24'}"></div></div>
+      <div class="dp-qual-hint">${good ? m.hint : '<b>'+m.action+'</b> '+m.hint}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderGruppenTeilnehmerSection() {
+  const section = document.getElementById("dp-gruppen-section");
+  if (!section) return;
+  const withGroups = MEETINGS.filter(m => m.hatGruppenTeilnehmer);
+  if (withGroups.length === 0) {
+    section.innerHTML = `<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-ok">0 erkannt</span></p>
+      <p class="dp-section-desc" style="color:#059669;margin-bottom:0">✓ Alle Teilnehmer sind einzelne Personen – keine Gruppen-Platzhalter erkannt.</p>`;
+    return;
+  }
+  const allPersons = [...new Set(Object.keys(effectivePersonAbt))].sort();
+  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+  const aufloesungen = cfg.gruppenAufloesungen || {};
+  section.innerHTML = `<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-warn">${withGroups.length} Meetings</span></p>
+    <p class="dp-section-desc">Ordne Gruppen-Platzhaltern echte Personen zu. Die Auflösungen werden gespeichert und beim nächsten Import wieder angewandt.</p>
+    ${withGroups.flatMap(m => m.gruppenTeilnehmer.map(g => {
+      const key = m.abteilung + "||" + m.name + "||" + g;
+      const cur = aufloesungen[key] || [];
+      const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
+      const opts = allPersons.map(p => `<option value="${p}"${cur.includes(p) ? " selected" : ""}>${p}</option>`).join("");
+      return `<div class="dp-gruppen-row">
+        <div class="dp-gruppen-meeting">
+          <span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:${farbe}22;color:${farbe};border:1px solid ${farbe}44">${m.abteilung}</span>
+          <strong style="font-size:.83rem">${m.name}</strong>
+          <span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ${g}</span>
+        </div>
+        <div class="dp-gruppen-assign">
+          <select multiple class="dp-gruppen-sel" data-key="${key}" size="4">${opts}</select>
+          <button class="btn-secondary" style="font-size:.76rem" onclick="saveGruppenAufloesung(this)">Speichern</button>
+        </div>
+      </div>`;
+    })).join("")}`;
+}
+
+function saveGruppenAufloesung(btn) {
+  const sel = btn.previousElementSibling;
+  const key = sel.dataset.key;
+  const selected = [...sel.selectedOptions].map(o => o.value);
+  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+  if (!cfg.gruppenAufloesungen) cfg.gruppenAufloesungen = {};
+  if (selected.length > 0) cfg.gruppenAufloesungen[key] = selected;
+  else delete cfg.gruppenAufloesungen[key];
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  showToast("Gruppen-Zuordnung gespeichert");
+}
+
+function exportConfig() {
+  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "meeting-config.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Konfiguration exportiert ↓");
+}
+
+function importConfigFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const cfg = JSON.parse(e.target.result);
+      const VALID = ["personAbt","fkList","wertOverrides","flugebeneOverrides","deptFunktionen","gruppenAufloesungen"];
+      const sanitized = {};
+      VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
+      deptFunktionen = sanitized.deptFunktionen || {};
+      // Vollständige Re-Init des abgeleiteten Zustands
+      const derived = autoDerivePERSON_ABT(MEETINGS);
+      personConfidence   = derived.confidence;
+      effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
+      effectiveAbtFarben = buildAbtFarben(allDepts);
+      fkSet = new Set(FK_LIST);
+      applyStoredConfig();
+      MEETINGS.forEach(m => {
+        const abts = new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean));
+        m.abteilungsuebergreifend = abts.size > 1;
+      });
+      MEETINGS.forEach(m => { if (m.flugebeneAuto) m.flugebene = suggestFlightLevel(m); });
+      MEETINGS.forEach(m => {
+        m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+        m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+      });
+      renderedTabs.clear();
+      renderStats();
+      renderTable();
+      renderPersonenTab();
+      renderedTabs.add(0); renderedTabs.add(9);
+      showToast("Konfiguration importiert ✓");
+    } catch(err) {
+      showToast("Fehler beim Import: " + err.message);
+    }
+    input.value = "";
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Tab 10: Flight Levels – 5 Diagnose-Visualisierungen
 // ══════════════════════════════════════════════════════════════════════════════
 function renderFlightLevels() {
@@ -2921,6 +3249,12 @@ function refreshAllCharts() {
     if (m.flugebeneAuto) m.flugebene = suggestFlightLevel(m);
   });
   renderedTabs.delete(10); // Flight Levels neu rendern
+  renderedTabs.delete(12); // Datenpflege neu rendern
+  // Gruppen-Teilnehmer nach Abteilungsänderung neu prüfen
+  MEETINGS.forEach(m => {
+    m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+    m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+  });
   netCache = null;
   renderedTabs.delete(1); // Netzwerk wird beim nächsten Tab-Besuch frisch gerendert
   renderedTabs.delete(3); // Kalender wird beim nächsten Tab-Besuch frisch gerendert
@@ -2956,8 +3290,11 @@ function saveConfig() {
     if (m.flugebene && !m.flugebeneAuto)
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
+  // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
+  const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+  const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
   try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, wertOverrides, flugebeneOverrides }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, wertOverrides, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
@@ -3001,6 +3338,8 @@ function applyStoredConfig() {
         }
       });
     }
+    // deptFunktionen aus localStorage (stabil über Imports)
+    if (cfg.deptFunktionen) deptFunktionen = cfg.deptFunktionen;
     updateConfigHint(true);
   } catch(e) { /* ignore parse errors */ }
 }
@@ -3015,8 +3354,9 @@ function updateConfigHint(hasStored) {
 }
 
 function resetConfig() {
-  if (!confirm("Alle manuellen Zuordnungen und FK-Markierungen löschen?")) return;
+  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen, FK-Markierungen und Gruppen-Auflösungen löschen?")) return;
   try { localStorage.removeItem(CONFIG_KEY); } catch(e) {}
+  deptFunktionen = {};
   // Neu ableiten ohne Overrides
   const derived = autoDerivePERSON_ABT(MEETINGS);
   personConfidence   = derived.confidence;
