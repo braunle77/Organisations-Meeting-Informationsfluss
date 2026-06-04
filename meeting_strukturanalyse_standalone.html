@@ -1133,7 +1133,7 @@ function renderStats() {
     const warnCount = warns.length;
     const hinweis = warnCount === 1 ? "Hinweis" : "Hinweise";
     document.getElementById("warnings-bar").innerHTML =
-      `<div class="warnings"><button class="warn-toggle" onclick="toggleWarning()">⚠ ${warnCount} ${hinweis} ▾</button><ul id="warn-list">${warns.map(w=>`<li>${w}</li>`).join("")}</ul></div>`;
+      '<div class="warnings"><button class="warn-toggle" onclick="toggleWarning()">⚠ ' + warnCount + ' ' + hinweis + ' ▾<\/button><ul id="warn-list">' + warns.map(function(w){return '<li>'+w+'<\/li>';}).join("") + '<\/ul><\/div>';
   } else {
     document.getElementById("warnings-bar").innerHTML = "";
   }
@@ -1639,7 +1639,7 @@ function renderOverlap() {
             <span style="color:#9ca3af;margin:0 4px">↔</span>
             <strong style="font-size:.84rem">${p.b}</strong>
             <span style="margin-left:8px;${badge};padding:1px 8px;border-radius:10px;font-size:.74rem">${Math.round(p.score*100)}%</span>
-            <br><span style="font-size:.77rem;color:#6b7280">Gemeinsam: ${p.gem.slice(0,5).join(", ")}${p.gem.length > 5 ? ` +${p.gem.length-5}` : ""}</span>
+            <br><span style="font-size:.77rem;color:#6b7280">Gemeinsam: ${p.gem.slice(0,5).join(", ")}${p.gem.length > 5 ? " +" + (p.gem.length-5) : ""}</span>
           </div></div>`;
       }).join("")
     : `<p style="font-size:.84rem;color:#9ca3af">Keine Überschneidungen über 25% gefunden.</p>`;
@@ -2235,10 +2235,10 @@ function renderPersonenTab() {
 
   const diagLines = [];
   if (_filtered.length) {
-    diagLines.push(`<b>Herausgefiltert (generische Beschreibungen):</b> ${_filtered.map(p => `„${p}"`).join(", ")}`);
+    diagLines.push('<b>Herausgefiltert (generische Beschreibungen):<\/b> ' + _filtered.map(function(p){return '„'+p+'“';}).join(", "));
   }
   if (_noDept.length) {
-    diagLines.push(`<b>Keine Abteilung erkannt (unsichtbar):</b> ${_noDept.map(p => `„${p}"`).join(", ")}`);
+    diagLines.push('<b>Keine Abteilung erkannt (unsichtbar):<\/b> ' + _noDept.map(function(p){return '„'+p+'"';}).join(", "));
   }
 
   if (diagLines.length) {
@@ -2864,25 +2864,30 @@ function renderGruppenTeilnehmerSection() {
   const allPersons = [...new Set(Object.keys(effectivePersonAbt))].sort();
   const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
   const aufloesungen = cfg.gruppenAufloesungen || {};
-  section.innerHTML = `<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-warn">${withGroups.length} Meetings</span></p>
-    <p class="dp-section-desc">Ordne Gruppen-Platzhaltern echte Personen zu. Die Auflösungen werden gespeichert und beim nächsten Import wieder angewandt.</p>
-    ${withGroups.flatMap(m => m.gruppenTeilnehmer.map(g => {
+  // Zeilen vorab berechnen (kein nested Template-Literal in ${} – Safari-Kompatibilität)
+  const rowsHTML = withGroups.flatMap(function(m) {
+    return m.gruppenTeilnehmer.map(function(g) {
       const key = m.abteilung + "||" + m.name + "||" + g;
       const cur = aufloesungen[key] || [];
       const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
-      const opts = allPersons.map(p => `<option value="${p}"${cur.includes(p) ? " selected" : ""}>${p}</option>`).join("");
-      return `<div class="dp-gruppen-row">
-        <div class="dp-gruppen-meeting">
-          <span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:${farbe}22;color:${farbe};border:1px solid ${farbe}44">${m.abteilung}</span>
-          <strong style="font-size:.83rem">${m.name}</strong>
-          <span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ${g}</span>
-        </div>
-        <div class="dp-gruppen-assign">
-          <select multiple class="dp-gruppen-sel" data-key="${key}" size="4">${opts}</select>
-          <button class="btn-secondary" style="font-size:.76rem" onclick="saveGruppenAufloesung(this)">Speichern</button>
-        </div>
-      </div>`;
-    })).join("")}`;
+      const opts = allPersons.map(function(p) {
+        return '<option value="' + p + '"' + (cur.includes(p) ? ' selected' : '') + '>' + p + '<\/option>';
+      }).join("");
+      return '<div class="dp-gruppen-row">'
+        + '<div class="dp-gruppen-meeting">'
+        + '<span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
+        + '<strong style="font-size:.83rem">' + m.name + '<\/strong>'
+        + '<span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ' + g + '<\/span>'
+        + '<\/div>'
+        + '<div class="dp-gruppen-assign">'
+        + '<select multiple class="dp-gruppen-sel" data-key="' + key + '" size="4">' + opts + '<\/select>'
+        + '<button class="btn-secondary" style="font-size:.76rem" onclick="saveGruppenAufloesung(this)">Speichern<\/button>'
+        + '<\/div><\/div>';
+    });
+  }).join("");
+  section.innerHTML = '<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-warn">' + withGroups.length + ' Meetings<\/span><\/p>'
+    + '<p class="dp-section-desc">Ordne Gruppen-Platzhaltern echte Personen zu. Die Auflösungen werden gespeichert und beim nächsten Import wieder angewandt.<\/p>'
+    + rowsHTML;
 }
 
 function saveGruppenAufloesung(btn) {
