@@ -15,7 +15,7 @@ Confluence: https://colenet.atlassian.net/wiki/spaces/KI/pages/2500427777
 Reines Browser-Tool: Nutzer öffnet HTML → Paste aus Confluence → fertig.  
 Kein Python, kein Server, kein Setup. Vollständig offline-fähig.
 
-**Aktueller Stand:** `APP_VERSION = "04.06.2026 19:00"` (~3470 Zeilen)  
+**Aktueller Stand:** `APP_VERSION = "04.06.2026 22:00"` (~3490 Zeilen)  
 **Testdaten:** `testdaten.tsv` im Repo – 73 fiktive Meetings, vollständige Beispielorganisation
 
 ---
@@ -312,7 +312,7 @@ main  ←  feat/<name>  (gh pr create → squash merge)
 | #32 | Personen-Tab: adaptives Layout, Sortierung, 2-Spalten, kein Duplikat |
 | #33 | Flight Levels: Tab 10, 5 Diagnose-Visualisierungen (F1–F5), Auto-Klassifikation, ~-Badge |
 | #34 | Datenpflege-Tab: Abteilungstypen, Datenqualität, Gruppen-Teilnehmer, Config Export/Import, Tab-Grouping |
-| #35 | Bug: CSV-Import kaputt (saveConfig außerhalb try-catch, showDashboard-Fehler unabgefangen); Import-Screen UX-Redesign |
+| #35 | Bug: CSV-Import kaputt (Safari nested Template-Literals); Script in 3 Blöcke aufgeteilt; Import-Screen UX-Redesign (zwei gleichwertige Optionen, OS-neutral) |
 
 ---
 
