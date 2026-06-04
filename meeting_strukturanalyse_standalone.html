@@ -2026,8 +2026,9 @@ function renderChord(flussSymm, abtList, abtIdx) {
   // Bogen-Pfade für Labels in defs registrieren
   chord.groups.forEach(function(d) {
     var midAngle = (d.startAngle + d.endAngle) / 2;
-    var bottomHalf = midAngle > Math.PI;
-    // Untere Halbkreis-Bögen umkehren damit Text lesbar bleibt
+    // Bögen von π/2 bis 3π/2 umkehren (rechte + untere + linke Seite)
+    // → Text läuft immer von links nach rechts, nie auf dem Kopf
+    var bottomHalf = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5;
     var sa = bottomHalf ? d.endAngle   : d.startAngle;
     var ea = bottomHalf ? d.startAngle : d.endAngle;
     var p1 = toXY(midR, sa);
