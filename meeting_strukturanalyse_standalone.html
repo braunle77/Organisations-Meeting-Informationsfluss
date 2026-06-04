@@ -218,8 +218,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .dp-section-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
   color:#1a2e2b;margin:0 0 4px}
 .dp-section-desc{font-size:.82rem;color:#4a6b67;margin:0 0 14px;line-height:1.55}
-.dp-dept-grid{display:flex;flex-direction:column;gap:7px}
-.dp-dept-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dp-dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px}
+.dp-dept-row{display:flex;align-items:center;gap:8px}
 .dp-typ-sel{font-family:inherit;font-size:.8rem;border:1px solid #e2e8f0;border-radius:6px;
   padding:5px 8px;background:#f9fafb;color:#374151;cursor:pointer;flex:1;max-width:320px}
 .dp-typ-sel:focus{outline:none;border-color:#59B2A5}
@@ -420,7 +420,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
         <thead><tr>
           <th>Abteilung</th><th>Meeting</th><th>Kategorie</th><th>Rhythmus</th>
           <th title="Dauer in Minuten">Min.</th>
-          <th title="Flight Level: FL1=Operativ · FL2=Koordination · FL3=Strategisch">FL</th>
           <th title="Empfundener Wert 1–4 (Selbsteinschätzung)">Wirkg.</th>
           <th>Verantwortl.</th><th>Teilnehmer</th><th>Status</th>
           <th title="Abteilungsübergreifend">Übergr.</th><th>Zweck</th><th>Learnings</th>
@@ -2084,12 +2083,6 @@ function renderTable() {
     const wertDisplay = m.wert
       ? '●'.repeat(m.wert) + '○'.repeat(4 - m.wert)
       : '–';
-    const flCls = m.flugebene
-      ? `fl-badge fl-badge-${m.flugebene.toLowerCase()}${m.flugebeneAuto ? ' fl-badge-auto' : ''}`
-      : '';
-    const flDisplay = m.flugebene
-      ? `<span class="${flCls}">${m.flugebeneAuto ? '~' : ''}${m.flugebene}</span>`
-      : '<span style="color:#c0ccc9">–</span>';
     const tr = document.createElement("tr");
     tr.setAttribute("data-abt", m.abteilung);
     tr.setAttribute("data-vera", vera);
@@ -2100,7 +2093,6 @@ function renderTable() {
       <td><span class="kat-pill">${m.kategorie}</span></td>
       <td><span class="rhy-dot" style="background:${RHY_FARBEN[m.rhythmus_klasse]||'#9ca3af'}"></span>${m.rhythmus_klasse}</td>
       <td style="text-align:right;color:${m.dauer?'inherit':'#c0ccc9'}">${m.dauer ? m.dauer+'′' : '–'}</td>
-      <td class="fl-cell" data-idx="${idx}" title="Klicken zum Bearbeiten" style="text-align:center;cursor:pointer">${flDisplay}</td>
       <td class="wert-cell" data-idx="${idx}" title="Klicken zum Bearbeiten" style="text-align:center;cursor:pointer;letter-spacing:1px;color:${m.wert?'#59B2A5':'#c0ccc9'}">${wertDisplay}</td>
       <td>${vera}</td>
       <td class="teiln-cell">${teilnStr}</td>
@@ -2882,10 +2874,6 @@ function renderQualitaetsCockpit() {
       count: allDepts.filter(d => deptFunktionen[d]).length, tot: allDepts.length || 1,
       hint: "Verbessert Flight-Level-Klassifikation erheblich.",
       action: "Hier oben in 'Abteilungstypen' eintragen.", color: "#7c6bab" },
-    { label: "Flugebene bestätigt",
-      count: MEETINGS.filter(m => m.flugebene && !m.flugebeneAuto).length, tot: total,
-      hint: "~-Badges sind auto-vorgeschlagen. Manuelle Bestätigung erhöht Präzision.",
-      action: "Im Tab 'Alle Meetings' ~-Badges pruefen.", color: "#d4a843" },
     { label: "Ohne Gruppen-Teilnehmer",
       count: MEETINGS.filter(m => !m.hatGruppenTeilnehmer).length, tot: total,
       hint: "Meetings mit Gruppen-Platzhaltern können nicht personengenau analysiert werden.",
