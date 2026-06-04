@@ -79,6 +79,17 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   color:white;border-radius:7px;padding:7px 14px;font-family:inherit;font-size:.8rem;
   cursor:pointer;transition:background .15s;white-space:nowrap;position:relative;z-index:1}
 .btn-reload:hover{background:rgba(255,255,255,.25)}
+/* Kommunikation Executive Briefing */
+.komm-briefing-card{background:white;border-radius:10px;padding:16px 20px;
+  margin-bottom:16px;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(89,178,165,.06)}
+.komm-insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:600px){.komm-insights-grid{grid-template-columns:1fr}}
+.komm-insight{background:#f8faf9;border-radius:8px;padding:10px 13px;border:1px solid #e8f0ee}
+.komm-insight-label{font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:#6b7280;margin-bottom:3px}
+.komm-insight-value{font-size:.92rem;font-weight:700;color:#1a2e2b;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.komm-insight-sub{font-size:.73rem;color:#9ca3af;margin-top:2px}
 /* Zeitverteilung Executive Briefing */
 .treemap-briefing{background:white;border-radius:10px;padding:16px 20px;
   margin-bottom:16px;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(89,178,165,.06)}
@@ -432,10 +443,14 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
   <div id="panel-4" class="panel" data-tab="4">
     <button class="tab-info-btn" onclick="showTabInfo(4)">ℹ</button>
+    <div id="komm-briefing"></div>
     <div class="chart-card" id="chart-sankey"></div>
     <p class="hint">Flussdicke = gewichtete Meeting-Häufigkeit · Nodes sortiert nach Vernetzungsgrad (oben = am stärksten vernetzt) · Richtung nicht bedeutsam</p>
-    <div class="chart-card" id="chart-chord" style="margin-top:20px"></div>
-    <p class="hint">Chord-Diagramm: Bogengröße = Gesamtkommunikation der Abteilung · Bandbreite = bidirektionale Meeting-Häufigkeit · Hover = Details</p>
+    <div id="chord-expand-bar" style="margin:12px 0"></div>
+    <div id="chord-wrap" style="display:none">
+      <div class="chart-card" id="chart-chord"></div>
+      <p class="hint">Bogengröße = Gesamtkommunikation · Bandbreite = bidirektionale Meeting-Häufigkeit · Hover = Details</p>
+    </div>
   </div>
   <div id="panel-5" class="panel" data-tab="9">
     <button class="tab-info-btn" onclick="showTabInfo(9)">ℹ</button>
@@ -1204,7 +1219,6 @@ function renderStats() {
   const m = MEETINGS;
   const aktive = m.filter(x => x.status === "Aktiv");
   const nUG    = m.filter(x => x.abteilungsuebergreifend).length;
-  const nEinzel = m.filter(x => /einzelgespräch|1:1|jf/i.test(x.kategorie)).length;
   const nPlatz = m.filter(x => x.ist_platzhalter).length;
   const nOhneInfo = m.filter(x => !x.infofluss).length;
 
@@ -1218,8 +1232,7 @@ function renderStats() {
   if (summaryEl) {
     var parts = [
       aktive.length + ' aktiv',
-      nUG + ' übergreifend',
-      nEinzel + ' Einzelgespräche'
+      nUG + ' übergreifend'
     ];
     var warns = [];
     if (nPlatz)   warns.push('<span class="s-warn">⚠ ' + nPlatz + ' Platzhalter</span>');
@@ -1912,6 +1925,73 @@ function renderRhythmusChart() {
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 5: Informationsfluss (Sankey)
 // ══════════════════════════════════════════════════════════════════════════════
+var _sankeyCache = null;
+
+function toggleChordDiagram() {
+  var wrap = document.getElementById("chord-wrap");
+  var btn  = document.getElementById("chord-toggle-btn");
+  if (!wrap) return;
+  if (wrap.style.display === "none") {
+    wrap.style.display = "";
+    if (btn) { btn.textContent = "▾ Chord-Diagramm ausblenden"; btn.classList.add("active"); }
+    if (_sankeyCache) renderChord(_sankeyCache.flussSymm, _sankeyCache.abtList, _sankeyCache.abtIdx);
+  } else {
+    wrap.style.display = "none";
+    if (btn) { btn.textContent = "▸ Chord-Diagramm anzeigen (kreisförmige Detailansicht)"; btn.classList.remove("active"); }
+  }
+}
+
+function _renderKommunikationBriefing(flussSymm, abtList, vol) {
+  var el = document.getElementById("komm-briefing");
+  if (!el) return;
+  var n = abtList.length;
+  if (n < 2 || !Object.keys(flussSymm).length) { el.innerHTML = ''; return; }
+
+  var maxPairs    = Math.round(n * (n-1) / 2);
+  var activePairs = Object.keys(flussSymm).length;
+  var coverage    = Math.round(activePairs / maxPairs * 100);
+
+  // Zentrum: höchstes Gesamtvolumen
+  var sorted = abtList.slice().sort(function(a,b){ return (vol[b]||0)-(vol[a]||0); });
+  var zentrum = sorted[0];
+  var zentrumConn = Object.keys(flussSymm).filter(function(k){
+    var p = k.split('||'); return p[0]===zentrum || p[1]===zentrum;
+  }).length;
+
+  // Stärkste Achse
+  var pairsSorted = Object.entries(flussSymm).sort(function(a,b){ return b[1]-a[1]; });
+  var starkste = pairsSorted[0];
+  var achseLabel = starkste ? starkste[0].replace('||',' ↔ ') : '–';
+  var achseVal   = starkste ? starkste[1].toFixed(1) : '0';
+
+  // Am wenigsten vernetzt (aber > 0 Verbindungen)
+  var leastIdx = sorted.length-1;
+  var least = sorted[leastIdx];
+  var leastConn = Object.keys(flussSymm).filter(function(k){
+    var p = k.split('||'); return p[0]===least || p[1]===least;
+  }).length;
+
+  el.innerHTML = '<div class="komm-briefing-card">'
+    + '<div class="tbr-header">'
+    + '<span class="tbr-title">Kommunikation – Executive Briefing</span>'
+    + '<span class="tbr-sub">' + n + ' Abteilungen · ' + activePairs + ' von ' + maxPairs + ' möglichen Verbindungen aktiv</span>'
+    + '</div>'
+    + '<div class="komm-insights-grid">'
+    + '<div class="komm-insight"><div class="komm-insight-label">Kommunikationszentrum</div>'
+    + '<div class="komm-insight-value">' + zentrum + '</div>'
+    + '<div class="komm-insight-sub">vernetzt mit ' + zentrumConn + ' Abteilung' + (zentrumConn===1?'':'en') + ' · ' + (vol[zentrum]||0).toFixed(1) + ' Freq.-Punkte</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Stärkste Kommunikationsachse</div>'
+    + '<div class="komm-insight-value">' + achseLabel + '</div>'
+    + '<div class="komm-insight-sub">' + achseVal + ' Freq.-Punkte</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Verbindungsabdeckung</div>'
+    + '<div class="komm-insight-value">' + coverage + '%</div>'
+    + '<div class="komm-insight-sub">' + activePairs + ' von ' + maxPairs + ' möglichen Abt.-Paaren haben gemeinsame Meetings</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Am wenigsten vernetzt</div>'
+    + '<div class="komm-insight-value">' + least + '</div>'
+    + '<div class="komm-insight-sub">' + leastConn + ' direkte Verbindung' + (leastConn===1?'':'en') + '</div></div>'
+    + '</div></div>';
+}
+
 function renderSankey() {
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
   const hasExtern = aktive.some(m => m.teilnehmer.some(t => t.toLowerCase() === "extern"));
@@ -2004,8 +2084,19 @@ function renderSankey() {
     sankeyEl.on("plotly_unhover", () => Plotly.restyle(sankeyEl, {"link.color":[baseColors]}, [0]));
   }
 
-  // ── Chord-Diagramm (D3) ───────────────────────────────────────────────────
-  renderChord(flussSymm, abtList, abtIdx);
+  // Daten cachen für Chord on-demand + Briefing
+  _sankeyCache = { flussSymm: flussSymm, abtList: abtList, abtIdx: abtIdx };
+  _renderKommunikationBriefing(flussSymm, abtList, vol);
+
+  // Chord-Toggle-Button aktualisieren (Chord bleibt eingeklappt)
+  var chordBar = document.getElementById("chord-expand-bar");
+  if (chordBar) {
+    chordBar.innerHTML = '<button id="chord-toggle-btn" class="overlap-toggle-btn" onclick="toggleChordDiagram()">'
+      + '▸ Chord-Diagramm anzeigen (kreisförmige Detailansicht)</button>';
+  }
+  // Chord-Wrap bei Re-Render schließen und leeren
+  var wrap = document.getElementById("chord-wrap");
+  if (wrap) { wrap.style.display = "none"; document.getElementById("chart-chord").innerHTML = ""; }
 }
 
 function renderChord(flussSymm, abtList, abtIdx) {
