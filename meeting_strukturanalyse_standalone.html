@@ -248,17 +248,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 </style>
 </head>
 <body>
-<script>
-// Früher Error-Handler – fängt Syntaxfehler im Hauptscript
-window.onerror = function(msg, src, line, col, err) {
-  var el = document.getElementById('import-status');
-  if (el) {
-    el.textContent = 'JS-Fehler (Zeile ' + line + '): ' + msg;
-    el.className = 'import-status err';
-  }
-  return false;
-};
-</script>
 
 <!-- ═══════════════════════════ IMPORT SCREEN ═══════════════════════════ -->
 <div id="import-screen">
@@ -509,7 +498,7 @@ window.onerror = function(msg, src, line, col, err) {
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "04.06.2026 19:00";
+const APP_VERSION = "04.06.2026 22:00";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3464,21 +3453,6 @@ document.addEventListener('DOMContentLoaded', function() {
     showStatus('HTML-Tabelle erkannt – klicke „Prüfen & Laden" zum Importieren.', true);
   });
 });
-</script>
-<script>
-// Teste ob Hauptscript geladen hat
-(function() {
-  var el = document.getElementById('import-status');
-  if (!el) return;
-  if (typeof loadFromFile === 'undefined') {
-    el.textContent = 'Fehler: loadFromFile nicht definiert – Hauptscript hat nicht geladen.';
-    el.className = 'import-status err';
-  } else {
-    el.textContent = 'JavaScript OK ✓';
-    el.className = 'import-status ok';
-    setTimeout(function() { el.style.display = 'none'; }, 2000);
-  }
-})();
 </script>
 </body>
 </html>
