@@ -1261,7 +1261,7 @@ function showTab(idx) {
     if (idx === 7) renderTreemap();
     if (idx === 8) renderWirkungsMatrix();
     if (idx === 10) renderFlightLevels();
-    if (idx === 12) renderDatapflege();
+    if (idx === 12 && typeof renderDatapflege === 'function') renderDatapflege();
   }
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = idx === 0 ? "flex" : "none";
@@ -2754,6 +2754,9 @@ function renderWirkungsMatrix() {
   }, { responsive: true, displayModeBar: false });
 }
 
+// ── Datenpflege-Funktionen in separatem Block (Safari-Kompatibilität) ─────────
+</script>
+<script>
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 12: Datenpflege – Abteilungstypen, Datenqualität, Gruppen-Teilnehmer
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2969,6 +2972,9 @@ function importConfigFile(input) {
   reader.readAsText(file);
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+</script>
+<script>
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 10: Flight Levels – 5 Diagnose-Visualisierungen
 // ══════════════════════════════════════════════════════════════════════════════
