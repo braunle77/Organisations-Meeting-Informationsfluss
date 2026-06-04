@@ -79,7 +79,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   color:white;border-radius:7px;padding:7px 14px;font-family:inherit;font-size:.8rem;
   cursor:pointer;transition:background .15s;white-space:nowrap;position:relative;z-index:1}
 .btn-reload:hover{background:rgba(255,255,255,.25)}
-/* Kommunikation Executive Briefing */
+/* Kommunikation Briefing */
 .komm-briefing-card{background:white;border-radius:10px;padding:16px 20px;
   margin-bottom:16px;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(89,178,165,.06)}
 .komm-insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
@@ -90,7 +90,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .komm-insight-value{font-size:.92rem;font-weight:700;color:#1a2e2b;line-height:1.2;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .komm-insight-sub{font-size:.73rem;color:#9ca3af;margin-top:2px}
-/* Zeitverteilung Executive Briefing */
+/* Zeitverteilung Briefing */
 .treemap-briefing{background:white;border-radius:10px;padding:16px 20px;
   margin-bottom:16px;border:1px solid #f1f5f9;box-shadow:0 2px 8px rgba(89,178,165,.06)}
 .tbr-header{display:flex;justify-content:space-between;align-items:baseline;
@@ -567,21 +567,21 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf) · Grün = als Teilnehmer/in · Sortiert nach Gesamtlast</p>
     <div id="engpass-expand-bar" style="margin:10px 0"></div>
     <div class="chart-card" id="chart-zeitlast" style="margin-top:4px"></div>
-    <p class="hint" id="hint-zeitlast">Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit</p>
+    <p class="hint" id="hint-zeitlast">Balken = Stunden/Monat <strong>pro Person</strong> · Formel: Dauer (min) × Häufigkeit/Monat ÷ 60 · Blau = Verantwortliche/r · Grün = Teilnehmer/in</p>
   </div>
 
   <div id="panel-9" class="panel" data-tab="7">
     <button class="tab-info-btn" onclick="showTabInfo(7)">ℹ</button>
     <div id="treemap-briefing"></div>
     <div class="chart-card" id="chart-treemap"></div>
-    <p class="hint" id="hint-treemap">Fläche = monatliche Personen-Stunden · Äußerer Rahmen = Kategorie (dunkler) · Innen = Meeting (heller) · Klick = Drill-down</p>
+    <p class="hint" id="hint-treemap">Fläche = <strong>Personen-Stunden/Monat</strong> (= Dauer × Häufigkeit/Monat × Teilnehmerzahl ÷ 60) · Äußerer Rahmen = Kategorie · Innen = Meeting · Klick = Drill-down</p>
   </div>
 
   <div id="panel-10" class="panel" data-tab="8">
     <button class="tab-info-btn" onclick="showTabInfo(8)">ℹ</button>
     <div id="wirkung-briefing"></div>
     <div class="chart-card" id="chart-wirkung" style="height:480px"></div>
-    <p class="hint">Nur Meetings mit Dauer- UND Wirkungsangabe · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Hover = Details · X-Trennlinie = Median der Zeitlast</p>
+    <p class="hint">X-Achse = <strong>Kalender-Stunden/Monat</strong> (Dauer × Häufigkeit ÷ 60, nicht × Teilnehmer) · Y-Achse = Wirkung (1–4) · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Nur Meetings mit Dauer- UND Wirkungsangabe</p>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -1975,7 +1975,7 @@ function _renderKommunikationBriefing(flussSymm, abtList, vol) {
 
   el.innerHTML = '<div class="komm-briefing-card">'
     + '<div class="tbr-header">'
-    + '<span class="tbr-title">Kommunikation – Executive Briefing</span>'
+    + '<span class="tbr-title">Kommunikation – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + n + ' Abteilungen · ' + activePairs + ' von ' + maxPairs + ' möglichen Verbindungen aktiv</span>'
     + '</div>'
     + '<div class="komm-insights-grid">'
@@ -2709,7 +2709,7 @@ function renderEngpass() {
     legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: HEIGHT,
-    margin: { l: 10, r: 20, t: 60, b: 60 }
+    margin: { l: 20, r: 20, t: 60, b: 60 }
   }, { responsive: true, displayModeBar: false });
   renderZeitlast();
 }
@@ -2793,7 +2793,7 @@ function renderZeitlast() {
     legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: HEIGHT,
-    margin: { l: 10, r: 20, t: 60, b: 60 }
+    margin: { l: 20, r: 20, t: 60, b: 60 }
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -2840,8 +2840,8 @@ function _renderTreemapBriefing(withHours) {
 
   el.innerHTML = '<div class="treemap-briefing">'
     + '<div class="tbr-header">'
-    + '<span class="tbr-title">Zeitaufwand – Executive Briefing</span>'
-    + '<span class="tbr-sub">Gesamtaufwand: ' + totalH.toFixed(1) + ' h/Mo · Top-' + TOP + ' = ' + topPct + '% der Gesamtzeit</span>'
+    + '<span class="tbr-title">Zeitaufwand – Auf einen Blick</span>'
+    + '<span class="tbr-sub">Gesamt: ' + totalH.toFixed(1) + ' Personen-Stunden/Mo · Top-' + TOP + ' = ' + topPct + '% · (Personen-Stunden = Dauer × Häufigkeit × Teilnehmer ÷ 60)</span>'
     + '</div>'
     + rows
     + (insight ? '<div class="tbr-insight">' + insight + '</div>' : '')
@@ -3088,7 +3088,7 @@ function _renderWirkungsBriefing(data, xVals, xMedian) {
   // Kein Handlungsbedarf
   if (!optimieren.length && !hinterfragen.length) {
     el.innerHTML = '<div class="treemap-briefing">'
-      + '<div class="tbr-header"><span class="tbr-title">Wirkung – Executive Briefing</span>'
+      + '<div class="tbr-header"><span class="tbr-title">Wirkung – Auf einen Blick</span>'
       + '<span class="tbr-sub">' + bewertet + ' Meetings bewertet' + (ohneWert ? ' · ' + ohneWert + ' noch ohne Wirkungsangabe' : '') + '</span></div>'
       + '<div style="color:#059669;font-size:.84rem;padding:6px 0">✓ Alle bewerteten Meetings haben Wirkung ≥ 3 – kein akuter Handlungsbedarf erkennbar.</div>'
       + '</div>';
@@ -3124,7 +3124,7 @@ function _renderWirkungsBriefing(data, xVals, xMedian) {
 
   el.innerHTML = '<div class="treemap-briefing">'
     + '<div class="tbr-header">'
-    + '<span class="tbr-title">Wirkung – Executive Briefing</span>'
+    + '<span class="tbr-title">Wirkung – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + bewertet + ' Meetings bewertet' + (ohneWert ? ' · ' + ohneWert + ' noch ohne Wirkungsangabe' : '') + '</span>'
     + '</div>'
     + (optimieren.length ? '<div style="font-size:.75rem;font-weight:700;color:#dc2626;margin-bottom:4px">⚠ OPTIMIEREN (' + optimieren.length + ') – hoher Zeitaufwand, Wirkung ≤ 2</div>'
@@ -3259,30 +3259,35 @@ function renderGruppenTeilnehmerSection() {
       const key = m.abteilung + "||" + m.name + "||" + g;
       const cur = aufloesungen[key] || [];
       const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
-      const opts = allPersons.map(function(p) {
-        return '<option value="' + p + '"' + (cur.includes(p) ? ' selected' : '') + '>' + p + '<\/option>';
+      // Checkboxen statt Multiselect (intuitiver)
+      const checkboxes = allPersons.map(function(p) {
+        var chk = cur.includes(p) ? ' checked' : '';
+        return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:.79rem">'
+          + '<input type="checkbox" value="' + p + '"' + chk + ' style="cursor:pointer">' + p + '<\/label>';
       }).join("");
       return '<div class="dp-gruppen-row">'
         + '<div class="dp-gruppen-meeting">'
         + '<span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
         + '<strong style="font-size:.83rem">' + m.name + '<\/strong>'
         + '<span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ' + g + '<\/span>'
+        + (cur.length > 0 ? '<span style="font-size:.72rem;color:#059669">✓ ' + cur.length + ' zugeordnet<\/span>' : '')
         + '<\/div>'
+        + '<div style="font-size:.74rem;color:#6b7280;margin-bottom:6px">Falls dieser Platzhalter eine variable Rolle ist (z.B. „Ticket-Owner"), leer lassen – das Meeting bleibt in Abteilungs- und Zeitanalysen erhalten.<\/div>'
         + '<div class="dp-gruppen-assign">'
-        + '<select multiple class="dp-gruppen-sel" data-key="' + key + '" size="4">' + opts + '<\/select>'
+        + '<div class="dp-gruppen-checklist" data-key="' + key + '" style="max-height:160px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;background:#f9fafb;min-width:160px">' + checkboxes + '<\/div>'
         + '<button class="btn-secondary" style="font-size:.76rem" onclick="saveGruppenAufloesung(this)">Speichern<\/button>'
         + '<\/div><\/div>';
     });
   }).join("");
   section.innerHTML = '<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-warn">' + withGroups.length + ' Meetings<\/span><\/p>'
-    + '<p class="dp-section-desc">Ordne Gruppen-Platzhaltern echte Personen zu. Die Auflösungen werden gespeichert und beim nächsten Import wieder angewandt.<\/p>'
+    + '<p class="dp-section-desc">Auflösbare Platzhalter (z.B. „PC alle" = echte Personen) hier zuordnen. Variable Rollen (z.B. „Ticket-Owner", „Kundenbetreuer") leer lassen – diese Meetings bleiben in Abteilungs- und Zeitanalysen erhalten, werden aber von der Personenanalyse ausgeschlossen.<\/p>'
     + rowsHTML;
 }
 
 function saveGruppenAufloesung(btn) {
-  const sel = btn.previousElementSibling;
-  const key = sel.dataset.key;
-  const selected = [...sel.selectedOptions].map(o => o.value);
+  const checklist = btn.previousElementSibling;
+  const key = checklist.dataset.key;
+  const selected = [...checklist.querySelectorAll('input[type=checkbox]:checked')].map(function(cb){ return cb.value; });
   const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
   if (!cfg.gruppenAufloesungen) cfg.gruppenAufloesungen = {};
   if (selected.length > 0) cfg.gruppenAufloesungen[key] = selected;
@@ -3420,7 +3425,7 @@ function _renderFLBriefing(aktive, byFL) {
   var mismatch = aktive.filter(function(m){ return MISMATCH5[m.flugebene] && MISMATCH5[m.flugebene].includes(m.rhythmus_klasse); }).length;
 
   el.innerHTML = '<div class="komm-briefing-card">'
-    + '<div class="tbr-header"><span class="tbr-title">Flight Levels – Executive Summary</span>'
+    + '<div class="tbr-header"><span class="tbr-title">Flight Levels – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + total + ' Meetings klassifiziert</span></div>'
     + '<div style="padding:6px 0 10px;font-size:.83rem;font-weight:600;color:' + pyramidColor + '">' + pyramidStatus + '</div>'
     + '<div class="komm-insights-grid">'
