@@ -1935,12 +1935,11 @@ function renderChord(flussSymm, abtList, abtIdx) {
     if (i !== undefined && j !== undefined) { matrix[i][j] += v; matrix[j][i] += v; }
   });
 
-  // Größe: 145px Platz für Labels (Gap + längster Name) auf jeder Seite
+  // Labels im Bogen: kein externer Platzbedarf mehr
   const W = Math.max(el.clientWidth - 32, 600);
   const H = Math.max(Math.round(W * 0.72), 450);
-  const labelSpace = 148;
-  const outerR = Math.min(W / 2 - labelSpace, H / 2 - 30);
-  const innerR = outerR - 26;
+  const outerR = Math.min(W / 2 - 24, H / 2 - 24);
+  const innerR = outerR - 34;  // breiterer Ring für lesbare Labels
 
   const chord  = d3.chord().padAngle(0.04).sortSubgroups(d3.descending)(matrix);
   const arc    = d3.arc().innerRadius(innerR).outerRadius(outerR);
@@ -1966,11 +1965,19 @@ function renderChord(flussSymm, abtList, abtIdx) {
 
   const svg = d3.select(el).append("svg")
     .attr("width", W).attr("height", H)
-    .style("font-family","DM Sans, system-ui, sans-serif")
-    .style("overflow","visible"); // Labels dürfen leicht über SVG-Rand hinaus
+    .style("font-family","DM Sans, system-ui, sans-serif");
+
+  // Pfad-Definitionen für Bogen-Labels (textPath)
+  const midR = (innerR + outerR) / 2;
+  const defs = svg.append("defs");
+
+  // Hilfsfunktion: D3-Winkel → SVG-Koordinaten (0 = oben, clockwise)
+  const toXY = function(r, a) {
+    return [r * Math.sin(a), -r * Math.cos(a)];
+  };
 
   const root = svg.append("g")
-    .attr("transform", `translate(${W/2},${H/2})`);
+    .attr("transform", "translate(" + (W/2) + "," + (H/2) + ")");
 
   // ── Bänder mit Hover-Highlight ────────────────────────────────────────────
   const ribbonG = root.append("g");
@@ -2016,18 +2023,46 @@ function renderChord(flussSymm, abtList, abtIdx) {
       hideTip();
     });
 
-  g.append("text")
-    .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
-    .attr("dy","0.35em")
-    .attr("transform", d => [
-      `rotate(${d.angle * 180 / Math.PI - 90})`,
-      `translate(${outerR + 14})`,
-      d.angle > Math.PI ? "rotate(180)" : ""
-    ].join(""))
-    .attr("text-anchor", d => d.angle > Math.PI ? "end" : "start")
-    .attr("font-size","12px").attr("fill","#374151")
+  // Bogen-Pfade für Labels in defs registrieren
+  chord.groups.forEach(function(d) {
+    var midAngle = (d.startAngle + d.endAngle) / 2;
+    var bottomHalf = midAngle > Math.PI;
+    // Untere Halbkreis-Bögen umkehren damit Text lesbar bleibt
+    var sa = bottomHalf ? d.endAngle   : d.startAngle;
+    var ea = bottomHalf ? d.startAngle : d.endAngle;
+    var p1 = toXY(midR, sa);
+    var p2 = toXY(midR, ea);
+    var span = Math.abs(ea - sa);
+    var largeArc = span > Math.PI ? 1 : 0;
+    var sweep    = bottomHalf ? 0 : 1;
+    defs.append("path")
+      .attr("id", "chord-arc-" + d.index)
+      .attr("d", "M " + p1[0].toFixed(2) + " " + p1[1].toFixed(2) +
+                 " A " + midR.toFixed(2) + " " + midR.toFixed(2) +
+                 " 0 " + largeArc + " " + sweep +
+                 " " + p2[0].toFixed(2) + " " + p2[1].toFixed(2));
+  });
+
+  // Labels entlang des Bogens (textPath)
+  root.append("g").selectAll("text")
+    .data(chord.groups).join("text")
     .style("pointer-events","none")
-    .text(d => abtList[d.index]);
+    .each(function(d) {
+      var arcLen = (d.endAngle - d.startAngle) * midR;
+      var name   = abtList[d.index];
+      var maxChars = Math.floor(arcLen / 7.5);
+      var label  = arcLen < 28 ? "" : (maxChars < name.length ? name.slice(0, Math.max(maxChars - 1, 1)) + "…" : name);
+      if (!label) return;
+      d3.select(this).append("textPath")
+        .attr("href", "#chord-arc-" + d.index)
+        .attr("startOffset","50%")
+        .attr("text-anchor","middle")
+        .attr("dominant-baseline","central")
+        .attr("font-size","11px")
+        .attr("font-weight","600")
+        .attr("fill","white")
+        .text(label);
+    });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
