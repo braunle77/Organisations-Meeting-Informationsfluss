@@ -317,7 +317,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <span class="tab-group-label">Datenpflege</span>
       <button class="tab-btn active" data-tab="0" onclick="showTab(0)">Personen</button>
       <button class="tab-btn" data-tab="9" onclick="showTab(9)">Alle Meetings</button>
-      <button class="tab-btn" data-tab="12" onclick="showTab(12)">Datenpflege</button>
+      <button class="tab-btn" data-tab="12" onclick="showTab(12)">Konfiguration</button>
     </div>
   </div>
 
@@ -2908,16 +2908,33 @@ function saveGruppenAufloesung(btn) {
 function exportConfig() {
   const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
   const json = JSON.stringify(cfg, null, 2);
-  // data: URI ist in Safari (file://) zuverlässiger als createObjectURL
-  const uri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(json);
-  const a = document.createElement('a');
-  a.href = uri;
-  a.download = 'meeting-config.json';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function() { document.body.removeChild(a); }, 100);
-  showToast("Konfiguration exportiert ↓");
+
+  // Versuche Browser-Download
+  try {
+    const uri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(json);
+    const a = document.createElement('a');
+    a.href = uri;
+    a.download = 'meeting-config.json';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { document.body.removeChild(a); }, 200);
+  } catch(e) {}
+
+  // Zeige JSON immer im Modal – Safari-Fallback (Kopieren + als .json speichern)
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = '<div style="background:white;border-radius:12px;padding:28px;max-width:580px;width:90%;max-height:80vh;display:flex;flex-direction:column;gap:12px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center">'
+    + '<strong style="font-size:.95rem">meeting-config.json</strong>'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="border:none;background:none;font-size:1.2rem;cursor:pointer;color:#6b7280">✕</button>'
+    + '</div>'
+    + '<p style="font-size:.8rem;color:#6b7280;margin:0">Falls kein Download gestartet wurde: Inhalt kopieren → Texteditor → als <code>meeting-config.json</code> speichern.</p>'
+    + '<textarea style="width:100%;height:260px;font-family:monospace;font-size:.75rem;border:1px solid #e2e8f0;border-radius:6px;padding:10px;resize:none;box-sizing:border-box" readonly>' + json.replace(/</g,'&lt;') + '</textarea>'
+    + '<button onclick="navigator.clipboard&&navigator.clipboard.writeText(' + JSON.stringify(json) + ');this.textContent=\'✓ Kopiert\'" style="background:#59B2A5;color:white;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-family:inherit;font-size:.88rem;font-weight:600">In Zwischenablage kopieren</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 }
 
 function importConfigFile(input) {
