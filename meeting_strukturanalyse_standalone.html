@@ -218,10 +218,10 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .dp-section-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
   color:#1a2e2b;margin:0 0 4px}
 .dp-section-desc{font-size:.82rem;color:#4a6b67;margin:0 0 14px;line-height:1.55}
-.dp-dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px}
-.dp-dept-row{display:flex;align-items:center;gap:8px}
+.dp-dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:5px}
+.dp-dept-row{display:flex;align-items:center;gap:8px;min-width:0}
 .dp-typ-sel{font-family:inherit;font-size:.8rem;border:1px solid #e2e8f0;border-radius:6px;
-  padding:5px 8px;background:#f9fafb;color:#374151;cursor:pointer;flex:1;max-width:320px}
+  padding:5px 8px;background:#f9fafb;color:#374151;cursor:pointer;flex:1;min-width:0}
 .dp-typ-sel:focus{outline:none;border-color:#59B2A5}
 .dp-quality-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:4px}
 .dp-qual-card{background:#f8faf9;border-radius:8px;padding:11px 13px;border:1px solid #e8f0ee}
@@ -2865,7 +2865,7 @@ function renderQualitaetsCockpit() {
     { label: "Wirkung bewertet",
       count: MEETINGS.filter(m => m.wert !== null).length, tot: total,
       hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Diagnose F3.",
-      action: "Im Tab 'Alle Meetings' per Klick eintragen.", color: "#2176ae" },
+      action: "Als Spalte in Confluence-Tabelle eintragen (Wirkung 1-4).", color: "#2176ae" },
     { label: "Infofluss dokumentiert",
       count: MEETINGS.filter(m => m.infofluss && m.infofluss.trim()).length, tot: total,
       hint: "Dokumentiert wohin Informationen fließen.",
