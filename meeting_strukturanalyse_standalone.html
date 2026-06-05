@@ -1014,6 +1014,7 @@ function parseData(text) {
       zweck: get("zweck"),
       verantwortlich: canonAbbr(normalizeAlias(get("vera"))),
       teilnehmer,
+      _originalTeilnehmer: teilnehmer.slice(), // Unverändertes Original für Gruppen-Expansion
       teilnehmer_anzahl: teilnehmer.length,
       rhythmus_raw: rhythmusRaw,
       rhythmus_klasse,
@@ -1126,6 +1127,34 @@ function tryLoad(text) {
   }
 }
 
+function applyGruppenAufloesungen() {
+  var cfg;
+  try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}"); } catch(e) { return; }
+  var aufloesungen = cfg.gruppenAufloesungen || {};
+  if (!Object.keys(aufloesungen).length) return;
+
+  MEETINGS.forEach(function(m) {
+    // Immer vom Original starten (verhindert Doppel-Expansion bei mehrfachem Aufruf)
+    if (m._originalTeilnehmer) m.teilnehmer = m._originalTeilnehmer.slice();
+    if (!m.hatGruppenTeilnehmer) return;
+
+    var changed = false;
+    m.gruppenTeilnehmer.forEach(function(g) {
+      var key = m.abteilung + "||" + m.name + "||" + g;
+      var resolved = aufloesungen[key];
+      if (!resolved || !resolved.length) return;
+      // Gruppen-Platzhalter entfernen
+      var idx = m.teilnehmer.indexOf(g);
+      if (idx !== -1) { m.teilnehmer.splice(idx, 1); changed = true; }
+      // Aufgelöste Personen hinzufügen
+      resolved.forEach(function(p) {
+        if (!m.teilnehmer.includes(p)) { m.teilnehmer.push(p); changed = true; }
+      });
+    });
+    if (changed) m.teilnehmer_anzahl = m.teilnehmer.length;
+  });
+}
+
 function showDashboard() {
   // Dynamische Konfiguration aus den geladenen Daten ableiten
   allDepts = [...new Set(MEETINGS.map(m => m.abteilung))].filter(Boolean).sort();
@@ -1156,6 +1185,9 @@ function showDashboard() {
   netCache      = null;
   sankeyRendered = false;
   abtRendered    = false;
+
+  // Gruppen-Auflösungen expandieren (vor abteilungsuebergreifend-Berechnung)
+  applyGruppenAufloesungen();
 
   // abteilungsuebergreifend nachträglich korrekt berechnen (parseData läuft vor effectivePersonAbt)
   MEETINGS.forEach(m => {
@@ -3293,7 +3325,24 @@ function saveGruppenAufloesung(btn) {
   if (selected.length > 0) cfg.gruppenAufloesungen[key] = selected;
   else delete cfg.gruppenAufloesungen[key];
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-  showToast("Gruppen-Zuordnung gespeichert");
+
+  // Sofort in die Daten expandieren + betroffene Charts invalidieren
+  if (MEETINGS.length) {
+    applyGruppenAufloesungen();
+    MEETINGS.forEach(function(m) {
+      var abts = new Set(m.teilnehmer.map(function(t){ return effectivePersonAbt[t]; }).filter(Boolean));
+      m.abteilungsuebergreifend = abts.size > 1;
+      m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+      m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+    });
+    // Alle personen-basierten Charts invalidieren
+    [1, 5, 6, 7, 8, 9, 10].forEach(function(t){ renderedTabs.delete(t); });
+    renderedTabs.delete(12);
+    renderStats();
+    renderTable();
+    if (typeof renderDatapflege === 'function') renderDatapflege();
+  }
+  showToast("Zuordnung gespeichert – Charts werden beim nächsten Tab-Besuch aktualisiert");
 }
 
 function exportConfig() {
@@ -3749,6 +3798,8 @@ function renderFlightLevels() {
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
 function refreshAllCharts() {
+  // Gruppen-Auflösungen neu expandieren (vom Original starten)
+  applyGruppenAufloesungen();
   // abteilungsuebergreifend neu berechnen
   MEETINGS.forEach(m => {
     const abts = new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean));
