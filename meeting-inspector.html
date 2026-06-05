@@ -601,7 +601,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "05.06.2026 11:13";
+const APP_VERSION = "05.06.2026 11:25";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1840,7 +1840,7 @@ function renderAbtChart() {
     title: { text: isFreq ? "Monatliche Meeting-Frequenz pro Abteilung" : "Meeting-Dichte pro Abteilung",
              font: { size:16, family:"DM Sans, system-ui, sans-serif" } },
     font: { family:"DM Sans, system-ui, sans-serif" },
-    yaxis: { automargin:true, tickfont:{ size:12 } },
+    yaxis: { automargin:true, tickfont:{ size:12 }, ticks: 'outside', ticklen: 5 },
     xaxis: { title: isFreq ? "Meetings/Monat" : "Anzahl Meeting-Formate", showgrid:true, gridcolor:"#f3f4f6" },
     legend: { title:{ text:"Frequenz-Gruppe" }, orientation:"v", x:1.02, xanchor:"left", y:1, yanchor:"top" },
     plot_bgcolor:"white", paper_bgcolor:"white",
@@ -1900,7 +1900,7 @@ function renderStatusVerteilung() {
     title: { text: "Status-Verteilung pro Abteilung", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Abteilung" },
-    yaxis: { title: "Anteil (%)", showgrid: true, gridcolor: "#f3f4f6", range: [0, 100] },
+    yaxis: { title: "Anteil (%)", showgrid: true, gridcolor: "#f3f4f6", range: [0, 100], ticks: 'outside', ticklen: 5 },
     legend: { title: { text: "Status" } },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: 380, margin: { l: 60, r: 20, t: 60, b: 60 }
@@ -1937,7 +1937,7 @@ function renderRhythmusChart() {
     title: { text: "Meetings nach Rhythmus und Kategorie", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Rhythmus (von hochfrequent → selten)" },
-    yaxis: { title: "Anzahl Meeting-Formate", showgrid: true, gridcolor: "#f3f4f6" },
+    yaxis: { title: "Anzahl Meeting-Formate", showgrid: true, gridcolor: "#f3f4f6", ticks: 'outside', ticklen: 5 },
     legend: { title: { text: "Kategorie" } },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: 380, margin: { l: 60, r: 20, t: 60, b: 80 }
@@ -2730,7 +2730,7 @@ function renderEngpass() {
     title: { text: "Meeting-Last pro Person" + (engpassExpanded ? "" : " (Top " + ENGPASS_TOP + ")"), font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Anzahl Meetings", showgrid: true, gridcolor: "#f3f4f6", dtick: 1 },
-    yaxis: { autorange: "reversed", automargin: true },
+    yaxis: { autorange: "reversed", automargin: true, ticks: 'outside', ticklen: 5 },
     legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: HEIGHT,
@@ -2814,7 +2814,7 @@ function renderZeitlast() {
     title: { text: "Zeitlast pro Person (Stunden/Monat, geschätzt)", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Stunden pro Monat", showgrid: true, gridcolor: "#f3f4f6" },
-    yaxis: { autorange: "reversed", automargin: true },
+    yaxis: { autorange: "reversed", automargin: true, ticks: 'outside', ticklen: 5 },
     legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1 },
     plot_bgcolor: "white", paper_bgcolor: "white",
     height: HEIGHT,
@@ -3735,7 +3735,7 @@ function renderFlightLevels() {
       ...LAYOUT_BASE,
       height: 200, margin: { l: 160, r: 40, t: 16, b: 40 },
       xaxis: { title: "Anzahl Meetings", zeroline: false, gridcolor: "#f1f5f9" },
-      yaxis: { automargin: true }
+      yaxis: { automargin: true, ticks: 'outside', ticklen: 5 }
     }, { responsive: true, displayModeBar: false });
 
     const a = document.getElementById("fl-alert-f1");
