@@ -601,7 +601,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "05.06.2026 13:47";
+const APP_VERSION = "06.06.2026 00:36";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3492,12 +3492,19 @@ function renderGruppenTeilnehmerSection() {
         + '<span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
         + '<strong style="font-size:.83rem">' + m.name + '<\/strong>'
         + '<span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ' + g + '<\/span>'
-        + (cur.length > 0 ? '<span style="font-size:.72rem;color:#059669">✓ ' + cur.length + ' zugeordnet<\/span>' : '')
+        + (cur.length > 0
+            ? '<span style="font-size:.72rem;color:#059669;font-weight:600">✓ ' + cur.length + ' Person' + (cur.length===1?'':'en') + ' aufgelöst<\/span>'
+            : '<span style="font-size:.72rem;color:#d97706">⚠ noch nicht aufgelöst<\/span>')
         + '<\/div>'
         + '<div style="font-size:.74rem;color:#6b7280;margin-bottom:6px">Falls dieser Platzhalter eine variable Rolle ist (z.B. „Ticket-Owner"), leer lassen – das Meeting bleibt in Abteilungs- und Zeitanalysen erhalten.<\/div>'
         + '<div class="dp-gruppen-assign">'
         + '<div class="dp-gruppen-checklist" data-key="' + key + '" style="max-height:160px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;background:#f9fafb;min-width:160px">' + checkboxes + '<\/div>'
+        + '<div>'
         + '<button class="btn-secondary" style="font-size:.76rem" onclick="saveGruppenAufloesung(this)">Speichern<\/button>'
+        + (cur.length > 0
+            ? '<div style="margin-top:6px;font-size:.73rem;color:#059669">✓ Aufgelöst – ' + cur.length + ' Person' + (cur.length===1?'':'en') + ' werden in den Charts berücksichtigt<\/div>'
+            : '<div style="margin-top:6px;font-size:.73rem;color:#d97706">⚠ Noch nicht aufgelöst – Gruppe bleibt als Platzhalter<\/div>')
+        + '<\/div>'
         + '<\/div><\/div>';
     });
   }).join("");
@@ -3532,7 +3539,11 @@ function saveGruppenAufloesung(btn) {
     renderTable();
     if (typeof renderDatapflege === 'function') renderDatapflege();
   }
-  showToast("Zuordnung gespeichert – Charts werden beim nächsten Tab-Besuch aktualisiert");
+  var n = selected.length;
+  var toastMsg = n > 0
+    ? 'Gruppe aufgelöst – ' + n + ' Person' + (n===1?'':'en') + ' werden beim nächsten Tab-Besuch berücksichtigt'
+    : 'Auflösung entfernt – Gruppe bleibt als Platzhalter';
+  showToast(toastMsg);
 }
 
 function exportConfig() {
