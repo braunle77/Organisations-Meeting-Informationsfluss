@@ -16,7 +16,7 @@
 Reines Browser-Tool: Nutzer öffnet HTML → Paste aus Confluence oder CSV → fertig.  
 Kein Python, kein Server, kein Setup. Vollständig offline-fähig.
 
-**Aktueller Stand:** `APP_VERSION = "05.06.2026 11:10"` (~4185 Zeilen)
+**Aktueller Stand:** `APP_VERSION = "05.06.2026 11:25"` (~4185 Zeilen)
 
 ---
 
@@ -343,6 +343,7 @@ Zwei gleichwertige Optionen nebeneinander:
 | #35 | Bug: CSV-Import Safari-Fix (nested Template-Literals), Chord-Labels im Ring |
 | **Commits nach #35** | Rename → Meeting-Inspektor, Gruppen-Expansion in Charts, Hardcoding-Audit, Netzwerk-Fix (Knotengröße + Edge-Gewicht), Doppelklick entfernt, Pre-commit-Hook für APP_VERSION, _confirmedPersons Bug-Fix, Rename → meeting-inspector.html |
 | #36 (= GitHub #35) | Executive Briefings für Abteilungen, Kalender, Engpass + Pre-commit-Hook Dateiname-Fix |
+| #37 (= GitHub #36) | Fix: Y-Achsen-Abstand in allen 6 Balkendiagrammen (ticks outside + ticklen 5) |
 
 ---
 
