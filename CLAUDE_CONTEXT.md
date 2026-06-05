@@ -16,7 +16,7 @@
 Reines Browser-Tool: Nutzer öffnet HTML → Paste aus Confluence oder CSV → fertig.  
 Kein Python, kein Server, kein Setup. Vollständig offline-fähig.
 
-**Aktueller Stand:** `APP_VERSION = "05.06.2026 10:15"` (~3980 Zeilen)
+**Aktueller Stand:** `APP_VERSION = "05.06.2026 11:10"` (~4185 Zeilen)
 
 ---
 
@@ -141,12 +141,15 @@ Folgende Tabs haben ein „Auf einen Blick"-Briefing (dynamisch berechnet, kein 
 
 | Tab | Funktion | Inhalt |
 |---|---|---|
+| Abteilungen | `_renderAbteilungsBriefing()` | Meiste/wenigste Meetings, Anteil abteilungsübergreifend, beste Ø-Wirkung |
+| Kalender | `_renderKalenderBriefing()` | Meistbelasteter Wochentag, häufigster Rhythmus, meeting-freie Tage |
 | Kommunikation | `_renderKommunikationBriefing()` | Zentrum, stärkste Achse, Coverage, least connected |
 | Zeitverteilung | `_renderTreemapBriefing()` | Top-5 teuerste Meetings + FK-Flag |
 | Wirkung | `_renderWirkungsBriefing()` | Optimieren-Meetings + Hinterfragen-Liste |
+| Engpass | `_renderEngpassBriefing()` | Stärkst beanspruchte Person, FK-Anteil Top-10, höchste Zeitlast |
 | Flight Levels | `_renderFLBriefing()` | Pyramidenstatus, FL2-Lücken, Brückenköpfe, F5-Mismatches |
 
-**Fehlende Briefings (offen):** Abteilungen, Kalender, Engpass – noch nicht implementiert.
+**Fehlende Briefings (offen):** keine – alle 7 Tabs mit Charts haben ein Briefing.
 
 ---
 
@@ -339,13 +342,13 @@ Zwei gleichwertige Optionen nebeneinander:
 | #34 | Datenpflege-Tab, Abteilungstypen, Config Export/Import, Tab-Grouping, Import-Screen UX, UX-Verbesserungen auf 8 Tabs, Alle Meetings read-only, Stats-Bar entfernt, Safari-Bug-Fix (Script 3 Blöcke) |
 | #35 | Bug: CSV-Import Safari-Fix (nested Template-Literals), Chord-Labels im Ring |
 | **Commits nach #35** | Rename → Meeting-Inspektor, Gruppen-Expansion in Charts, Hardcoding-Audit, Netzwerk-Fix (Knotengröße + Edge-Gewicht), Doppelklick entfernt, Pre-commit-Hook für APP_VERSION, _confirmedPersons Bug-Fix, Rename → meeting-inspector.html |
+| #36 (= GitHub #35) | Executive Briefings für Abteilungen, Kalender, Engpass + Pre-commit-Hook Dateiname-Fix |
 
 ---
 
 ## Offene Punkte
 
 ### Mittel-Priorität
-- **Briefings fehlen** bei 3 Tabs: Abteilungen, Kalender, Engpass – gleicher Pattern wie bestehende Briefings
 - **Gruppen-Teilnehmer vollständig**: Konfiguration-Tab zeigt Auflösungen, aber UX könnte verbessert werden (z.B. Feedback wenn aufgelöst)
 
 ### Niedrig-Priorität
