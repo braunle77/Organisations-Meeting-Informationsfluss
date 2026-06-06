@@ -16,7 +16,7 @@
 Reines Browser-Tool: Nutzer öffnet HTML → Paste aus Confluence oder CSV → fertig.  
 Kein Python, kein Server, kein Setup. Vollständig offline-fähig.
 
-**Aktueller Stand:** `APP_VERSION = "05.06.2026 11:25"` (~4185 Zeilen)
+**Aktueller Stand:** `APP_VERSION = "06.06.2026 10:54"` (~4200 Zeilen)
 
 ---
 
@@ -344,13 +344,15 @@ Zwei gleichwertige Optionen nebeneinander:
 | **Commits nach #35** | Rename → Meeting-Inspektor, Gruppen-Expansion in Charts, Hardcoding-Audit, Netzwerk-Fix (Knotengröße + Edge-Gewicht), Doppelklick entfernt, Pre-commit-Hook für APP_VERSION, _confirmedPersons Bug-Fix, Rename → meeting-inspector.html |
 | #36 (= GitHub #35) | Executive Briefings für Abteilungen, Kalender, Engpass + Pre-commit-Hook Dateiname-Fix |
 | #37 (= GitHub #36) | Fix: Y-Achsen-Abstand in allen 6 Balkendiagrammen (ticks outside + ticklen 5) |
+| #38 (= GitHub #37) | feat: Gruppen-Auflösung – inline Feedback + verbesserter Status-Badge (PR offen) |
+| #39 (= GitHub #38) | feat: Personenanzahl-Badge pro Abteilung im Personen-Tab |
 
 ---
 
 ## Offene Punkte
 
 ### Mittel-Priorität
-- **Gruppen-Teilnehmer vollständig**: Konfiguration-Tab zeigt Auflösungen, aber UX könnte verbessert werden (z.B. Feedback wenn aufgelöst)
+- **Gruppen-Teilnehmer UX**: PR #38 (GitHub #37) noch offen – inline Feedback nach Speichern
 
 ### Niedrig-Priorität
 - **KI-Analyse Tab** mit echten Beobachtungen befüllen (derzeit Placeholder)
