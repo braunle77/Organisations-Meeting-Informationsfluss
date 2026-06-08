@@ -4,6 +4,9 @@
 *.csv
 # Ausnahme: testdaten.tsv ist synthetisch und absichtlich versioniert (.tsv nicht ignoriert)
 
+# Lokaler Session-Kontext – nicht auf GitHub
+CLAUDE_CONTEXT.md
+
 # Python
 __pycache__/
 *.pyc
