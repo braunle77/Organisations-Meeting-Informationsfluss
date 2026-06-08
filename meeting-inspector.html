@@ -629,7 +629,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "08.06.2026 17:11";
+const APP_VERSION = "08.06.2026 17:31";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1422,19 +1422,34 @@ function showTab(idx) {
   });
 }
 
-// Einzige Resize-Quelle: gedrosselt, nur sichtbare Charts aus ihrer echten Breite neu zeichnen.
-// (responsive:true ist bewusst entfernt, um Plotlys Per-Chart-Listener auf versteckte
-//  display:none-Charts zu vermeiden, die sonst auf 0 Breite zusammenstauchen.)
-let _plotResizeTimer = null;
-function _resizeVisiblePlots() {
-  document.querySelectorAll(".plotly-graph-div").forEach(p => {
-    if (p.offsetParent !== null && p.offsetWidth > 0) Plotly.Plots.resize(p);
+// Robuste Resize-Quelle: ein ResizeObserver pro Chart-Card skaliert jeden Chart
+// automatisch exakt auf seinen Container – egal ob Tab-Wechsel (Breite 0 -> echt),
+// Scrollbar erscheint oder Fenster verändert wird. Ersetzt den fragilen
+// window-resize-Handler und behebt zu-breit-gerenderte (abgeschnittene) Charts.
+// (responsive:true bleibt bewusst entfernt, sonst doppelte/0-Breiten-Resizes.)
+const _chartLastW = new WeakMap();
+const _chartResizeTimers = new WeakMap();
+let _chartResizeObserver = null;
+function _initChartResizeObserver() {
+  if (typeof ResizeObserver === "undefined") return;
+  if (_chartResizeObserver) _chartResizeObserver.disconnect();
+  _chartResizeObserver = new ResizeObserver(entries => {
+    entries.forEach(entry => {
+      const el = entry.target;
+      const w = el.offsetWidth;
+      if (w === 0 || el.offsetParent === null) return;     // versteckt -> ignorieren
+      if (_chartLastW.get(el) === w) return;               // nur auf Breitenänderung reagieren (kein Loop)
+      _chartLastW.set(el, w);
+      clearTimeout(_chartResizeTimers.get(el));
+      _chartResizeTimers.set(el, setTimeout(() => {
+        if (el.offsetWidth > 0 && el.classList.contains("js-plotly-plot")) {
+          Plotly.Plots.resize(el);
+        }
+      }, 80));
+    });
   });
+  document.querySelectorAll(".chart-card").forEach(c => _chartResizeObserver.observe(c));
 }
-window.addEventListener("resize", () => {
-  clearTimeout(_plotResizeTimer);
-  _plotResizeTimer = setTimeout(_resizeVisiblePlots, 150);
-});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Tab 1: Netzwerk (d3-force + Plotly)
@@ -4551,6 +4566,7 @@ function parseHtmlTable(html) {
 // Paste-Interceptor: liest text/html aus Clipboard, konvertiert <table> zu Tab-Text.
 // Muss NACH DOMContentLoaded laufen.
 document.addEventListener('DOMContentLoaded', function() {
+  _initChartResizeObserver();
   const ta = document.getElementById('paste-area');
   if (!ta) return;
   ta.addEventListener('paste', function(e) {
