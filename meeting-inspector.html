@@ -501,27 +501,27 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div id="fl-briefing" style="margin-bottom:16px"></div>
     <div class="fl-kpi-row" id="fl-kpi-cards"></div>
 
-    <p class="fl-section-title">F1 – Existiert Koordination? (FL2-Ebene)</p>
+    <p class="fl-section-title">Existiert eine Koordinationsebene?</p>
     <div class="chart-card" id="chart-fl-pyramide" style="height:240px"></div>
     <div id="fl-alert-f1" class="fl-alert"></div>
-    <p class="hint">Gesunde Pyramide: FL1 (Operativ) &gt; FL2 (Koordination) &gt; FL3 (Strategisch). Fehlt FL2, wird abteilungsübergreifend koordiniert ohne strukturelles Format.</p>
+    <p class="hint">Gesunde Pyramide: FL1 (Operativ, breite Basis) &gt; FL2 (Koordination) &gt; FL3 (Strategisch, Spitze). Fehlt FL2, wird abteilungsübergreifend koordiniert ohne strukturelles Format.</p>
 
-    <p class="fl-section-title">F2 – Koordinations-Lücken zwischen Abteilungen</p>
+    <p class="fl-section-title">Koordinations-Lücken zwischen Abteilungen</p>
     <div class="chart-card" id="chart-fl-matrix"></div>
     <div id="fl-alert-f2" class="fl-alert"></div>
     <p class="hint">Zellwert = Anzahl FL2-Meetings, die beide Abteilungen verbinden. Weiße Felder = kein gemeinsames Koordinationsformat.</p>
 
-    <p class="fl-section-title">F3 – Wirkungsgrad nach Ebene</p>
+    <p class="fl-section-title">Wirkungsgrad nach Ebene</p>
     <div class="chart-card" id="chart-fl-wirkung"></div>
     <div id="fl-alert-f3" class="fl-alert"></div>
     <p class="hint">Wirkung aus Confluence-Spalte (1–4). FL2/FL3-Meetings mit Wirkung ≤ 2 sind Kandidaten für „Koordinationstheater".</p>
 
-    <p class="fl-section-title">F4 – Ebenen-Beteiligung: Wer ist Brückenkopf?</p>
+    <p class="fl-section-title">Wer ist Brückenkopf zwischen den Ebenen?</p>
     <div class="chart-card" id="chart-fl-bruecke"></div>
     <div id="fl-alert-f4" class="fl-alert"></div>
     <p class="hint">Personen auf allen 3 Ebenen sind potenzielle Informationsrouter. Hohe Stunden auf FL2 + FL3 = strategischer Entscheider. Auf FL1 + FL3 = möglicher Bottleneck.</p>
 
-    <p class="fl-section-title">F5 – Frequenz und Ebene: Passt das zusammen?</p>
+    <p class="fl-section-title">Passen Frequenz und Ebene zusammen?</p>
     <div class="chart-card" id="chart-fl-frequenz"></div>
     <div id="fl-alert-f5" class="fl-alert"></div>
     <p class="hint">Erwartet: FL1 → täglich/wöchentlich · FL2 → zwei-/dreiwöchentlich · FL3 → monatlich/quartalsweise. Rot = Abweichung. Bubble-Größe = Stunden/Monat.</p>
@@ -623,7 +623,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "08.06.2026 10:17";
+const APP_VERSION = "08.06.2026 11:42";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3700,23 +3700,56 @@ function _renderFLBriefing(aktive, byFL) {
   var MISMATCH5 = { FL1:["monatlich","quartalsweise"], FL2:[], FL3:["täglich","wöchentlich"] };
   var mismatch = aktive.filter(function(m){ return MISMATCH5[m.flugebene] && MISMATCH5[m.flugebene].includes(m.rhythmus_klasse); }).length;
 
+  // Status-Farben (NUR Status, nicht FL-Identität): grün = gut, gelb = Achtung
+  var OK = '#059669', WARN = '#d97706';
+
+  // Kachel 1: Koordinations-Lücken
+  var k1val, k1col, k1sub;
+  if (missing > 0) {
+    k1col = WARN; k1val = '⚠ ' + missing + ' Lücke' + (missing===1?'':'n');
+    k1sub = (maxPairs-missing) + ' von ' + maxPairs + ' Abteilungspaaren haben ein FL2-Format. Die fehlenden Paare können Abhängigkeiten nicht strukturiert klären.';
+  } else {
+    k1col = OK; k1val = '✓ Vollständig';
+    k1sub = 'Alle ' + maxPairs + ' Abteilungspaare sind über ein FL2-Koordinationsformat verbunden.';
+  }
+
+  // Kachel 2: Brückenköpfe (Status mit Begründung, nicht nur Zahl)
+  var k2val, k2col, k2sub;
+  if (bruecken > 0) {
+    k2col = WARN; k2val = '⚠ ' + bruecken + ' Person' + (bruecken===1?'':'en');
+    k2sub = 'Sitzen gleichzeitig auf allen 3 Ebenen und können so zu Informations-Flaschenhälsen werden.';
+  } else {
+    k2col = OK; k2val = '✓ Rollentrennung';
+    k2sub = 'Niemand ist auf allen 3 Ebenen – operative, koordinierende und strategische Rollen sind personell getrennt.';
+  }
+
+  // Kachel 3: Frequenz-Mismatches
+  var k3val, k3col, k3sub;
+  if (mismatch > 0) {
+    k3col = WARN; k3val = '⚠ ' + mismatch + ' Meeting' + (mismatch===1?'':'s');
+    k3sub = 'Tagen in einem zur Ebene unpassenden Rhythmus – z.B. strategisch, aber wöchentlich.';
+  } else {
+    k3col = OK; k3val = '✓ Alle stimmig';
+    k3sub = 'Jedes Meeting tagt in dem zur Ebene passenden Rhythmus.';
+  }
+
   el.innerHTML = '<div class="komm-briefing-card">'
     + '<div class="tbr-header"><span class="tbr-title">Flight Levels – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + total + ' Meetings klassifiziert</span></div>'
     + '<div style="padding:6px 0 10px;font-size:.83rem;font-weight:600;color:' + pyramidColor + '">' + pyramidStatus + '</div>'
     + '<div class="komm-insights-grid">'
-    + '<div class="komm-insight"><div class="komm-insight-label">FL2-Koordinations-Lücken</div>'
-    + '<div class="komm-insight-value" style="color:' + (missing>0?'#d97706':'#059669') + '">' + (missing>0 ? missing + ' fehlend' : '0 – vollständig') + '</div>'
-    + '<div class="komm-insight-sub">von ' + maxPairs + ' möglichen Abt.-Paaren ' + (maxPairs-missing) + ' mit FL2-Verbindung</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Koordinations-Lücken</div>'
+    + '<div class="komm-insight-value" style="color:' + k1col + '">' + k1val + '</div>'
+    + '<div class="komm-insight-sub">' + k1sub + '</div></div>'
     + '<div class="komm-insight"><div class="komm-insight-label">Brückenkopf-Personen</div>'
-    + '<div class="komm-insight-value" style="color:' + (bruecken>0?'#d97706':'#059669') + '">' + bruecken + '</div>'
-    + '<div class="komm-insight-sub">Person' + (bruecken===1?'':'en') + ' auf allen 3 Ebenen gleichzeitig</div></div>'
-    + '<div class="komm-insight"><div class="komm-insight-label">Frequenz-Mismatches (F5)</div>'
-    + '<div class="komm-insight-value" style="color:' + (mismatch>0?'#d97706':'#059669') + '">' + (mismatch>0 ? mismatch + ' Meetings' : '0 – alle stimmig') + '</div>'
-    + '<div class="komm-insight-sub">Rhythmus passt nicht zur FL-Ebene</div></div>'
-    + '<div class="komm-insight"><div class="komm-insight-label">Verteilung</div>'
-    + '<div class="komm-insight-value" style="font-size:.8rem">FL1: ' + fl1 + ' · FL2: ' + fl2 + ' · FL3: ' + fl3 + '</div>'
-    + '<div class="komm-insight-sub">Optimal: FL1 &gt; FL2 &gt; FL3</div></div>'
+    + '<div class="komm-insight-value" style="color:' + k2col + '">' + k2val + '</div>'
+    + '<div class="komm-insight-sub">' + k2sub + '</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Frequenz-Mismatches</div>'
+    + '<div class="komm-insight-value" style="color:' + k3col + '">' + k3val + '</div>'
+    + '<div class="komm-insight-sub">' + k3sub + '</div></div>'
+    + '<div class="komm-insight"><div class="komm-insight-label">Verteilung der Ebenen</div>'
+    + '<div class="komm-insight-value" style="font-size:.8rem;color:#374151">FL1: ' + fl1 + ' · FL2: ' + fl2 + ' · FL3: ' + fl3 + '</div>'
+    + '<div class="komm-insight-sub">Optimal ist eine breite operative Basis: FL1 &gt; FL2 &gt; FL3.</div></div>'
     + '</div></div>';
 }
 
@@ -3763,10 +3796,10 @@ function renderFlightLevels() {
     const hours  = FL_KEYS.map(fl => +hPerMonth(byFL[fl]).toFixed(1));
     Plotly.newPlot("chart-fl-pyramide", [{
       type: "bar", orientation: "h",
-      y: ["FL3 · Strategisch", "FL2 · Koordination", "FL1 · Operativ"],
-      x: [counts[2], counts[1], counts[0]],
-      marker: { color: [FL_COLORS.FL3, FL_COLORS.FL2, FL_COLORS.FL1] },
-      text: [`${counts[2]} Meetings · ${hours[2]} h/Mo`, `${counts[1]} Meetings · ${hours[1]} h/Mo`, `${counts[0]} Meetings · ${hours[0]} h/Mo`],
+      y: ["FL1 · Operativ", "FL2 · Koordination", "FL3 · Strategisch"],
+      x: [counts[0], counts[1], counts[2]],
+      marker: { color: [FL_COLORS.FL1, FL_COLORS.FL2, FL_COLORS.FL3] },
+      text: [`${counts[0]} Meetings · ${hours[0]} h/Mo`, `${counts[1]} Meetings · ${hours[1]} h/Mo`, `${counts[2]} Meetings · ${hours[2]} h/Mo`],
       textposition: "inside", insidetextanchor: "middle",
       textfont: { color: "white", size: 12 },
       hovertemplate: "%{y}: %{x} Meetings<extra></extra>"
@@ -4060,7 +4093,7 @@ function _renderFLEinfuehrung() {
     + '</div>';
 
   var introText = '<p style="font-size:.81rem;color:#374151;line-height:1.6;margin:0 0 10px">'
-    + 'Klaus Leopold beschreibt Flight Levels als Kommunikationssystem einer Organisation. '
+    + 'Flight Levels beschreiben eine Organisation als Kommunikationssystem. '
     + 'Die entscheidende Frage lautet: <strong>Wer muss mit wem, wie oft und worüber sprechen – '
     + 'damit Arbeit fließt statt stockt?</strong> Drei Ebenen, drei Rhythmen, drei Perspektiven.</p>'
     + '<div class="fl-level-grid">' + fl1Box + fl2Box + fl3Box + '</div>'
@@ -4087,20 +4120,17 @@ function _renderFLDatenperspektive(aktive, byFL) {
   var fl1 = byFL.FL1.length, fl2 = byFL.FL2.length, fl3 = byFL.FL3.length;
   var total = fl1 + fl2 + fl3;
 
-  // Perspektive schaetzen
-  var perspLabel, perspDetail, perspColor;
+  // Perspektive schaetzen (Klassifikation, KEIN Status – daher neutral eingefaerbt)
+  var perspLabel, perspDetail;
   if (fl3 > 0 && fl2 > 0) {
     perspLabel = 'Mehrebenen-Perspektive';
     perspDetail = 'Daten enthalten alle drei Ebenen. Strategische, koordinierende und operative Meetings sind repraesentiert – eine umfassende Analyse ist moeglich.';
-    perspColor = '#059669';
   } else if (fl2 > 0 && fl3 === 0) {
     perspLabel = 'Teamleiter- bis Koordinationsebene';
     perspDetail = 'FL2-Koordinationsebene erkennbar, aber keine strategischen Meetings (FL3). Daten kommen vermutlich von Abteilungsleitern oder Teamleitern.';
-    perspColor = '#2176ae';
   } else {
-    perspLabel = 'Vorwiegend operative Ebene (FL1)';
+    perspLabel = 'Vorwiegend operative Ebene';
     perspDetail = 'Fast alle Meetings sind operativ klassifiziert. Entweder fehlen Abteilungstyp-Konfigurationen, oder die Daten stammen aus einer rein operativen Perspektive.';
-    perspColor = '#d97706';
   }
 
   // Klassifikations-Konfidenz
@@ -4136,7 +4166,7 @@ function _renderFLDatenperspektive(aktive, byFL) {
   el.innerHTML = '<div class="komm-briefing-card">'
     + '<div class="tbr-header">'
     + '<span class="tbr-title">Datenperspektive</span>'
-    + '<span class="tbr-sub" style="font-weight:600;color:' + perspColor + '">' + perspLabel + '</span>'
+    + '<span class="tbr-sub" style="font-weight:600;color:#4a6b67">' + perspLabel + '</span>'
     + '</div>'
     + '<p style="font-size:.8rem;color:#374151;line-height:1.55;margin:6px 0 10px">' + perspDetail + '</p>'
     + '<div class="fl-data-grid">'
@@ -4220,7 +4250,7 @@ function _renderFLSchluesselFragen(aktive, byFL) {
     q4Answer = 'Alle Meetings haben einen zur Ebene passenden Rhythmus. FL1-Meetings tagen haeufig, FL3-Meetings selten – so soll es sein.';
   } else {
     var ex = mismatches.slice(0, 2).map(function(m){ return '"' + m.name + '" (' + m.flugebene + ', ' + m.rhythmus_klasse + ')'; }).join(', ');
-    q4Answer = mismatches.length + ' Meeting' + (mismatches.length === 1 ? '' : 's') + ' tagt mit einem zur Ebene unpassenden Rhythmus, z.B. ' + ex + (mismatches.length > 2 ? ' u.a.' : '') + '. Leopold warnt: ein strategisches Meeting, das woeochentlich tagt, erzeugt operative Betriebsamkeit auf dem falschen Level.';
+    q4Answer = mismatches.length + ' Meeting' + (mismatches.length === 1 ? '' : 's') + ' tagt mit einem zur Ebene unpassenden Rhythmus, z.B. ' + ex + (mismatches.length > 2 ? ' u.a.' : '') + '. Ein strategisches Meeting, das wöchentlich tagt, erzeugt operative Betriebsamkeit auf dem falschen Level.';
   }
 
   // Q5: Gibt es teure Meetings mit geringer Wirkung?
@@ -4263,7 +4293,7 @@ function _renderFLSchluesselFragen(aktive, byFL) {
   }
 
   el.innerHTML = '<p class="fl-section-title">Schlüsselfragen</p>'
-    + '<p style="font-size:.8rem;color:#6b7280;margin:0 0 12px;line-height:1.5">Diese Fragen stellt Klaus Leopold in seinen Flight-Level-Workshops. Die Antworten unten basieren auf euren Daten.</p>'
+    + '<p style="font-size:.8rem;color:#6b7280;margin:0 0 12px;line-height:1.5">Dies sind die zentralen Fragen, die ein Flight-Levels-Blick stellt. Die Antworten unten basieren auf euren Daten.</p>'
     + makeCard(1, 'Existiert eine Koordinationsebene zwischen operativer Arbeit und Strategie?', q1Answer, q1Missing)
     + makeCard(2, 'Werden Abhaengigkeiten zwischen Abteilungen strukturell sichtbar gemacht?', q2Answer, q2Missing)
     + makeCard(3, 'Wer traegt Informationen zwischen den Ebenen?', q3Answer, q3Missing)
