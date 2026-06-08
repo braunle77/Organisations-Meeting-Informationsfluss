@@ -630,7 +630,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "08.06.2026 19:59";
+const APP_VERSION = "08.06.2026 22:47";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -647,8 +647,8 @@ const RHY_FARBEN = {
   "zweiwöchentlich":"#7c9e44","monatlich":"#d4a843","quartalsweise":"#7c6bab","variabel":"#b0bec5"
 };
 const FREQ_W = {
-  "täglich":5,"wöchentlich":4,"dreiwöchentlich":3,
-  "zweiwöchentlich":2,"monatlich":1,"quartalsweise":0.5,"variabel":0.5
+  "täglich":5,"wöchentlich":4,"zweiwöchentlich":3,
+  "dreiwöchentlich":2,"monatlich":1,"quartalsweise":0.5,"variabel":0.5
 };
 // Monatliche Häufigkeit für Zeitlast-Berechnung (Arbeitstage/Wochen pro Monat)
 const FREQ_MONTHLY = {
@@ -1653,7 +1653,7 @@ function _plotNetzwerk(firstRender) {
 function renderKalender() {
   _renderKalenderBriefing();
   const aktive = MEETINGS.filter(m => m.status === "Aktiv");
-  const rhyO   = ["variabel","quartalsweise","monatlich","zweiwöchentlich","dreiwöchentlich","wöchentlich","täglich"];
+  const rhyO   = ["variabel","quartalsweise","monatlich","dreiwöchentlich","zweiwöchentlich","wöchentlich","täglich"];
   // Numerische X-Positionen für die Wochentage (nötig für Dodge-Offsets)
   const tagIdx = { "Mo":0, "Di":1, "Mi":2, "Do":3, "Fr":4, "—":5 };
 
@@ -1967,7 +1967,7 @@ function renderStatusVerteilung() {
 function renderRhythmusChart() {
   if (!MEETINGS.length) return;
 
-  const rhyO = ["täglich","wöchentlich","dreiwöchentlich","zweiwöchentlich","monatlich","quartalsweise","variabel"];
+  const rhyO = ["täglich","wöchentlich","zweiwöchentlich","dreiwöchentlich","monatlich","quartalsweise","variabel"];
 
   // Alle Kategorien sammeln
   const allKat = [...new Set(MEETINGS.map(m => (m.kategorie || "Unbekannt").trim()))].sort();
