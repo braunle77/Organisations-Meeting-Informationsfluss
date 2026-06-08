@@ -295,6 +295,25 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .fl-badge-fl2{background:#2176ae20;color:#2176ae;border:1px solid #2176ae55}
 .fl-badge-fl3{background:#7c6bab20;color:#7c6bab;border:1px solid #7c6bab55}
 .fl-badge-auto{opacity:.55}
+/* FL Guided Experience */
+.fl-intro-card{background:white;border-radius:10px;padding:14px 18px;border:1px solid #e8f0ee}
+.fl-intro-toggle{background:none;border:none;cursor:pointer;font-size:.77rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4a6b67;padding:0;display:flex;align-items:center;gap:6px;width:100%;text-align:left}
+.fl-intro-body{margin-top:12px}
+.fl-level-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0 6px}
+@media(max-width:600px){.fl-level-grid{grid-template-columns:1fr}}
+.fl-level-box{border-radius:8px;padding:10px 12px}
+.fl-level-box-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.fl-level-box-text{font-size:.75rem;color:#4b5563;line-height:1.5;margin:0}
+.fl-data-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+@media(max-width:600px){.fl-data-grid{grid-template-columns:1fr}}
+.fl-data-head{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px;color:#4a6b67}
+.fl-data-item{font-size:.79rem;padding:3px 0;color:#374151;line-height:1.4}
+.fl-data-miss{font-size:.79rem;padding:3px 0;color:#d97706;line-height:1.4}
+.fl-question{background:white;border-radius:10px;padding:14px 18px;border:1px solid #e8f0ee;margin-bottom:10px}
+.fl-q-nr{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:3px}
+.fl-q-title{font-size:.85rem;font-weight:700;color:#1a2e2b;margin:0 0 7px}
+.fl-q-answer{font-size:.8rem;color:#374151;line-height:1.55;margin:0}
+.fl-q-missing{font-size:.77rem;color:#d97706;margin:5px 0 0;line-height:1.4;font-style:italic}
 </style>
 </head>
 <body>
@@ -477,6 +496,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   </div>
   <div id="panel-fl" class="panel" data-tab="10">
     <button class="tab-info-btn" onclick="showTabInfo(10)">ℹ</button>
+    <div id="fl-einfuehrung" style="margin-bottom:16px"></div>
+    <div id="fl-datenperspektive" style="margin-bottom:16px"></div>
     <div id="fl-briefing" style="margin-bottom:16px"></div>
     <div class="fl-kpi-row" id="fl-kpi-cards"></div>
 
@@ -504,6 +525,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="chart-card" id="chart-fl-frequenz"></div>
     <div id="fl-alert-f5" class="fl-alert"></div>
     <p class="hint">Erwartet: FL1 → täglich/wöchentlich · FL2 → zwei-/dreiwöchentlich · FL3 → monatlich/quartalsweise. Rot = Abweichung. Bubble-Größe = Stunden/Monat.</p>
+    <div id="fl-schluessel-fragen" style="margin-top:24px"></div>
   </div>
 
   <div id="panel-6" class="panel" data-tab="11">
@@ -601,7 +623,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "06.06.2026 22:57";
+const APP_VERSION = "08.06.2026 09:58";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3712,6 +3734,8 @@ function renderFlightLevels() {
   aktive.forEach(m => { if (byFL[m.flugebene]) byFL[m.flugebene].push(m); });
 
   _renderFLBriefing(aktive, byFL);
+  _renderFLEinfuehrung();
+  _renderFLDatenperspektive(aktive, byFL);
 
   function hPerMonth(ms) {
     return ms.reduce((s, m) => {
@@ -3999,6 +4023,253 @@ function renderFlightLevels() {
       a.style.display = "";
     }
   })();
+
+  _renderFLSchluesselFragen(aktive, byFL);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FL Guided Experience – Einführung, Datenperspektive, Schlüsselfragen
+// ══════════════════════════════════════════════════════════════════════════════
+
+function _toggleFLEinfuehrung() {
+  var body = document.getElementById("fl-intro-body");
+  var btn  = document.getElementById("fl-intro-btn");
+  if (!body || !btn) return;
+  var open = body.style.display !== "none";
+  body.style.display = open ? "none" : "";
+  btn.textContent = open ? "▸ Flight Levels – was steckt dahinter?" : "▾ Flight Levels – was steckt dahinter?";
+}
+
+function _renderFLEinfuehrung() {
+  var el = document.getElementById("fl-einfuehrung");
+  if (!el) return;
+
+  var fl1Box = '<div class="fl-level-box" style="background:#59B2A515;border-left:4px solid #59B2A5">'
+    + '<div class="fl-level-box-title" style="color:#2e7d72">FL1 – Operativ</div>'
+    + '<p class="fl-level-box-text">Einzelteams arbeiten hier. Meetings auf FL1 koordinieren die taegliche Arbeit – Dailys, Retrospektiven, Team-Reviews. Rhythmus: haeufig (taeglich bis woechentlich). Fokus: Tasks, Stories, Fortschritt.</p>'
+    + '</div>';
+
+  var fl2Box = '<div class="fl-level-box" style="background:#2176ae15;border-left:4px solid #2176ae">'
+    + '<div class="fl-level-box-title" style="color:#1a5c8a">FL2 – Koordination</div>'
+    + '<p class="fl-level-box-text">Abhaengigkeiten zwischen Teams werden hier sichtbar. FL2-Meetings verbinden Abteilungen und loesen Engpaesse auf – ohne diesen Puffer werden Abhaengigkeiten eskaliert oder still ignoriert. Rhythmus: zwei- bis dreiwoeochentlich. Fokus: Epics, Abhaengigkeiten, Sync.</p>'
+    + '</div>';
+
+  var fl3Box = '<div class="fl-level-box" style="background:#7c6bab15;border-left:4px solid #7c6bab">'
+    + '<div class="fl-level-box-title" style="color:#5a4a8a">FL3 – Strategisch</div>'
+    + '<p class="fl-level-box-text">Portfolio und Richtung. FL3-Meetings setzen das Warum – OKRs, Quartals- und Jahreshorizonte, Ressourcenpriorisierung. Rhythmus: monatlich bis quartalsweise. Fokus: Strategie, Portfolioentscheidungen.</p>'
+    + '</div>';
+
+  var introText = '<p style="font-size:.81rem;color:#374151;line-height:1.6;margin:0 0 10px">'
+    + 'Klaus Leopold beschreibt Flight Levels als Kommunikationssystem einer Organisation. '
+    + 'Die entscheidende Frage lautet: <strong>Wer muss mit wem, wie oft und worüber sprechen – '
+    + 'damit Arbeit fließt statt stockt?</strong> Drei Ebenen, drei Rhythmen, drei Perspektiven.</p>'
+    + '<div class="fl-level-grid">' + fl1Box + fl2Box + fl3Box + '</div>'
+    + '<p style="font-size:.77rem;color:#6b7280;line-height:1.55;margin:8px 0 0">'
+    + '<strong>Die gesunde Pyramide:</strong> FL1 &gt; FL2 &gt; FL3. '
+    + 'Fehlt FL2, werden Abhaengigkeiten informell geloest – oder gar nicht. '
+    + 'Zu viel FL3 ohne stabiles FL2 erzeugt Strategiemeeting-Overload ohne Wirkung auf FL1. '
+    + 'Diese Analyse unten zeigt, wie deine Meeting-Landschaft dazu steht.</p>';
+
+  el.innerHTML = '<div class="fl-intro-card">'
+    + '<button class="fl-intro-toggle" id="fl-intro-btn" onclick="_toggleFLEinfuehrung()">'
+    + '▸ Flight Levels – was steckt dahinter?'
+    + '</button>'
+    + '<div class="fl-intro-body" id="fl-intro-body" style="display:none">'
+    + introText
+    + '</div></div>';
+}
+
+function _renderFLDatenperspektive(aktive, byFL) {
+  var el = document.getElementById("fl-datenperspektive");
+  if (!el) return;
+  if (!aktive.length) { el.innerHTML = ''; return; }
+
+  var fl1 = byFL.FL1.length, fl2 = byFL.FL2.length, fl3 = byFL.FL3.length;
+  var total = fl1 + fl2 + fl3;
+
+  // Perspektive schaetzen
+  var perspLabel, perspDetail, perspColor;
+  if (fl3 > 0 && fl2 > 0) {
+    perspLabel = 'Mehrebenen-Perspektive';
+    perspDetail = 'Daten enthalten alle drei Ebenen. Strategische, koordinierende und operative Meetings sind repraesentiert – eine umfassende Analyse ist moeglich.';
+    perspColor = '#059669';
+  } else if (fl2 > 0 && fl3 === 0) {
+    perspLabel = 'Teamleiter- bis Koordinationsebene';
+    perspDetail = 'FL2-Koordinationsebene erkennbar, aber keine strategischen Meetings (FL3). Daten kommen vermutlich von Abteilungsleitern oder Teamleitern.';
+    perspColor = '#2176ae';
+  } else {
+    perspLabel = 'Vorwiegend operative Ebene (FL1)';
+    perspDetail = 'Fast alle Meetings sind operativ klassifiziert. Entweder fehlen Abteilungstyp-Konfigurationen, oder die Daten stammen aus einer rein operativen Perspektive.';
+    perspColor = '#d97706';
+  }
+
+  // Klassifikations-Konfidenz
+  var autoCount = aktive.filter(function(m){ return m.flugebeneAuto; }).length;
+  var manuCount = aktive.length - autoCount;
+  var typAbdeckung = allDepts.filter(function(d){ return deptFunktionen[d]; }).length;
+  var typPct = allDepts.length > 0 ? Math.round(typAbdeckung / allDepts.length * 100) : 0;
+
+  // Was wir sehen
+  var sehenItems = [];
+  sehenItems.push('&#10003; ' + total + ' Meetings klassifiziert (FL1: ' + fl1 + ' · FL2: ' + fl2 + ' · FL3: ' + fl3 + ')');
+  if (manuCount > 0) sehenItems.push('&#10003; ' + manuCount + ' Meetings manuell verortet');
+  if (typPct >= 80) sehenItems.push('&#10003; Abteilungstypen ' + typPct + '% konfiguriert – gute Klassifikationsbasis');
+  else if (typPct > 0) sehenItems.push('&#9888; Abteilungstypen nur ' + typPct + '% gepflegt – FL-Klassifikation eingeschraenkt');
+  sehenItems.push('&#10003; Automatische Klassifikation basiert auf: Abteilungstyp, Abteilungsuebergreifend, Teilnehmerzahl, Rhythmus');
+
+  // Was fehlt
+  var fehlendItems = [];
+  var ohneWert  = aktive.filter(function(m){ return m.wert === null; }).length;
+  var ohneDauer = aktive.filter(function(m){ return m.dauer === null; }).length;
+  if (ohneWert  > 0) fehlendItems.push('&#9888; ' + ohneWert  + ' Meetings ohne Wirkungsangabe – F3-Analyse unvollstaendig');
+  if (ohneDauer > 0) fehlendItems.push('&#9888; ' + ohneDauer + ' Meetings ohne Dauer – Zeitlast-Berechnungen geschaetzt');
+  if (fl3 === 0)     fehlendItems.push('&#9888; Keine FL3-Meetings erkennbar – strategische Ebene nicht repraesentiert');
+  if (fl2 === 0)     fehlendItems.push('&#9888; Keine FL2-Meetings erkennbar – Koordinationsebene fehlt in den Daten');
+  if (typPct < 80)   fehlendItems.push('&#9888; Abteilungstypen ungepflegt – im Konfigurations-Tab nachpflegen fuer bessere FL-Klassifikation');
+  if (autoCount === total && total > 0) fehlendItems.push('&#9888; Alle Klassifikationen automatisch – manuelles Pruefen empfohlen');
+
+  if (!fehlendItems.length) fehlendItems.push('&#10003; Keine wesentlichen Datenlücken erkannt');
+
+  var sehenHTML = sehenItems.map(function(s){ return '<div class="fl-data-item">' + s + '</div>'; }).join('');
+  var fehlHTML  = fehlendItems.map(function(s){ return '<div class="' + (s.charAt(0) === '✓' || s.indexOf('10003') > -1 ? 'fl-data-item' : 'fl-data-miss') + '">' + s + '</div>'; }).join('');
+
+  el.innerHTML = '<div class="komm-briefing-card">'
+    + '<div class="tbr-header">'
+    + '<span class="tbr-title">Datenperspektive</span>'
+    + '<span class="tbr-sub" style="font-weight:600;color:' + perspColor + '">' + perspLabel + '</span>'
+    + '</div>'
+    + '<p style="font-size:.8rem;color:#374151;line-height:1.55;margin:6px 0 10px">' + perspDetail + '</p>'
+    + '<div class="fl-data-grid">'
+    + '<div><div class="fl-data-head">Was wir sehen</div>' + sehenHTML + '</div>'
+    + '<div><div class="fl-data-head">Was fehlt / einschraenkt</div>' + fehlHTML + '</div>'
+    + '</div></div>';
+}
+
+function _renderFLSchluesselFragen(aktive, byFL) {
+  var el = document.getElementById("fl-schluessel-fragen");
+  if (!el) return;
+  if (!aktive.length) { el.innerHTML = ''; return; }
+
+  var fl1 = byFL.FL1.length, fl2 = byFL.FL2.length, fl3 = byFL.FL3.length;
+
+  // Q1: Existiert eine Koordinationsebene?
+  var q1Answer, q1Missing = '';
+  if (fl2 === 0) {
+    q1Answer = 'Nein – keine FL2-Meetings erkennbar. Abteilungsuebergreifende Abhaengigkeiten werden entweder ad-hoc geregelt oder komplett auf FL3 eskaliert. Das ist ein klassisches Dysfunktionssignal.';
+  } else {
+    var pct2 = Math.round(fl2 / (fl1 + fl2 + fl3) * 100);
+    q1Answer = 'Ja – ' + fl2 + ' Koordinations-Meetings erkannt (' + pct2 + '% der klassifizierten Meetings). ';
+    q1Answer += (fl2 >= fl3) ? 'Koordinationsebene ist staerker als strategische Ebene – eine gute Basis.' : 'Koordinationsebene ist schwaecher als die strategische Ebene – Koordination koennte unterentwickelt sein.';
+  }
+
+  // Q2: Werden Abhaengigkeiten sichtbar gemacht?
+  var mainDepts = allDepts.filter(function(d){ return !SPECIAL_DEPTS.find(function(s){ return s.key===d; }); });
+  var conn = {};
+  byFL.FL2.forEach(function(m) {
+    var abtSet = new Set([m.abteilung]);
+    m.teilnehmer.forEach(function(t){ var a = effectivePersonAbt[t]; if (a && mainDepts.includes(a)) abtSet.add(a); });
+    var arr = Array.from(abtSet).filter(function(a){ return mainDepts.includes(a); });
+    for (var i = 0; i < arr.length; i++) {
+      for (var j = i + 1; j < arr.length; j++) {
+        var k = [arr[i], arr[j]].sort().join('||');
+        conn[k] = (conn[k] || 0) + 1;
+      }
+    }
+  });
+  var maxPairs = Math.round(mainDepts.length * (mainDepts.length - 1) / 2);
+  var connCount = Object.keys(conn).length;
+  var missingPairs = maxPairs - connCount;
+  var q2Answer, q2Missing = '';
+  if (fl2 === 0) {
+    q2Answer = 'Nicht erkennbar – keine FL2-Meetings vorhanden.';
+  } else if (maxPairs === 0) {
+    q2Answer = 'Nur eine Abteilung erkannt – kein Paarvergleich moeglich.';
+  } else {
+    var covPct = Math.round(connCount / maxPairs * 100);
+    q2Answer = connCount + ' von ' + maxPairs + ' moeglichen Abteilungspaaren sind durch FL2-Meetings verbunden (' + covPct + '% Abdeckung). ';
+    q2Answer += missingPairs > 0
+      ? missingPairs + ' Paare haben kein gemeinsames Koordinationsformat – dort koennen Abhaengigkeiten nicht strukturiert aufgeloest werden.'
+      : 'Alle Abteilungspaare haben mindestens ein gemeinsames Koordinationsformat.';
+  }
+
+  // Q3: Wer traegt Information zwischen den Ebenen?
+  var pFlH = {};
+  aktive.forEach(function(m) {
+    if (!m.flugebene) return;
+    var h = (m.dauer ? m.dauer / 60 : 1) * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5);
+    m.teilnehmer.forEach(function(t) {
+      if (!pFlH[t]) pFlH[t] = { FL1: 0, FL2: 0, FL3: 0 };
+      pFlH[t][m.flugebene] += h;
+    });
+  });
+  var bruecken = Object.entries(pFlH).filter(function(e){ return e[1].FL1 > 0 && e[1].FL2 > 0 && e[1].FL3 > 0; });
+  var q3Answer, q3Missing = '';
+  if (bruecken.length === 0) {
+    q3Answer = 'Keine Person ist auf allen drei Ebenen praesentiert. Informationsfluss zwischen den Ebenen ist potenziell fragmentiert – es gibt keine formellen Brueckenkopf-Personen in den Daten.';
+  } else {
+    var topB = bruecken.sort(function(a, b){ return (b[1].FL1+b[1].FL2+b[1].FL3) - (a[1].FL1+a[1].FL2+a[1].FL3); });
+    var names = topB.slice(0, 3).map(function(e){ return e[0]; }).join(', ');
+    q3Answer = bruecken.length + ' Person' + (bruecken.length === 1 ? '' : 'en') + ' sitzt in Meetings aller drei Ebenen: ' + names + (bruecken.length > 3 ? ' u.a.' : '') + '. Diese Personen sind zentrale Informationsrouter – sie koennen Engpass und Enabler zugleich sein.';
+  }
+
+  // Q4: Passt die Meeting-Frequenz zur Ebene?
+  var MISMATCH_DEF = { FL1: ['monatlich', 'quartalsweise'], FL2: [], FL3: ['taeglich', 'wöchentlich', 'täglich'] };
+  var mismatches = aktive.filter(function(m){ return MISMATCH_DEF[m.flugebene] && MISMATCH_DEF[m.flugebene].indexOf(m.rhythmus_klasse) >= 0; });
+  var q4Answer, q4Missing = '';
+  if (mismatches.length === 0) {
+    q4Answer = 'Alle Meetings haben einen zur Ebene passenden Rhythmus. FL1-Meetings tagen haeufig, FL3-Meetings selten – so soll es sein.';
+  } else {
+    var ex = mismatches.slice(0, 2).map(function(m){ return '"' + m.name + '" (' + m.flugebene + ', ' + m.rhythmus_klasse + ')'; }).join(', ');
+    q4Answer = mismatches.length + ' Meeting' + (mismatches.length === 1 ? '' : 's') + ' tagt mit einem zur Ebene unpassenden Rhythmus, z.B. ' + ex + (mismatches.length > 2 ? ' u.a.' : '') + '. Leopold warnt: ein strategisches Meeting, das woeochentlich tagt, erzeugt operative Betriebsamkeit auf dem falschen Level.';
+  }
+
+  // Q5: Gibt es teure Meetings mit geringer Wirkung?
+  var mitWert  = aktive.filter(function(m){ return m.wert !== null && m.dauer !== null; });
+  var q5Answer, q5Missing = '';
+  if (mitWert.length === 0) {
+    q5Missing = 'Keine Wirkungsangaben vorhanden – diese Frage kann nicht beantwortet werden. Felder "Wirkung" und "Dauer" in Confluence befllen.';
+    q5Answer = '';
+  } else {
+    var kandidaten = mitWert.filter(function(m){ return m.wert <= 2; });
+    var teureKand  = kandidaten.filter(function(m){ return m.dauer * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5) >= 120; });
+    if (teureKand.length === 0) {
+      q5Answer = 'Kein Meeting mit Wirkung ≤ 2 und hoher Zeitlast erkannt. Die bekannten Meetings mit geringer Wirkung haben vergleichsweise niedrigen Zeitaufwand.';
+    } else {
+      var top = teureKand.sort(function(a, b){ return (b.dauer*(FREQ_MONTHLY[b.rhythmus_klasse]||0.5)) - (a.dauer*(FREQ_MONTHLY[a.rhythmus_klasse]||0.5)); });
+      var names5 = top.slice(0, 3).map(function(m){ return '"' + m.name + '"'; }).join(', ');
+      q5Answer = teureKand.length + ' Meeting' + (teureKand.length === 1 ? '' : 's') + ' mit Wirkung ≤ 2 und hoher Zeitbindung: ' + names5 + (teureKand.length > 3 ? ' u.a.' : '') + '. Diese Meetings sind Kandidaten fuer Redesign oder Abschaffung.';
+    }
+  }
+
+  // Q6: Was koennen wir aus diesen Daten NICHT schlussfolgern?
+  var q6Parts = [];
+  if (fl3 === 0) q6Parts.push('die strategische Entscheidungsebene (FL3 fehlt)');
+  if (fl2 === 0) q6Parts.push('wie abteilungsuebergreifende Abhaengigkeiten koordiniert werden (FL2 fehlt)');
+  var ohneZweck = aktive.filter(function(m){ return !m.zweck || m.zweck.trim() === '' || m.zweck === '-'; }).length;
+  if (ohneZweck > aktive.length * 0.5) q6Parts.push('die inhaltliche Ausrichtung der Meetings (Zweck-Feld mehrheitlich leer)');
+  if (q6Parts.length === 0) {
+    q6Parts.push('keine wesentlichen blinden Flecken – Datenlage ist gut');
+  }
+  var q6Answer = 'Auf Basis der vorliegenden Daten koennen wir nichts sagen ueber: ' + q6Parts.join(', ') + '. Eine Analyse auf Basis unvollstaendiger Daten kann verzerren – fehlende Informationen sollten in der Quelltabelle nachgepflegt werden.';
+
+  // Karten bauen
+  function makeCard(nr, frage, antwort, fehlt) {
+    return '<div class="fl-question">'
+      + '<div class="fl-q-nr">Frage ' + nr + '</div>'
+      + '<div class="fl-q-title">' + frage + '</div>'
+      + (antwort ? '<div class="fl-q-answer">' + antwort + '</div>' : '')
+      + (fehlt   ? '<div class="fl-q-missing">&#9888; ' + fehlt + '</div>' : '')
+      + '</div>';
+  }
+
+  el.innerHTML = '<p class="fl-section-title">Schlüsselfragen</p>'
+    + '<p style="font-size:.8rem;color:#6b7280;margin:0 0 12px;line-height:1.5">Diese Fragen stellt Klaus Leopold in seinen Flight-Level-Workshops. Die Antworten unten basieren auf euren Daten.</p>'
+    + makeCard(1, 'Existiert eine Koordinationsebene zwischen operativer Arbeit und Strategie?', q1Answer, q1Missing)
+    + makeCard(2, 'Werden Abhaengigkeiten zwischen Abteilungen strukturell sichtbar gemacht?', q2Answer, q2Missing)
+    + makeCard(3, 'Wer traegt Informationen zwischen den Ebenen?', q3Answer, q3Missing)
+    + makeCard(4, 'Passt die Meeting-Haeufigkeit zur jeweiligen Flight-Level-Ebene?', q4Answer, q4Missing)
+    + makeCard(5, 'Gibt es Meetings, die viel Zeit kosten aber wenig Wirkung zeigen?', q5Answer, q5Missing)
+    + makeCard(6, 'Was koennen wir aus diesen Daten nicht schlussfolgern?', q6Answer, '');
 }
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
