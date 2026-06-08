@@ -623,7 +623,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "08.06.2026 11:42";
+const APP_VERSION = "08.06.2026 11:49";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3448,43 +3448,49 @@ function renderQualitaetsCockpit() {
     { label: "Dauer erfasst",
       count: MEETINGS.filter(m => m.dauer !== null).length, tot: total,
       hint: "Nötig für Zeitlastberechnung, Engpass und Treemap.",
-      action: "Dauern in Confluence eintragen.", color: "#59B2A5" },
+      action: "Dauern in Confluence eintragen." },
     { label: "Wirkung bewertet",
       count: MEETINGS.filter(m => m.wert !== null).length, tot: total,
-      hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Diagnose F3.",
-      action: "Als Spalte in Confluence-Tabelle eintragen (Wirkung 1-4).", color: "#2176ae" },
+      hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Wirkungsdiagramm.",
+      action: "Als Spalte in Confluence-Tabelle eintragen (Wirkung 1-4)." },
     { label: "Infofluss dokumentiert",
       count: MEETINGS.filter(m => m.infofluss && m.infofluss.trim()).length, tot: total,
       hint: "Dokumentiert wohin Informationen fließen.",
-      action: "In Confluence-Tabelle befüllen.", color: "#7c9e44" },
+      action: "In Confluence-Tabelle befüllen." },
     { label: "Abteilungstypen gepflegt",
       count: allDepts.filter(d => deptFunktionen[d]).length, tot: allDepts.length || 1,
       hint: "Verbessert Flight-Level-Klassifikation erheblich.",
-      action: "Hier oben in 'Abteilungstypen' eintragen.", color: "#7c6bab" },
+      action: "Hier oben in 'Abteilungstypen' eintragen." },
     { label: "Ohne Gruppen-Teilnehmer",
       count: MEETINGS.filter(m => !m.hatGruppenTeilnehmer).length, tot: total,
       hint: "Meetings mit Gruppen-Platzhaltern können nicht personengenau analysiert werden.",
-      action: "Unten in 'Gruppen-Teilnehmer' auflösen.", color: "#e05c2a" },
+      action: "Unten in 'Gruppen-Teilnehmer' auflösen." },
     { label: "Personen klar zugeordnet",
       count: knownPersons.filter(p => (personConfidence[p]?.score || 1) >= 0.7).length,
       tot: knownPersons.length || 1,
       hint: "Unsichere Personen (gelber Punkt) können Charts verzerren.",
-      action: "Im Tab 'Personen' gelbe Punkte pruefen.", color: "#c25050" },
+      action: "Im Tab 'Personen' gelbe Punkte pruefen." },
   ];
+
+  // Status-Ampel: eine Quelle für Balkenfarbe, Icon und Wert (≥80 grün · 50–79 gelb · <50 rot)
+  function qualStatus(pct) {
+    if (pct >= 80) return { color: "#059669", icon: "✓" };
+    if (pct >= 50) return { color: "#d97706", icon: "⚠" };
+    return { color: "#dc2626", icon: "✕" };
+  }
 
   grid.innerHTML = metrics.map(m => {
     const pct = m.tot > 0 ? Math.round(m.count / m.tot * 100) : 100;
-    const good = pct >= 80;
-    const ic = good ? "✓" : "⚠";
-    const ic_color = good ? "#059669" : "#d97706";
+    const st = qualStatus(pct);
+    const isGood = pct >= 80;
     return `<div class="dp-qual-card">
       <div class="dp-qual-header">
-        <span style="color:${ic_color};font-weight:700;font-size:.88rem">${ic}</span>
+        <span style="color:${st.color};font-weight:700;font-size:.88rem">${st.icon}</span>
         <span class="dp-qual-label">${m.label}</span>
-        <span class="dp-qual-val" style="color:${ic_color}">${m.count}/${m.tot} (${pct}%)</span>
+        <span class="dp-qual-val" style="color:${st.color}">${m.count}/${m.tot} (${pct}%)</span>
       </div>
-      <div class="dp-qual-bar"><div class="dp-qual-fill" style="width:${pct}%;background:${good ? m.color : '#fbbf24'}"></div></div>
-      <div class="dp-qual-hint">${good ? m.hint : '<b>'+m.action+'</b> '+m.hint}</div>
+      <div class="dp-qual-bar"><div class="dp-qual-fill" style="width:${pct}%;background:${st.color}"></div></div>
+      <div class="dp-qual-hint">${isGood ? m.hint : '<b>'+m.action+'</b> '+m.hint}</div>
     </div>`;
   }).join("");
 }
@@ -4151,7 +4157,7 @@ function _renderFLDatenperspektive(aktive, byFL) {
   var fehlendItems = [];
   var ohneWert  = aktive.filter(function(m){ return m.wert === null; }).length;
   var ohneDauer = aktive.filter(function(m){ return m.dauer === null; }).length;
-  if (ohneWert  > 0) fehlendItems.push('&#9888; ' + ohneWert  + ' Meetings ohne Wirkungsangabe – F3-Analyse unvollstaendig');
+  if (ohneWert  > 0) fehlendItems.push('&#9888; ' + ohneWert  + ' Meetings ohne Wirkungsangabe – Wirkungsanalyse unvollstaendig');
   if (ohneDauer > 0) fehlendItems.push('&#9888; ' + ohneDauer + ' Meetings ohne Dauer – Zeitlast-Berechnungen geschaetzt');
   if (fl3 === 0)     fehlendItems.push('&#9888; Keine FL3-Meetings erkennbar – strategische Ebene nicht repraesentiert');
   if (fl2 === 0)     fehlendItems.push('&#9888; Keine FL2-Meetings erkennbar – Koordinationsebene fehlt in den Daten');
