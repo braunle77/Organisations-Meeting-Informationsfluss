@@ -296,9 +296,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .fl-badge-fl3{background:#7c6bab20;color:#7c6bab;border:1px solid #7c6bab55}
 .fl-badge-auto{opacity:.55}
 /* FL Guided Experience */
-.fl-intro-card{background:white;border-radius:10px;padding:14px 18px;border:1px solid #e8f0ee}
-.fl-intro-toggle{background:none;border:none;cursor:pointer;font-size:.77rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4a6b67;padding:0;display:flex;align-items:center;gap:6px;width:100%;text-align:left}
-.fl-intro-body{margin-top:12px}
+.fl-intro-card{background:#f7fbfa;border-radius:10px;border:1px solid #d8e8e4;overflow:hidden}
+.fl-intro-toggle{background:none;border:none;cursor:pointer;font-size:.77rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#3a5b57;padding:13px 18px;display:flex;align-items:center;gap:8px;width:100%;text-align:left;transition:background .15s}
+.fl-intro-toggle:hover{background:#eaf4f1}
+.fl-intro-chevron{display:inline-block;transition:transform .2s;font-size:.68rem;color:#59B2A5}
+.fl-intro-toggle.open .fl-intro-chevron{transform:rotate(90deg)}
+.fl-intro-hint{margin-left:auto;font-size:.7rem;font-weight:600;text-transform:none;letter-spacing:0;color:#8aa6a1;flex-shrink:0}
+.fl-intro-body{padding:2px 18px 16px}
 .fl-level-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0 6px}
 @media(max-width:600px){.fl-level-grid{grid-template-columns:1fr}}
 .fl-level-box{border-radius:8px;padding:10px 12px}
@@ -310,7 +314,9 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .fl-data-item{font-size:.79rem;padding:3px 0;color:#374151;line-height:1.4}
 .fl-data-miss{font-size:.79rem;padding:3px 0;color:#d97706;line-height:1.4}
 .fl-question{background:white;border-radius:10px;padding:14px 18px;border:1px solid #e8f0ee;margin-bottom:10px}
-.fl-q-nr{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:3px}
+.fl-q-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.fl-q-nr{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af}
+.fl-q-status{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;white-space:nowrap}
 .fl-q-title{font-size:.85rem;font-weight:700;color:#1a2e2b;margin:0 0 7px}
 .fl-q-answer{font-size:.8rem;color:#374151;line-height:1.55;margin:0}
 .fl-q-missing{font-size:.77rem;color:#d97706;margin:5px 0 0;line-height:1.4;font-style:italic}
@@ -623,7 +629,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "08.06.2026 11:49";
+const APP_VERSION = "08.06.2026 12:33";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3673,6 +3679,9 @@ function _renderFLBriefing(aktive, byFL) {
   if (fl2 === 0) {
     pyramidStatus = '⚠ FL2-Koordination fehlt vollständig – Meetings springen direkt von operativ zu strategisch';
     pyramidColor = '#dc2626';
+  } else if (fl3 === 0) {
+    pyramidStatus = '⚠ Pyramide ohne Spitze – keine strategische Ebene (FL3) erfasst. Vermutlich aus FL1/FL2-Sicht noch nicht eingepflegt – strategische Meetings ergänzen.';
+    pyramidColor = '#d97706';
   } else if (fl2 < fl3) {
     pyramidStatus = '⚠ FL2 (' + fl2 + ') kleiner als FL3 (' + fl3 + ') – Koordinationsebene unterentwickelt';
     pyramidColor = '#d97706';
@@ -3739,6 +3748,20 @@ function _renderFLBriefing(aktive, byFL) {
     k3sub = 'Jedes Meeting tagt in dem zur Ebene passenden Rhythmus.';
   }
 
+  // Kachel 4: Verteilung – fehlende Ebenen ehrlich flaggen
+  var missingLevels = [];
+  if (fl1 === 0) missingLevels.push('FL1');
+  if (fl2 === 0) missingLevels.push('FL2');
+  if (fl3 === 0) missingLevels.push('FL3');
+  var vertSub, vertSubColor;
+  if (missingLevels.length) {
+    vertSubColor = WARN;
+    vertSub = '⚠ ' + missingLevels.join(' &amp; ') + ' nicht erfasst – vermutlich aus FL1/FL2-Sicht noch nicht eingepflegt. Für ein vollständiges Bild ergänzen.';
+  } else {
+    vertSubColor = '#9ca3af';
+    vertSub = 'Optimal ist eine breite operative Basis: FL1 &gt; FL2 &gt; FL3.';
+  }
+
   el.innerHTML = '<div class="komm-briefing-card">'
     + '<div class="tbr-header"><span class="tbr-title">Flight Levels – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + total + ' Meetings klassifiziert</span></div>'
@@ -3755,7 +3778,7 @@ function _renderFLBriefing(aktive, byFL) {
     + '<div class="komm-insight-sub">' + k3sub + '</div></div>'
     + '<div class="komm-insight"><div class="komm-insight-label">Verteilung der Ebenen</div>'
     + '<div class="komm-insight-value" style="font-size:.8rem;color:#374151">FL1: ' + fl1 + ' · FL2: ' + fl2 + ' · FL3: ' + fl3 + '</div>'
-    + '<div class="komm-insight-sub">Optimal ist eine breite operative Basis: FL1 &gt; FL2 &gt; FL3.</div></div>'
+    + '<div class="komm-insight-sub" style="color:' + vertSubColor + '">' + vertSub + '</div></div>'
     + '</div></div>';
 }
 
@@ -3820,6 +3843,9 @@ function renderFlightLevels() {
     if (a) {
       if (counts[1] === 0) {
         a.innerHTML = "<b>⚠ Keine FL2-Meetings erkannt.</b> Wie werden abteilungsübergreifende Abhängigkeiten koordiniert? Möglicherweise durch Ad-hoc-Eskalation oder informelle Kanäle.";
+        a.className = "fl-alert fl-alert-warn";
+      } else if (counts[2] === 0) {
+        a.innerHTML = "<b>⚠ Keine FL3-Meetings erfasst – Pyramide ohne Spitze.</b> Entweder fehlt die strategische Ebene, oder (wahrscheinlicher bei Daten aus FL1/FL2-Sicht) sie wurde noch nicht eingepflegt. Strategische Meetings ergänzen für ein vollständiges Bild.";
         a.className = "fl-alert fl-alert-warn";
       } else if (counts[1] < counts[2]) {
         a.innerHTML = `<b>⚠ FL2 (${counts[1]}) kleiner als FL3 (${counts[2]}).</b> Die Koordinationsebene ist schwächer als die strategische Ebene – klassisches Dysfunktionssignal.`;
@@ -4073,10 +4099,12 @@ function renderFlightLevels() {
 function _toggleFLEinfuehrung() {
   var body = document.getElementById("fl-intro-body");
   var btn  = document.getElementById("fl-intro-btn");
+  var hint = document.getElementById("fl-intro-hint");
   if (!body || !btn) return;
   var open = body.style.display !== "none";
   body.style.display = open ? "none" : "";
-  btn.textContent = open ? "▸ Flight Levels – was steckt dahinter?" : "▾ Flight Levels – was steckt dahinter?";
+  btn.classList.toggle("open", !open);
+  if (hint) hint.textContent = open ? "einblenden" : "ausblenden";
 }
 
 function _renderFLEinfuehrung() {
@@ -4111,7 +4139,9 @@ function _renderFLEinfuehrung() {
 
   el.innerHTML = '<div class="fl-intro-card">'
     + '<button class="fl-intro-toggle" id="fl-intro-btn" onclick="_toggleFLEinfuehrung()">'
-    + '▸ Flight Levels – was steckt dahinter?'
+    + '<span class="fl-intro-chevron">&#9654;</span>'
+    + '<span>Flight Levels – was steckt dahinter?</span>'
+    + '<span class="fl-intro-hint" id="fl-intro-hint">einblenden</span>'
     + '</button>'
     + '<div class="fl-intro-body" id="fl-intro-body" style="display:none">'
     + introText
@@ -4240,7 +4270,9 @@ function _renderFLSchluesselFragen(aktive, byFL) {
   });
   var bruecken = Object.entries(pFlH).filter(function(e){ return e[1].FL1 > 0 && e[1].FL2 > 0 && e[1].FL3 > 0; });
   var q3Answer, q3Missing = '';
-  if (bruecken.length === 0) {
+  if (fl2 === 0 || fl3 === 0) {
+    q3Answer = 'Nicht beurteilbar – es fehlen Meetings auf mindestens einer Ebene (siehe oben). Solange nicht alle drei Ebenen erfasst sind, kann keine Person sie verbinden, und die Frage lässt sich nicht sinnvoll beantworten.';
+  } else if (bruecken.length === 0) {
     q3Answer = 'Keine Person ist auf allen drei Ebenen praesentiert. Informationsfluss zwischen den Ebenen ist potenziell fragmentiert – es gibt keine formellen Brueckenkopf-Personen in den Daten.';
   } else {
     var topB = bruecken.sort(function(a, b){ return (b[1].FL1+b[1].FL2+b[1].FL3) - (a[1].FL1+a[1].FL2+a[1].FL3); });
@@ -4288,10 +4320,29 @@ function _renderFLSchluesselFragen(aktive, byFL) {
   }
   var q6Answer = 'Auf Basis der vorliegenden Daten koennen wir nichts sagen ueber: ' + q6Parts.join(', ') + '. Eine Analyse auf Basis unvollstaendiger Daten kann verzerren – fehlende Informationen sollten in der Quelltabelle nachgepflegt werden.';
 
+  // Ampel-Status pro Frage: ✓ gut beantwortbar · ⚠ Einschränkung · ✕ Datenlücke/Handlungsbedarf
+  var GOOD = { color: '#059669', icon: '✓', word: 'Befund' };
+  var WARN = { color: '#d97706', icon: '⚠', word: 'Achtung' };
+  var BAD  = { color: '#dc2626', icon: '✕', word: 'Datenlücke' };
+
+  var q1St = (fl2 === 0) ? BAD : (fl2 < fl3 ? WARN : GOOD);
+  var q2St = (fl2 === 0) ? BAD : ((maxPairs === 0 || missingPairs > 0) ? WARN : GOOD);
+  var q3St = (fl2 === 0 || fl3 === 0) ? WARN : (bruecken.length > 0 ? WARN : GOOD);
+  var q4St = (mismatches.length > 0) ? WARN : GOOD;
+  var q5teure = mitWert.length
+    ? mitWert.filter(function(m){ return m.wert <= 2 && m.dauer * (FREQ_MONTHLY[m.rhythmus_klasse] || 0.5) >= 120; }).length
+    : 0;
+  var q5St = (mitWert.length === 0) ? BAD : (q5teure > 0 ? WARN : GOOD);
+  var q6Major = (fl3 === 0 || fl2 === 0);
+  var q6St = q6Major ? BAD : ((ohneZweck > aktive.length * 0.5) ? WARN : GOOD);
+
   // Karten bauen
-  function makeCard(nr, frage, antwort, fehlt) {
-    return '<div class="fl-question">'
-      + '<div class="fl-q-nr">Frage ' + nr + '</div>'
+  function makeCard(nr, frage, antwort, fehlt, st) {
+    return '<div class="fl-question" style="border-left:4px solid ' + st.color + '">'
+      + '<div class="fl-q-head">'
+      + '<span class="fl-q-nr">Frage ' + nr + '</span>'
+      + '<span class="fl-q-status" style="color:' + st.color + '">' + st.icon + ' ' + st.word + '</span>'
+      + '</div>'
       + '<div class="fl-q-title">' + frage + '</div>'
       + (antwort ? '<div class="fl-q-answer">' + antwort + '</div>' : '')
       + (fehlt   ? '<div class="fl-q-missing">&#9888; ' + fehlt + '</div>' : '')
@@ -4299,13 +4350,13 @@ function _renderFLSchluesselFragen(aktive, byFL) {
   }
 
   el.innerHTML = '<p class="fl-section-title">Schlüsselfragen</p>'
-    + '<p style="font-size:.8rem;color:#6b7280;margin:0 0 12px;line-height:1.5">Dies sind die zentralen Fragen, die ein Flight-Levels-Blick stellt. Die Antworten unten basieren auf euren Daten.</p>'
-    + makeCard(1, 'Existiert eine Koordinationsebene zwischen operativer Arbeit und Strategie?', q1Answer, q1Missing)
-    + makeCard(2, 'Werden Abhaengigkeiten zwischen Abteilungen strukturell sichtbar gemacht?', q2Answer, q2Missing)
-    + makeCard(3, 'Wer traegt Informationen zwischen den Ebenen?', q3Answer, q3Missing)
-    + makeCard(4, 'Passt die Meeting-Haeufigkeit zur jeweiligen Flight-Level-Ebene?', q4Answer, q4Missing)
-    + makeCard(5, 'Gibt es Meetings, die viel Zeit kosten aber wenig Wirkung zeigen?', q5Answer, q5Missing)
-    + makeCard(6, 'Was koennen wir aus diesen Daten nicht schlussfolgern?', q6Answer, '');
+    + '<p style="font-size:.8rem;color:#6b7280;margin:0 0 12px;line-height:1.5">Dies sind die zentralen Fragen, die ein Flight-Levels-Blick stellt. Die farbige Markierung zeigt, wie gut jede Frage mit euren Daten beantwortbar ist.</p>'
+    + makeCard(1, 'Existiert eine Koordinationsebene zwischen operativer Arbeit und Strategie?', q1Answer, q1Missing, q1St)
+    + makeCard(2, 'Werden Abhaengigkeiten zwischen Abteilungen strukturell sichtbar gemacht?', q2Answer, q2Missing, q2St)
+    + makeCard(3, 'Wer traegt Informationen zwischen den Ebenen?', q3Answer, q3Missing, q3St)
+    + makeCard(4, 'Passt die Meeting-Haeufigkeit zur jeweiligen Flight-Level-Ebene?', q4Answer, q4Missing, q4St)
+    + makeCard(5, 'Gibt es Meetings, die viel Zeit kosten aber wenig Wirkung zeigen?', q5Answer, q5Missing, q5St)
+    + makeCard(6, 'Was koennen wir aus diesen Daten nicht schlussfolgern?', q6Answer, '', q6St);
 }
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
