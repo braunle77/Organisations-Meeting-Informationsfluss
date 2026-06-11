@@ -597,10 +597,10 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <button id="eng-btn-ma"   onclick="setEngpassMode('ma')">Mitarbeitende</button>
     </div>
     <div class="chart-card" id="chart-engpass"></div>
-    <p class="hint">Balken = Anzahl Meetings · Blau = als Verantwortliche/r (Kopf) · Grün = als Teilnehmer/in · Sortiert nach Gesamtlast</p>
+    <p class="hint">Gestapelter Balken = Meetings gesamt (jedes Meeting einmal) · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · sortiert nach Gesamtlast</p>
     <div id="engpass-expand-bar" style="margin:10px 0"></div>
     <div class="chart-card" id="chart-zeitlast" style="margin-top:4px"></div>
-    <p class="hint" id="hint-zeitlast">Balken = Stunden/Monat <strong>pro Person</strong> · Formel: Dauer (min) × Häufigkeit/Monat ÷ 60 · Blau = Verantwortliche/r · Grün = Teilnehmer/in</p>
+    <p class="hint" id="hint-zeitlast">Gestapelter Balken = Stunden/Monat <strong>pro Person</strong> (jedes Meeting einmal) · Formel: Dauer (min) × Häufigkeit/Monat ÷ 60 · Blau = Verantwortliche/r · Grün = Teilnehmer/in</p>
   </div>
 
   <div id="panel-9" class="panel" data-tab="7">
@@ -631,7 +631,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "11.06.2026 14:18";
+const APP_VERSION = "11.06.2026 14:35";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -2795,15 +2795,19 @@ function renderEngpass() {
   if (!MEETINGS.length) return;
   _renderEngpassBriefing();
 
-  // Meetings pro Person zählen: als Verantwortliche/r und als Teilnehmer/in
+  // Meetings pro Person zählen – jede Person pro Meeting GENAU EINMAL:
+  // verantwortlich → zählt als Verantwortliche/r, sonst als Teilnehmer/in (keine Doppelzählung).
   const kopfCount  = {};
   const teilnCount = {};
 
   MEETINGS.forEach(m => {
     const v = m.verantwortlich;
-    if (v) kopfCount[v] = (kopfCount[v] || 0) + 1;
+    const seen = new Set();
+    if (v) { kopfCount[v] = (kopfCount[v] || 0) + 1; seen.add(v); }
     m.teilnehmer.forEach(t => {
+      if (seen.has(t)) return;   // bereits als Verantwortliche/r gezählt
       teilnCount[t] = (teilnCount[t] || 0) + 1;
+      seen.add(t);
     });
   });
 
@@ -2852,7 +2856,7 @@ function renderEngpass() {
       hovertemplate: "<b>%{y}</b><br>%{x} Meetings als Teilnehmer/in<extra></extra>"
     }
   ], {
-    barmode: "group",
+    barmode: "stack",
     title: { text: "Meeting-Last pro Person" + (engpassExpanded ? "" : " (Top " + ENGPASS_TOP + ")"), font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Anzahl Meetings", showgrid: true, gridcolor: "#f3f4f6", dtick: 1 },
@@ -2878,10 +2882,14 @@ function renderZeitlast() {
     if (m.dauer === null) { missingDauer++; return; }
     const monMin = m.dauer * freq;
 
+    // Jede Person pro Meeting GENAU EINMAL: verantwortlich → Kopf-Zeit, sonst Teilnehmer-Zeit.
     const v = m.verantwortlich;
-    if (v) kopfMin[v] = (kopfMin[v] || 0) + monMin;
+    const seen = new Set();
+    if (v) { kopfMin[v] = (kopfMin[v] || 0) + monMin; seen.add(v); }
     m.teilnehmer.forEach(t => {
+      if (seen.has(t)) return;   // bereits als Verantwortliche/r gezählt
       teilnMin[t] = (teilnMin[t] || 0) + monMin;
+      seen.add(t);
     });
   });
 
@@ -2916,7 +2924,7 @@ function renderZeitlast() {
     ? ` (${missingDauer} Meeting${missingDauer>1?"s":""} ohne Dauer-Angabe nicht berücksichtigt)`
     : "";
   if (hint) hint.textContent =
-    `Balken = geschätzte Stunden/Monat · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit${suffix}`;
+    `Gestapelter Balken = geschätzte Stunden/Monat gesamt (jedes Meeting einmal) · Blau = als Verantwortliche/r · Grün = als Teilnehmer/in · Basis: Dauer × monatliche Häufigkeit${suffix}`;
 
   Plotly.newPlot("chart-zeitlast", [
     {
@@ -2936,7 +2944,7 @@ function renderZeitlast() {
       hovertemplate: "<b>%{y}</b><br>%{x} h/Monat als Teilnehmer/in<extra></extra>"
     }
   ], {
-    barmode: "group",
+    barmode: "stack",
     title: { text: "Zeitlast pro Person (Stunden/Monat, geschätzt)", font: { size: 16, family: "DM Sans, system-ui, sans-serif" } },
     font: { family: "DM Sans, system-ui, sans-serif" },
     xaxis: { title: "Stunden pro Monat", showgrid: true, gridcolor: "#f3f4f6" },
