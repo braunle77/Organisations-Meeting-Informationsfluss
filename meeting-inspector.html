@@ -168,12 +168,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .badge-aktiv{background:#dcfce7;color:#15803d}
 .badge-geplant{background:#dbeafe;color:#1d4ed8}
 .teiln-cell,.zweck-cell,.learning-cell{max-width:220px;font-size:.8rem;color:#475569}
-/* KI Analyse Placeholder */
-.findings-placeholder{text-align:center;padding:60px 40px;color:#4a6b67}
-.findings-placeholder-icon{font-size:3rem;margin-bottom:16px}
-.findings-placeholder h2{font-size:1.2rem;font-weight:600;margin-bottom:10px;color:#1a2e2c}
-.findings-placeholder p{font-size:.88rem;color:#4a6b67;max-width:520px;margin:0 auto 8px;line-height:1.65}
-.findings-placeholder-sub{color:#7a9e9a !important;font-size:.83rem !important}
 /* Overlap legend */
 /* Überschneidungen Tab */
 .top-paare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
@@ -416,7 +410,6 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       <button class="tab-btn" data-tab="7" onclick="showTab(7)">Zeitverteilung</button>
       <button class="tab-btn" data-tab="8" onclick="showTab(8)">Wirkung</button>
       <button class="tab-btn" data-tab="10" onclick="showTab(10)">Flight Levels</button>
-      <button class="tab-btn" data-tab="11" onclick="showTab(11)">KI Analyse</button>
     </div>
     <div class="tab-group-sep"></div>
     <div class="tab-group tab-group-admin">
@@ -536,22 +529,12 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div id="fl-schluessel-fragen" style="margin-top:24px"></div>
   </div>
 
-  <div id="panel-6" class="panel" data-tab="11">
-    <button class="tab-info-btn" onclick="showTabInfo(11)">ℹ</button>
-    <div class="findings-placeholder">
-      <div class="findings-placeholder-icon">🤖</div>
-      <h2>KI-Analyse</h2>
-      <p>Diese Ausbaustufe ist noch nicht aktiviert.</p>
-      <p class="findings-placeholder-sub">Dieser Tab ist für KI-gestützte Mustererkennung vorgesehen. Eine KI analysiert die Datenlage und erkennt Muster, die visuell nicht sofort sichtbar sind – z.&thinsp;B. Redundanzen, strukturelle Engpässe oder auffällige Kommunikationslücken.<br><br>Die Ergebnisse erscheinen hier als kommentierte Befund-Karten. Diese Funktion kann auf Wunsch ergänzt werden.</p>
-    </div>
-  </div>
-
   <div id="panel-dp" class="panel" data-tab="12">
     <button class="tab-info-btn" onclick="showTabInfo(12)">ℹ</button>
 
     <div class="dp-section">
       <p class="dp-section-title">Abteilungstypen</p>
-      <p class="dp-section-desc">Ordne jeder Abteilung einen funktionalen Typ zu. Verbessert die Flight-Level-Klassifikation signifikant und bereitet die KI-Analyse vor.</p>
+      <p class="dp-section-desc">Ordne jeder Abteilung einen funktionalen Typ zu. Verbessert die Flight-Level-Klassifikation signifikant.</p>
       <div class="dp-dept-grid" id="dp-dept-grid"></div>
     </div>
 
@@ -631,7 +614,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "11.06.2026 14:35";
+const APP_VERSION = "12.06.2026 19:09";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1356,10 +1339,6 @@ const TAB_INFO = {
         was: "Fünf diagnostische Visualisierungen: Kommunikationspyramide (FL1/FL2/FL3), FL2-Verbindungsmatrix, Wirkungsgrad nach Ebene, Brückenkopf-Heatmap und Frequenz-Level-Matrix.",
         achten: "FL1 = Operativ (Teamarbeit), FL2 = Koordination (teamübergreifend), FL3 = Strategisch (Portfolio). Fehlende FL2-Meetings sind das häufigste Dysfunktionssignal. Die FL-Klassifikation erfolgt automatisch über Abteilungstypen (im Konfiguration-Tab pflegbar).",
         folgefragen: "Existiert FL2 wirklich, oder wird koordiniert durch Ad-hoc-Eskalation? Welche Abteilungspaare haben keine strukturierte Koordination? Wer sitzt auf allen drei Ebenen gleichzeitig?" },
-  11: { title: "KI-Analyse",
-        was: "Reserviert für kommentierte Befunde – erkannte Muster, Redundanzen und Handlungsempfehlungen aus einer KI-gestützten Analyse.",
-        achten: "Dieser Tab ist aktuell leer. Sinnvolle Insights erfordern Mustererkennung über die Daten – das ist eine KI-Aufgabe.",
-        folgefragen: "Welche Muster sind in dieser Organisation besonders auffällig? Welche Maßnahmen werden empfohlen?" },
   12: { title: "Datenpflege",
         was: "Zentraler Admin-Bereich: Abteilungstypen pflegen, Datenqualität überwachen, Gruppen-Teilnehmer auflösen, Konfiguration exportieren/importieren.",
         achten: "Abteilungstypen verbessern die Flight-Level-Klassifikation erheblich. Je mehr Felder gepflegt sind (Dauer, Wirkung, Infofluss), desto aussagekräftiger sind die Analyse-Tabs.",
