@@ -315,6 +315,13 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .fl-q-title{font-size:.85rem;font-weight:700;color:#1a2e2b;margin:0 0 7px}
 .fl-q-answer{font-size:.8rem;color:#374151;line-height:1.55;margin:0}
 .fl-q-missing{font-size:.77rem;color:#d97706;margin:5px 0 0;line-height:1.4;font-style:italic}
+.fl-mtg-list{background:white;border:1px solid #e8f0ee;border-radius:10px;margin-top:10px;overflow:hidden}
+.fl-mtg-list-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f1f5f9;font-weight:700;font-size:.82rem;color:#1a2e2b}
+.fl-mtg-list-close{border:none;background:none;cursor:pointer;font-size:1rem;color:#9ca3af;line-height:1}
+.fl-mtg-list-body{max-height:260px;overflow-y:auto;padding:2px 0}
+.fl-mtg-item{padding:6px 14px;font-size:.8rem;color:#374151;border-bottom:1px solid #f7fafc;display:flex;justify-content:space-between;gap:12px}
+.fl-mtg-item:last-child{border-bottom:none}
+.fl-mtg-item .abt{color:#6b7280;font-size:.75rem;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -504,6 +511,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <p class="fl-section-title">Existiert eine Koordinationsebene?</p>
     <div class="chart-card" id="chart-fl-pyramide" style="height:240px"></div>
+    <div id="fl-pyramide-liste"></div>
     <div id="fl-alert-f1" class="fl-alert"></div>
     <p class="hint">Gesunde Pyramide: FL1 (Operativ, breite Basis) &gt; FL2 (Koordination) &gt; FL3 (Strategisch, Spitze). Fehlt FL2, wird abteilungsübergreifend koordiniert ohne strukturelles Format.</p>
 
@@ -614,7 +622,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "12.06.2026 19:09";
+const APP_VERSION = "16.06.2026 12:17";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3921,13 +3929,39 @@ function renderFlightLevels() {
       text: [`${counts[0]} Meetings · ${hours[0]} h/Mo`, `${counts[1]} Meetings · ${hours[1]} h/Mo`, `${counts[2]} Meetings · ${hours[2]} h/Mo`],
       textposition: "inside", insidetextanchor: "middle",
       textfont: { color: "white", size: 12 },
-      hovertemplate: "%{y}: %{x} Meetings<extra></extra>"
+      hovertemplate: "%{y}: %{x} Meetings · klicken für Details<extra></extra>"
     }], {
       ...LAYOUT_BASE,
       height: 200, margin: { l: 160, r: 40, t: 16, b: 40 },
       xaxis: { title: "Anzahl Meetings", zeroline: false, gridcolor: "#f1f5f9" },
       yaxis: { automargin: true, ticks: 'outside', ticklen: 5 }
     }, { displayModeBar: false });
+
+    // Klick auf einen Balken → scrollbare Liste der Meetings dieser Ebene (skaliert für 2 wie 47)
+    var _pyEl = document.getElementById("chart-fl-pyramide");
+    var _listEl = document.getElementById("fl-pyramide-liste");
+    if (_listEl) { _listEl.innerHTML = ""; _listEl.dataset.open = ""; }
+    function _escFL(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function _showFLList(fl) {
+      var ms = (byFL[fl] || []).slice().sort(function(x,y){ return String(x.name).localeCompare(String(y.name)); });
+      var items = ms.length
+        ? ms.map(function(m){ return '<div class="fl-mtg-item"><span>' + _escFL(m.name) + '</span><span class="abt">' + _escFL(m.abteilung) + '</span></div>'; }).join("")
+        : '<div class="fl-mtg-item" style="color:#9ca3af">Keine Meetings auf dieser Ebene.</div>';
+      _listEl.innerHTML = '<div class="fl-mtg-list">'
+        + '<div class="fl-mtg-list-head"><span style="border-left:4px solid ' + FL_COLORS[fl] + ';padding-left:8px">' + ms.length + ' Meeting' + (ms.length===1?"":"s") + ' · ' + FL_LABELS[fl] + '</span>'
+        + '<button class="fl-mtg-list-close" title="Schließen" onclick="var e=document.getElementById(\'fl-pyramide-liste\');e.innerHTML=\'\';e.dataset.open=\'\'">&times;</button></div>'
+        + '<div class="fl-mtg-list-body">' + items + '</div></div>';
+      _listEl.dataset.open = fl;
+    }
+    if (_pyEl && _pyEl.on && _listEl) {
+      _pyEl.on("plotly_click", function(d) {
+        if (!d.points || !d.points.length) return;
+        var fl = FL_KEYS[d.points[0].pointIndex];
+        if (!fl) return;
+        if (_listEl.dataset.open === fl) { _listEl.innerHTML = ""; _listEl.dataset.open = ""; return; }
+        _showFLList(fl);
+      });
+    }
 
     const a = document.getElementById("fl-alert-f1");
     if (a) {
