@@ -654,7 +654,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "16.06.2026 14:05";
+const APP_VERSION = "16.06.2026 14:49";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -2797,24 +2797,15 @@ function closePopover() {
 function assignPerson(person, newDept) {
   effectivePersonAbt[person] = newDept;
   _confirmedPersons.add(person); // explizit bestätigt → kein gelber Punkt mehr
-  // Konfidenz sofort auf 100% setzen (ohne refreshAllCharts abzuwarten)
+  // Konfidenz sofort auf 100% setzen
   if (personConfidence[person]) personConfidence[person].score = 1.0;
   else personConfidence[person] = { score: 1.0, autoDept: newDept };
   saveConfig();
 
-  // Chip in der alten Spalte entfernen
-  document.querySelectorAll(`.person-chip[data-person="${CSS.escape(person)}"]`).forEach(c => c.remove());
-
-  // Chip in der neuen Spalte einfügen (alphabetisch)
-  const targetCol = document.querySelector(`.dept-col[data-dept="${CSS.escape(newDept)}"]`);
-  if (targetCol) {
-    const newChip = buildPersonChip(person, newDept);
-    // Alphabetisch einsortieren (hinter dem Header)
-    const chips = [...targetCol.querySelectorAll(".person-chip")];
-    const insertBefore = chips.find(c => c.dataset.person > person);
-    if (insertBefore) targetCol.insertBefore(newChip, insertBefore);
-    else              targetCol.appendChild(newChip);
-  }
+  // Automatisch alles aktualisieren: baut die Spalten robust neu auf (Person erscheint
+  // in der neuen Abteilung, auch wenn diese Spalte vorher nicht existierte) und rechnet
+  // abhängige Analysen neu. Ersetzt die fragile manuelle Chip-Verschiebung.
+  refreshAllCharts();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
