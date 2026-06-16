@@ -414,9 +414,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="tab-group-sep"></div>
     <div class="tab-group tab-group-admin">
       <span class="tab-group-label">Datenpflege</span>
-      <button class="tab-btn active" data-tab="0" onclick="showTab(0)">Personen</button>
+      <button class="tab-btn active" data-tab="0" onclick="showTab(0)">Konfiguration</button>
       <button class="tab-btn" data-tab="9" onclick="showTab(9)">Alle Meetings</button>
-      <button class="tab-btn" data-tab="12" onclick="showTab(12)">Konfiguration</button>
     </div>
   </div>
 
@@ -529,8 +528,14 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div id="fl-schluessel-fragen" style="margin-top:24px"></div>
   </div>
 
-  <div id="panel-dp" class="panel" data-tab="12">
-    <button class="tab-info-btn" onclick="showTabInfo(12)">ℹ</button>
+  <div id="panel-7" class="panel active" data-tab="0">
+    <button class="tab-info-btn" onclick="showTabInfo(0)">ℹ</button>
+
+    <div class="dp-section">
+      <p class="dp-section-title">Personen-Zuordnung</p>
+      <p class="hint" style="margin-bottom:14px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
+      <div class="personen-grid" id="personen-grid"></div>
+    </div>
 
     <div class="dp-section">
       <p class="dp-section-title">Abteilungstypen</p>
@@ -548,7 +553,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <div class="dp-section">
       <p class="dp-section-title">Konfiguration exportieren / importieren</p>
-      <p class="dp-section-desc">Alle manuellen Zuordnungen, Abteilungstypen und Korrekturen als JSON sichern und auf anderen Geräten oder im Team wiederverwenden.</p>
+      <p class="dp-section-desc">Alle manuellen Zuordnungen, Abteilungstypen und Korrekturen als JSON sichern und auf anderen Geräten oder im Team wiederverwenden – so muss ein Kollege nicht alles neu setzen.</p>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-primary" onclick="exportConfig()">↓ Konfiguration exportieren (.json)</button>
         <label class="file-upload-label" style="margin:0;cursor:pointer">
@@ -558,12 +563,9 @@ textarea#paste-area::placeholder{color:#cbd5e1}
       </div>
       <p class="hint" style="margin-top:8px">Enthält: Personenzuordnungen · FK-Markierungen · Abteilungstypen · Flight-Level-Korrekturen · Gruppen-Teilnehmer-Auflösungen</p>
     </div>
-  </div>
 
-  <div id="panel-7" class="panel active" data-tab="0">
-    <button class="tab-info-btn" onclick="showTabInfo(0)">ℹ</button>
-    <p class="hint" style="margin-bottom:14px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
-    <div class="personen-grid" id="personen-grid"></div>
+    <div style="height:72px" aria-hidden="true"></div>
+
     <div class="personen-actions" id="personen-actions" style="display:none">
       <button class="btn-primary" onclick="refreshAllCharts()">Alle Charts aktualisieren</button>
       <button class="btn-secondary" onclick="resetConfig()">Zuordnungen zurücksetzen</button>
@@ -614,7 +616,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "12.06.2026 19:09";
+const APP_VERSION = "16.06.2026 12:23";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1295,10 +1297,10 @@ function renderStats() {
 // Tab Info Overlay – ℹ-Erklärungsbox pro Tab
 // ══════════════════════════════════════════════════════════════════════════════
 const TAB_INFO = {
-  0: { title: "Personen & Abteilungen",
-       was: "Alle erkannten Personen und ihre automatisch abgeleitete Abteilungszugehörigkeit. Gelber Punkt = unsichere Zuordnung (Algorithmus &lt; 70% sicher).",
-       achten: "Prüfe gelb markierte Personen und korrigiere per Klick. Alle anderen Tabs bauen auf dieser Zuordnung auf – Fehler hier pflanzen sich fort.",
-       folgefragen: "Welche Personen sind in mehreren Abteilungen aktiv? Sind alle Führungskräfte (★) korrekt markiert?" },
+  0: { title: "Konfiguration",
+       was: "Zentrales Setup in Sektionen: Personen-Zuordnung (gelber Punkt = unsichere Zuordnung, ★ = Führungskraft), Abteilungstypen, Gruppen-Teilnehmer, Datenqualität und Export/Import der gesamten Konfiguration.",
+       achten: "Prüfe gelb markierte Personen und korrigiere per Klick – alle Analyse-Tabs bauen darauf auf. Abteilungstypen verbessern die Flight-Level-Klassifikation. Export/Import erspart Kollegen das Neu-Setzen.",
+       folgefragen: "Sind alle gelben Punkte geprüft und Führungskräfte (★) korrekt? Haben alle Abteilungen einen Typ? Ist die Konfiguration gesichert?" },
   1: { title: "Kommunikationsnetzwerk",
        was: "Jeder Knoten = Person. Verbindungen = gemeinsame Meetings. Knotengröße = Anzahl Meetings, Liniendicke = Häufigkeit.",
        achten: "Zentrale, stark vernetzte Knoten sind Informations-Hubs. Isolierte Knoten am Rand haben kaum Vernetzung.",
@@ -1339,10 +1341,6 @@ const TAB_INFO = {
         was: "Fünf diagnostische Visualisierungen: Kommunikationspyramide (FL1/FL2/FL3), FL2-Verbindungsmatrix, Wirkungsgrad nach Ebene, Brückenkopf-Heatmap und Frequenz-Level-Matrix.",
         achten: "FL1 = Operativ (Teamarbeit), FL2 = Koordination (teamübergreifend), FL3 = Strategisch (Portfolio). Fehlende FL2-Meetings sind das häufigste Dysfunktionssignal. Die FL-Klassifikation erfolgt automatisch über Abteilungstypen (im Konfiguration-Tab pflegbar).",
         folgefragen: "Existiert FL2 wirklich, oder wird koordiniert durch Ad-hoc-Eskalation? Welche Abteilungspaare haben keine strukturierte Koordination? Wer sitzt auf allen drei Ebenen gleichzeitig?" },
-  12: { title: "Datenpflege",
-        was: "Zentraler Admin-Bereich: Abteilungstypen pflegen, Datenqualität überwachen, Gruppen-Teilnehmer auflösen, Konfiguration exportieren/importieren.",
-        achten: "Abteilungstypen verbessern die Flight-Level-Klassifikation erheblich. Je mehr Felder gepflegt sind (Dauer, Wirkung, Infofluss), desto aussagekräftiger sind die Analyse-Tabs.",
-        folgefragen: "Welche Abteilungen haben noch keinen Typ? Wie viele Meetings haben Gruppen-Platzhalter als Teilnehmer? Ist die Konfiguration gesichert?" }
 };
 
 function showTabInfo(idx) {
@@ -1384,12 +1382,11 @@ function showTab(idx) {
     if (idx === 5) renderOverlap();
     if (idx === 2) { renderAbteilung(); abtRendered = true; }
     if (idx === 4) { renderSankey();    sankeyRendered = true; }
-    if (idx === 0) renderPersonenTab();
+    if (idx === 0) { renderPersonenTab(); renderDatapflege(); }
     if (idx === 6) renderEngpass();
     if (idx === 7) renderTreemap();
     if (idx === 8) renderWirkungsMatrix();
     if (idx === 10) renderFlightLevels();
-    if (idx === 12 && typeof renderDatapflege === 'function') renderDatapflege();
   }
   const pa = document.getElementById("personen-actions");
   if (pa) pa.style.display = idx === 0 ? "flex" : "none";
@@ -3662,7 +3659,7 @@ function saveGruppenAufloesung(btn) {
     });
     // Alle personen-basierten Charts invalidieren
     [1, 5, 6, 7, 8, 9, 10].forEach(function(t){ renderedTabs.delete(t); });
-    renderedTabs.delete(12);
+    renderedTabs.delete(0);
     renderStats();
     renderTable();
     if (typeof renderDatapflege === 'function') renderDatapflege();
@@ -4463,7 +4460,7 @@ function refreshAllCharts() {
     if (m.flugebeneAuto) m.flugebene = suggestFlightLevel(m);
   });
   renderedTabs.delete(10); // Flight Levels neu rendern
-  renderedTabs.delete(12); // Datenpflege neu rendern
+  renderedTabs.delete(0);  // Konfiguration (Personen + Datenpflege) neu rendern
   // Gruppen-Teilnehmer nach Abteilungsänderung neu prüfen
   MEETINGS.forEach(m => {
     m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
