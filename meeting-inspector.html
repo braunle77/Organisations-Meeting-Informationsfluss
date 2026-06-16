@@ -243,7 +243,28 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 .toast.visible{opacity:1}
 /* ── Datenpflege-Tab ────────────────────────────────────────────────────── */
 .dp-section{background:white;border-radius:10px;padding:20px 24px;margin-bottom:16px;
-  box-shadow:0 2px 8px rgba(89,178,165,.06);border:1px solid #f1f5f9}
+  box-shadow:0 2px 8px rgba(89,178,165,.06);border:1px solid #f1f5f9;scroll-margin-top:90px}
+/* Konfig-Topbar: Sektions-Navigation + Health-Streifen */
+.dp-topbar{position:sticky;top:0;z-index:50;background:#f7faf9;border:1px solid #e8f0ee;border-radius:10px;
+  padding:10px 14px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px}
+.dp-nav{display:flex;flex-wrap:wrap;gap:6px}
+.dp-nav-chip{font-size:.76rem;font-weight:600;color:#4a6b67;text-decoration:none;
+  background:#fff;border:1px solid #d8e8e4;border-radius:7px;padding:4px 10px;transition:all .12s}
+.dp-nav-chip:hover{background:#eaf4f1;border-color:#59B2A5;color:#246b61}
+.dp-health-strip{font-size:.8rem;color:#374151;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dp-health-strip a{color:#246b61;font-weight:600;text-decoration:none}
+.dp-health-strip a:hover{text-decoration:underline}
+/* Unsichere-Zuordnungen-Hinweis im Personen-Bereich */
+.dp-unsicher-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;
+  padding:8px 12px;border-radius:8px;font-size:.82rem;font-weight:600}
+.dp-unsicher-bar.warn{background:#fff7ed;border:1px solid #fed7aa;color:#b45309}
+.dp-unsicher-bar.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#047857}
+.dp-unsicher-toggle{font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
+  background:#fff;border:1px solid #fdba74;color:#b45309;border-radius:7px;padding:4px 10px}
+.dp-unsicher-toggle.active{background:#b45309;color:#fff;border-color:#b45309}
+.dp-cfg-btn{background:#fff;color:#374151;border:1px solid #cbd5e1;border-radius:8px;
+  padding:9px 16px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .12s}
+.dp-cfg-btn:hover{border-color:#59B2A5;color:#246b61;background:#f7faf9}
 .dp-section-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
   color:#1a2e2b;margin:0 0 4px}
 .dp-section-desc{font-size:.82rem;color:#4a6b67;margin:0 0 14px;line-height:1.55}
@@ -539,19 +560,31 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-7" class="panel active" data-tab="0">
     <button class="tab-info-btn" onclick="showTabInfo(0)">ℹ</button>
 
-    <div class="dp-section">
+    <div class="dp-topbar">
+      <nav class="dp-nav">
+        <a href="#sec-personen" class="dp-nav-chip">Personen</a>
+        <a href="#sec-typen" class="dp-nav-chip">Abteilungstypen</a>
+        <a href="#sec-qualitaet" class="dp-nav-chip">Datenqualität</a>
+        <a href="#dp-gruppen-section" class="dp-nav-chip">Gruppen</a>
+        <a href="#sec-export" class="dp-nav-chip">Export / Import</a>
+      </nav>
+      <div class="dp-health-strip" id="dp-health-strip"></div>
+    </div>
+
+    <div class="dp-section" id="sec-personen">
       <p class="dp-section-title">Personen-Zuordnung</p>
-      <p class="hint" style="margin-bottom:14px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
+      <p class="hint" style="margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
+      <div class="dp-unsicher-bar" id="personen-unsicher-bar" style="display:none"></div>
       <div class="personen-grid" id="personen-grid"></div>
     </div>
 
-    <div class="dp-section">
+    <div class="dp-section" id="sec-typen">
       <p class="dp-section-title">Abteilungstypen</p>
       <p class="dp-section-desc">Ordne jeder Abteilung einen funktionalen Typ zu. Verbessert die Flight-Level-Klassifikation signifikant.</p>
       <div class="dp-dept-grid" id="dp-dept-grid"></div>
     </div>
 
-    <div class="dp-section">
+    <div class="dp-section" id="sec-qualitaet">
       <p class="dp-section-title">Datenqualität</p>
       <p class="dp-section-desc">Je vollständiger die Daten, desto präziser die Analyse. Hier siehst du, wo Datenpflege den größten Mehrwert schafft.</p>
       <div class="dp-quality-grid" id="dp-quality-grid"></div>
@@ -559,15 +592,12 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <div class="dp-section" id="dp-gruppen-section"></div>
 
-    <div class="dp-section">
+    <div class="dp-section" id="sec-export">
       <p class="dp-section-title">Konfiguration exportieren / importieren</p>
       <p class="dp-section-desc">Alle manuellen Zuordnungen, Abteilungstypen und Korrekturen als JSON sichern und auf anderen Geräten oder im Team wiederverwenden – so muss ein Kollege nicht alles neu setzen.</p>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn-primary" onclick="exportConfig()">↓ Konfiguration exportieren (.json)</button>
-        <label class="file-upload-label" style="margin:0;cursor:pointer">
-          ↑ Konfiguration importieren (.json)
-          <input type="file" accept=".json" onchange="importConfigFile(this)" style="display:none">
-        </label>
+        <button class="dp-cfg-btn" onclick="exportConfig()">↓ Exportieren (.json)</button>
+        <label class="dp-cfg-btn" style="margin:0;cursor:pointer;display:inline-flex;align-items:center">↑ Importieren (.json)<input type="file" accept=".json" onchange="importConfigFile(this)" style="display:none"></label>
       </div>
       <p class="hint" style="margin-top:8px">Enthält: Personenzuordnungen · FK-Markierungen · Abteilungstypen · Flight-Level-Korrekturen · Gruppen-Teilnehmer-Auflösungen</p>
     </div>
@@ -624,7 +654,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "16.06.2026 13:59";
+const APP_VERSION = "16.06.2026 14:05";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -741,6 +771,7 @@ let sankeyRendered     = false;
 let abtRendered        = false;
 let abtMode            = "anzahl"; // "anzahl" | "freq"
 let engpassMode        = "alle";  // "alle" | "fk" | "ma"
+let personenNurUnsicher = false;   // Personen-Tab: nur unsichere Zuordnungen zeigen
 let engpassExpanded    = false;
 const ENGPASS_TOP      = 10;
 
@@ -2485,6 +2516,11 @@ function updateTableCount() {
 // Tab 8: Personen – Abteilungszuordnung & FK-Verwaltung
 // ══════════════════════════════════════════════════════════════════════════════
 
+function toggleNurUnsicher() {
+  personenNurUnsicher = !personenNurUnsicher;
+  renderPersonenTab();
+}
+
 function renderPersonenTab() {
   const grid = document.getElementById("personen-grid");
   if (!grid) return;
@@ -2518,9 +2554,15 @@ function renderPersonenTab() {
     return ok;
   });
 
+  // Unsichere Zuordnungen (gelber Punkt = Konfidenz < 0.7) ermitteln
+  const _isUnsicher = p => !!(personConfidence[p] && personConfidence[p].score < 0.7);
+  const _unsicherList = allPersons.filter(_isUnsicher);
+  if (personenNurUnsicher && _unsicherList.length === 0) personenNurUnsicher = false; // nichts zu filtern
+
   // Diagnose-Box: herausgefilterte + dept-lose Personen anzeigen
   const _noDept = [];
   allPersons.forEach(p => {
+    if (personenNurUnsicher && !_isUnsicher(p)) return; // Filter: nur unsichere zeigen
     const dept = effectivePersonAbt[p];
     if (dept && deptPersons[dept] !== undefined) {
       deptPersons[dept].push(p);
@@ -2555,6 +2597,24 @@ function renderPersonenTab() {
     if (specialDef) col.title = specialDef.title;
     grid.appendChild(col);
   });
+
+  // ── Hinweisleiste „unsichere Zuordnungen" ────────────────────────────────
+  const _unsicherBar = document.getElementById("personen-unsicher-bar");
+  if (_unsicherBar) {
+    if (_unsicherList.length) {
+      _unsicherBar.className = "dp-unsicher-bar warn";
+      _unsicherBar.style.display = "";
+      _unsicherBar.innerHTML =
+        '<span>&#9888; ' + _unsicherList.length + ' unsichere Zuordnung' + (_unsicherList.length === 1 ? '' : 'en')
+        + ' &ndash; per Klick auf den Chip pr&uuml;fen</span>'
+        + '<button class="dp-unsicher-toggle' + (personenNurUnsicher ? ' active' : '') + '" onclick="toggleNurUnsicher()">'
+        + (personenNurUnsicher ? 'Alle zeigen' : 'Nur unsichere zeigen') + '</button>';
+    } else {
+      _unsicherBar.className = "dp-unsicher-bar ok";
+      _unsicherBar.style.display = "";
+      _unsicherBar.innerHTML = '<span>&#10003; Alle Zuordnungen sicher</span>';
+    }
+  }
 
   // ── Diagnose-Box ─────────────────────────────────────────────────────────
   // Zeigt, wenn Personen aus den Daten nicht dargestellt werden konnten.
@@ -3594,6 +3654,21 @@ function renderQualitaetsCockpit() {
       <div class="dp-qual-hint">${isGood ? m.hint : '<b>'+m.action+'</b> '+m.hint}</div>
     </div>`;
   }).join("");
+
+  // Kompakter Health-Streifen ganz oben (lenkt zur Pflege)
+  const strip = document.getElementById("dp-health-strip");
+  if (strip) {
+    const pcts = metrics.map(m => m.tot > 0 ? Math.round(m.count / m.tot * 100) : 100);
+    const gut = pcts.filter(p => p >= 80).length;
+    const schwach = metrics.filter((m, i) => pcts[i] < 80);
+    if (schwach.length === 0) {
+      strip.innerHTML = '<span style="color:#059669;font-weight:600">&#10003; Datenqualität: alle ' + metrics.length + ' Felder vollständig (&ge; 80 %)</span>';
+    } else {
+      strip.innerHTML = '<span style="color:#d97706;font-weight:600">&#9888; Datenqualität: ' + gut + '/' + metrics.length + ' Felder vollständig</span>'
+        + '<span style="color:#6b7280">· Pflege empfohlen: ' + schwach.map(m => m.label).join(', ') + '</span>'
+        + '<a href="#sec-qualitaet">Details &rarr;</a>';
+    }
+  }
 }
 
 function renderGruppenTeilnehmerSection() {
