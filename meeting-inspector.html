@@ -574,7 +574,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <div class="dp-section" id="sec-personen">
       <p class="dp-section-title">Personen-Zuordnung</p>
-      <p class="hint" style="margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern</p>
+      <p class="hint" style="margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung / FK-Status ändern &nbsp;·&nbsp; 🚫 Kein Mensch = keine Einzelperson = Gruppenplatzhalter</p>
       <div class="dp-unsicher-bar" id="personen-unsicher-bar" style="display:none"></div>
       <div class="personen-grid" id="personen-grid"></div>
     </div>
@@ -655,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 10:39";
+const APP_VERSION = "17.06.2026 12:17";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -728,14 +728,14 @@ RHYTHM_GROUPS.forEach(g => g.rhythms.forEach(r => { RHYTHM_TO_GROUP[r] = g; }));
 function autoDerivePERSON_ABT(meetings) {
   const counts = {};
   meetings.forEach(m => {
-    // Teilnehmer-Liste auswerten
-    m.teilnehmer.forEach(p => {
+    // Teilnehmer-Liste auswerten (Platzhalter vorher herausfiltern)
+    m.teilnehmer.filter(p => !isGruppenParticipant(p)).forEach(p => {
       if (!counts[p]) counts[p] = {};
       counts[p][m.abteilung] = (counts[p][m.abteilung] || 0) + 1;
     });
     // Verantwortliche/r ebenfalls berücksichtigen – steht manchmal nicht in Personen
     const v = m.verantwortlich;
-    if (v) {
+    if (v && !isGruppenParticipant(v)) {
       if (!counts[v]) counts[v] = {};
       counts[v][m.abteilung] = (counts[v][m.abteilung] || 0) + 1;
     }
@@ -782,6 +782,7 @@ let deptFunktionen = {};  // { "Vertrieb": "operativ", "Management": "strategisc
 // Netzwerk: FK-Set (klickbar im Chart togglebar) + Positions-Cache
 let fkSet    = new Set(FK_LIST);   // wird bei neuem Daten-Load auf FK_LIST zurückgesetzt
 let _confirmedPersons = new Set(); // Personen die der Nutzer explizit bestätigt hat (kein gelber Punkt)
+let _nonPersons = new Set();       // Explizit als Nicht-Person markiert (Platzhalter/Gruppe)
 let netCache = null;               // { pos, edges, connectedPersons, isolatedCount }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -833,11 +834,12 @@ function normalizeAlias(raw) {
 // ══════════════════════════════════════════════════════════════════════════════
 function isGruppenParticipant(name) {
   if (!name) return false;
-  if (/^[a-zäöü]/.test(name)) return true;                       // Kleinbuchstabe = generisch
-  if (name.length > 30) return true;                             // Zu lang für einen Namen
+  if (_nonPersons.has(name)) return true;                        // Explizit als Nicht-Person markiert
+  if (name.length > 40) return true;                             // Zu lang für einen Namen
+  if (/[\/+&;|]/.test(name)) return true;                       // Sonderzeichen = kein Eigenname
+  if (/\balle\b|\bteam\b|\babteilung\b|\bgruppe\b|\bextern/i.test(name)) return true;
   if (allDepts.includes(name)) return true;                      // Passt zu bekanntem Abt.-Namen
   if (SPECIAL_DEPTS.find(s => s.key === name)) return true;      // Sonderkategorie
-  if (/\balle\b|\bteam\b/i.test(name)) return true;
   return false;
 }
 
@@ -1184,37 +1186,16 @@ function tryLoad(text) {
   }
 }
 
-function applyGruppenAufloesungen() {
-  var cfg;
-  try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}"); } catch(e) { return; }
-  var aufloesungen = cfg.gruppenAufloesungen || {};
-  if (!Object.keys(aufloesungen).length) return;
-
-  MEETINGS.forEach(function(m) {
-    // Immer vom Original starten (verhindert Doppel-Expansion bei mehrfachem Aufruf)
-    if (m._originalTeilnehmer) m.teilnehmer = m._originalTeilnehmer.slice();
-    if (!m.hatGruppenTeilnehmer) return;
-
-    var changed = false;
-    m.gruppenTeilnehmer.forEach(function(g) {
-      var key = m.abteilung + "||" + m.name + "||" + g;
-      var resolved = aufloesungen[key];
-      if (!resolved || !resolved.length) return;
-      // Gruppen-Platzhalter entfernen
-      var idx = m.teilnehmer.indexOf(g);
-      if (idx !== -1) { m.teilnehmer.splice(idx, 1); changed = true; }
-      // Aufgelöste Personen hinzufügen
-      resolved.forEach(function(p) {
-        if (!m.teilnehmer.includes(p)) { m.teilnehmer.push(p); changed = true; }
-      });
-    });
-    if (changed) m.teilnehmer_anzahl = m.teilnehmer.length;
-  });
-}
 
 function showDashboard() {
   // Dynamische Konfiguration aus den geladenen Daten ableiten
   allDepts = [...new Set(MEETINGS.map(m => m.abteilung))].filter(Boolean).sort();
+  // _nonPersons vorab laden – wird in isGruppenParticipant benötigt, das in autoDerivePERSON_ABT aufgerufen wird
+  _nonPersons = new Set();
+  try {
+    const _preCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    if (Array.isArray(_preCfg.nonPersons)) _preCfg.nonPersons.forEach(p => _nonPersons.add(p));
+  } catch(e) {}
   // Auto-Ableitung gewinnt für Personen in den aktuellen Daten;
   // PERSON_ABT dient als Fallback / expliziter Override
   const derived = autoDerivePERSON_ABT(MEETINGS);
@@ -1242,9 +1223,6 @@ function showDashboard() {
   netCache      = null;
   sankeyRendered = false;
   abtRendered    = false;
-
-  // Gruppen-Auflösungen expandieren (vor abteilungsuebergreifend-Berechnung)
-  applyGruppenAufloesungen();
 
   // abteilungsuebergreifend nachträglich korrekt berechnen (parseData läuft vor effectivePersonAbt)
   MEETINGS.forEach(m => {
@@ -1279,6 +1257,8 @@ function resetToImport() {
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("import-screen").style.display = "flex";
   document.getElementById("paste-area").value = "";
+  const _fi = document.getElementById("file-input");
+  if (_fi) _fi.value = "";
   document.getElementById("import-status").className = "import-status";
   document.getElementById("import-status").textContent = "";
   // Clear chart divs
@@ -2546,13 +2526,9 @@ function renderPersonenTab() {
 
   const _filtered = [];   // für Diagnose: herausgefilterte Einträge
   const allPersons = _rawCandidates.filter(p => {
-    if (!p.includes(" ")) return true;
-    const words = p.trim().split(/\s+/);
-    const ok = words.length <= 2
-             && /^[A-ZÄÖÜ]/.test(words[0])
-             && p.length <= 30;
-    if (!ok) _filtered.push(p);
-    return ok;
+    if (_nonPersons.has(p)) return false; // Manuell als Nicht-Person markiert → nur im Diagnose-Panel
+    if (isGruppenParticipant(p)) { _filtered.push(p); return false; }
+    return true;
   });
 
   // Unsichere Zuordnungen (gelber Punkt = Konfidenz < 0.7) ermitteln
@@ -2773,6 +2749,19 @@ function openPersonPopover(person, anchorEl, event) {
   fkItem.onclick = () => { toggleFK(person); closePopover(); renderPersonenTab(); };
   pop.appendChild(fkItem);
 
+  // Trennlinie + Kein-Mensch-Toggle
+  const sep3 = document.createElement("div");
+  sep3.className = "person-popover-sep";
+  pop.appendChild(sep3);
+
+  const npItem = document.createElement("div");
+  npItem.className = "person-popover-item";
+  npItem.style.color = "#9333ea";
+  npItem.innerHTML = "<span style='font-size:.8rem'>&#128683;</span> Kein Mensch / Platzhalter markieren";
+  npItem.title = "Bezeichnung ist keine einzelne Person – wird im Diagnose-Panel angezeigt";
+  npItem.onclick = () => { toggleNonPerson(person); closePopover(); };
+  pop.appendChild(npItem);
+
   document.body.appendChild(pop);
   _activePopover = pop;
 
@@ -2807,6 +2796,40 @@ function assignPerson(person, newDept) {
   // in der neuen Abteilung, auch wenn diese Spalte vorher nicht existierte) und rechnet
   // abhängige Analysen neu. Ersetzt die fragile manuelle Chip-Verschiebung.
   refreshAllCharts();
+}
+
+function toggleNonPerson(person) {
+  if (_nonPersons.has(person)) {
+    _nonPersons.delete(person);
+  } else {
+    _nonPersons.add(person);
+    _confirmedPersons.delete(person);
+  }
+  // Nur nonPersons in localStorage aktualisieren (personAbt-Overrides bleiben erhalten)
+  try {
+    var _cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    _cfg.nonPersons = [..._nonPersons].sort();
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(_cfg));
+  } catch(e) {}
+  // Person-Map neu ableiten (isGruppenParticipant nutzt jetzt den aktualisierten _nonPersons-Set)
+  var derived = autoDerivePERSON_ABT(MEETINGS);
+  personConfidence   = derived.confidence;
+  effectivePersonAbt = Object.assign({}, derived.map, PERSON_ABT);
+  // Gespeicherte Overrides (personAbt, fkList etc.) wiederherstellen
+  applyStoredConfig();
+  // gruppenTeilnehmer + abteilungsuebergreifend neu setzen
+  MEETINGS.forEach(function(m) {
+    m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+    m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+    var abts = new Set(m.teilnehmer.map(function(t){ return effectivePersonAbt[t]; }).filter(Boolean));
+    m.abteilungsuebergreifend = abts.size > 1;
+  });
+  [0,1,2,3,4,5,6,7,8,9,10].forEach(function(t){ renderedTabs.delete(t); });
+  renderPersonenTab();
+  if (typeof renderDatapflege === 'function') renderDatapflege();
+  renderStats();
+  var isNow = _nonPersons.has(person);
+  showToast(isNow ? '"' + person + '" als Platzhalter markiert' : '"' + person + '" wieder als Person erkannt');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3666,106 +3689,42 @@ function renderQualitaetsCockpit() {
 function renderGruppenTeilnehmerSection() {
   const section = document.getElementById("dp-gruppen-section");
   if (!section) return;
-  const withGroups = MEETINGS.filter(m => m.hatGruppenTeilnehmer);
+  const withGroups = MEETINGS.filter(function(m){ return m.hatGruppenTeilnehmer; });
   if (withGroups.length === 0) {
-    section.innerHTML = `<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-ok">0 erkannt</span></p>
-      <p class="dp-section-desc" style="color:#059669;margin-bottom:0">✓ Alle Teilnehmer sind einzelne Personen – keine Gruppen-Platzhalter erkannt.</p>`;
+    section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-ok">Keine erkannt</span><\/p>'
+      + '<p class="dp-section-desc" style="color:#059669;margin-bottom:0">&#10003; Alle Teilnehmer sind eindeutige Personen – keine unklaren Bezeichnungen gefunden.<\/p>';
     return;
   }
-  // Nur ECHTE Personen als Auflösungs-Kandidaten (keine anderen Platzhalter wie „Alle", „??")
-  const realPersons = [...new Set(Object.keys(effectivePersonAbt))].filter(p => !isGruppenParticipant(p)).sort();
-  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  const aufloesungen = cfg.gruppenAufloesungen || {};
 
-  // Einträge (Meeting × Platzhalter) sammeln; offene zuerst
+  // Einträge (Meeting × Platzhalter) sammeln
   const entries = withGroups.flatMap(function(m) {
-    return m.gruppenTeilnehmer.map(function(g) {
-      const key = m.abteilung + "||" + m.name + "||" + g;
-      return { m: m, g: g, key: key, cur: aufloesungen[key] || [] };
-    });
+    return m.gruppenTeilnehmer.map(function(g) { return { m: m, g: g }; });
   });
-  const total = entries.length;
-  const resolved = entries.filter(function(e){ return e.cur.length > 0; }).length;
-  entries.sort(function(a, b){ return (a.cur.length > 0 ? 1 : 0) - (b.cur.length > 0 ? 1 : 0); });
 
-  // Zeilen vorab berechnen (kein nested Template-Literal in ${} – Safari-Kompatibilität)
   const rowsHTML = entries.map(function(e) {
-    const m = e.m, g = e.g, key = e.key, cur = e.cur;
+    const m = e.m;
     const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
-    // Personen der Meeting-Abteilung zuerst, dann übrige
-    const inDept = realPersons.filter(function(p){ return effectivePersonAbt[p] === m.abteilung; });
-    const others = realPersons.filter(function(p){ return effectivePersonAbt[p] !== m.abteilung; });
-    const checkboxes = inDept.concat(others).map(function(p) {
-      var chk = cur.includes(p) ? ' checked' : '';
-      return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:.79rem">'
-        + '<input type="checkbox" value="' + p + '"' + chk + ' style="cursor:pointer">' + p + '<\/label>';
-    }).join("");
-    const statusBadge = cur.length > 0
-      ? '<span style="font-size:.72rem;color:#059669;font-weight:600">✓ ' + cur.length + ' Person' + (cur.length===1?'':'en') + ' aufgelöst<\/span>'
-      : '<span style="font-size:.72rem;color:#d97706;font-weight:600">⚠ noch nicht aufgelöst<\/span>';
-    return '<div class="dp-gruppen-row">'
-      + '<div class="dp-gruppen-meeting">'
-      + '<span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
-      + '<strong style="font-size:.83rem">' + m.name + '<\/strong>'
-      + '<span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ' + g + '<\/span>'
-      + statusBadge
-      + '<\/div>'
-      + '<input type="text" placeholder="Tippen zum Filtern…" oninput="_filterGruppenList(this)" style="width:100%;max-width:280px;margin:6px 0 4px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.78rem;box-sizing:border-box">'
-      + '<div class="dp-gruppen-checklist" data-key="' + key + '" style="max-height:160px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;background:#f9fafb">' + checkboxes + '<\/div>'
-      + '<button class="btn-secondary" style="font-size:.76rem;margin-top:8px" onclick="saveGruppenAufloesung(this)">Speichern<\/button>'
+    const isManual = _nonPersons.has(e.g);
+    const herkunftBadge = isManual
+      ? '<span style="font-size:.68rem;background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;border-radius:4px;padding:1px 6px">manuell markiert<\/span>'
+      + '<button onclick="toggleNonPerson(\'' + e.g.replace(/'/g,"\\'") + '\')" style="font-size:.68rem;background:none;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;cursor:pointer;color:#6b7280;margin-left:2px">&#8617; Rückgängig<\/button>'
+      : '<span style="font-size:.68rem;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px">&#9881; automatisch erkannt<\/span>';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
+      + '<span class="abt-badge" style="font-size:.7rem;padding:1px 6px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
+      + '<span style="font-size:.82rem;font-weight:600;color:#1a2e2c">' + m.name + '<\/span>'
+      + '<span style="font-size:.78rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:1px 7px;font-weight:600">' + e.g + '<\/span>'
+      + herkunftBadge
       + '<\/div>';
   }).join("");
 
-  const badgeClass = resolved >= total ? 'dp-count-ok' : 'dp-count-warn';
-  section.innerHTML = '<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge ' + badgeClass + '">' + resolved + ' / ' + total + ' aufgelöst<\/span><\/p>'
-    + '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;color:#1e40af;line-height:1.5">'
-    + '💡 <strong>Am besten direkt in der Quelltabelle pflegen.</strong> Dieses Panel ist nur für Sonderfälle, die sich dort <strong>nicht</strong> abbilden lassen.<\/div>'
-    + '<p class="dp-section-desc">Auflösbare Platzhalter (z.B. „PC alle" = echte Personen) den echten Personen zuordnen. Variable Rollen (z.B. „Ticket-Owner") leer lassen – das Meeting bleibt in Abteilungs- und Zeitanalysen erhalten, wird aber von der Personenanalyse ausgeschlossen.<\/p>'
-    + rowsHTML;
-}
-
-// Filtert die Personen-Checkboxen einer Gruppen-Zeile per Tippen
-function _filterGruppenList(input) {
-  const list = input.nextElementSibling;
-  if (!list) return;
-  const q = input.value.trim().toLowerCase();
-  list.querySelectorAll('label').forEach(function(l){
-    l.style.display = l.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
-  });
-}
-
-function saveGruppenAufloesung(btn) {
-  const row = btn.closest('.dp-gruppen-row');
-  const checklist = row ? row.querySelector('.dp-gruppen-checklist') : btn.previousElementSibling;
-  const key = checklist.dataset.key;
-  const selected = [...checklist.querySelectorAll('input[type=checkbox]:checked')].map(function(cb){ return cb.value; });
-  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  if (!cfg.gruppenAufloesungen) cfg.gruppenAufloesungen = {};
-  if (selected.length > 0) cfg.gruppenAufloesungen[key] = selected;
-  else delete cfg.gruppenAufloesungen[key];
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-
-  // Sofort in die Daten expandieren + betroffene Charts invalidieren
-  if (MEETINGS.length) {
-    applyGruppenAufloesungen();
-    MEETINGS.forEach(function(m) {
-      var abts = new Set(m.teilnehmer.map(function(t){ return effectivePersonAbt[t]; }).filter(Boolean));
-      m.abteilungsuebergreifend = abts.size > 1;
-      m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
-      m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
-    });
-    // Alle personen-basierten Charts invalidieren
-    [1, 5, 6, 7, 8, 9, 10].forEach(function(t){ renderedTabs.delete(t); });
-    renderedTabs.delete(0);
-    renderStats();
-    renderTable();
-    if (typeof renderDatapflege === 'function') renderDatapflege();
-  }
-  var n = selected.length;
-  var toastMsg = n > 0
-    ? 'Gruppe aufgelöst – ' + n + ' Person' + (n===1?'':'en') + ' werden beim nächsten Tab-Besuch berücksichtigt'
-    : 'Auflösung entfernt – Gruppe bleibt als Platzhalter';
-  showToast(toastMsg);
+  section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-warn">' + entries.length + ' gefunden<\/span><\/p>'
+    + '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem;color:#991b1b;line-height:1.6">'
+    + '&#128680; <strong>Diese Bezeichnungen konnten keiner Person zugeordnet werden.</strong><br>'
+    + 'Bitte direkt in der <strong>Quelltabelle</strong> korrigieren – die Meetings sind in Abteilungs- und Zeitanalysen enthalten, werden aber in der Personenanalyse nicht vollständig erfasst.'
+    + '<\/div>'
+    + '<div style="border:1px solid #fee2e2;border-radius:8px;overflow:hidden;background:white">'
+    + rowsHTML
+    + '<\/div>';
 }
 
 function exportConfig() {
@@ -3807,11 +3766,12 @@ function importConfigFile(input) {
   reader.onload = e => {
     try {
       const cfg = JSON.parse(e.target.result);
-      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","gruppenAufloesungen"];
+      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","nonPersons"];
       const sanitized = {};
       VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
       localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
       deptFunktionen = sanitized.deptFunktionen || {};
+      _nonPersons = new Set(Array.isArray(sanitized.nonPersons) ? sanitized.nonPersons : []);
       // Vollständige Re-Init des abgeleiteten Zustands
       const derived = autoDerivePERSON_ABT(MEETINGS);
       personConfidence   = derived.confidence;
@@ -4573,8 +4533,6 @@ function _renderFLSchluesselFragen(aktive, byFL) {
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
 function refreshAllCharts() {
-  // Gruppen-Auflösungen neu expandieren (vom Original starten)
-  applyGruppenAufloesungen();
   // abteilungsuebergreifend neu berechnen
   MEETINGS.forEach(m => {
     const abts = new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean));
@@ -4624,10 +4582,7 @@ function saveConfig() {
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
   try {
-    // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
-    const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-    const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, nonPersons: [..._nonPersons].sort() }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
@@ -4674,6 +4629,8 @@ function applyStoredConfig() {
     }
     // deptFunktionen aus localStorage (stabil über Imports)
     if (cfg.deptFunktionen) deptFunktionen = cfg.deptFunktionen;
+    // nonPersons aus localStorage (stabil über Imports, unabhängig von Reset)
+    if (Array.isArray(cfg.nonPersons)) cfg.nonPersons.forEach(p => _nonPersons.add(p));
     updateConfigHint(true);
   } catch(e) { /* ignore parse errors */ }
 }
@@ -4688,16 +4645,23 @@ function updateConfigHint(hasStored) {
 }
 
 function resetConfig() {
-  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen, FK-Markierungen und Gruppen-Auflösungen löschen?")) return;
+  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen und FK-Markierungen löschen?\n(Platzhalter-Markierungen bleiben erhalten)")) return;
+  // nonPersons vor dem Reset sichern (sind persistente Konfiguration)
+  const savedNonPersons = [..._nonPersons];
   try { localStorage.removeItem(CONFIG_KEY); } catch(e) {}
   deptFunktionen = {};
-  // Neu ableiten ohne Overrides
+  _confirmedPersons = new Set();
+  fkSet = new Set(FK_LIST);
+  netCache = null;
+  // nonPersons wiederherstellen + in neuem Config-Stand sichern
+  _nonPersons = new Set(savedNonPersons);
+  // Neu ableiten ohne Overrides (isGruppenParticipant nutzt _nonPersons)
   const derived = autoDerivePERSON_ABT(MEETINGS);
   personConfidence   = derived.confidence;
   effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
-  fkSet = new Set(FK_LIST);
-  netCache = null;
+  if (savedNonPersons.length) saveConfig();
   renderPersonenTab();
+  if (typeof renderDatapflege === 'function') renderDatapflege();
   refreshAllCharts();
   showToast("Zuordnungen zurückgesetzt");
 }
