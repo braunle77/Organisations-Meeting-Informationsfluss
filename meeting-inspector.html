@@ -563,6 +563,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <div class="dp-topbar">
       <nav class="dp-nav">
+        <a href="#sec-mein-input" class="dp-nav-chip">Mein Input</a>
         <a href="#sec-personen" class="dp-nav-chip">Personen</a>
         <a href="#sec-typen" class="dp-nav-chip">Abteilungstypen</a>
         <a href="#sec-qualitaet" class="dp-nav-chip">Datenqualität</a>
@@ -570,6 +571,17 @@ textarea#paste-area::placeholder{color:#cbd5e1}
         <a href="#sec-export" class="dp-nav-chip">Export / Import</a>
       </nav>
       <div class="dp-health-strip" id="dp-health-strip"></div>
+    </div>
+
+    <div class="dp-section" id="sec-mein-input">
+      <p class="dp-section-title">Individuelle Optimierungsimpulse</p>
+      <p class="dp-section-desc">Trag deinen Namen oder dein Kürzel ein – du siehst sofort, welche deiner Meetings noch Lücken in der Urliste haben.</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <input type="text" id="mein-name-input" placeholder="Name oder Kürzel (z. B. MB)"
+               style="padding:6px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:.87rem;width:260px;outline:none;font-family:inherit"
+               oninput="renderMeinInputSection()">
+      </div>
+      <div id="mein-input-result"></div>
     </div>
 
     <div class="dp-section" id="sec-personen">
@@ -655,7 +667,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 12:17";
+const APP_VERSION = "17.06.2026 12:58";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3573,9 +3585,96 @@ const DEPT_TYP_OPTS = [
 ];
 
 function renderDatapflege() {
+  renderMeinInputSection();
   renderDeptTypenGrid();
   renderQualitaetsCockpit();
   renderGruppenTeilnehmerSection();
+}
+
+function renderMeinInputSection() {
+  var resultDiv = document.getElementById("mein-input-result");
+  if (!resultDiv) return;
+
+  var inp = document.getElementById("mein-name-input");
+  var name = inp ? inp.value.trim() : "";
+
+  // Sofort in localStorage sichern (unabhängig von saveConfig)
+  try {
+    var _cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    _cfg.meinName = name;
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(_cfg));
+  } catch(e) {}
+
+  if (!name) {
+    resultDiv.innerHTML = '<p class="dp-section-desc" style="color:#94a3b8;margin:0">Gib deinen Namen oder dein Kürzel ein, um deine offenen Punkte zu sehen.</p>';
+    return;
+  }
+
+  if (!MEETINGS || !MEETINGS.length) {
+    resultDiv.innerHTML = '<p class="dp-section-desc" style="color:#94a3b8;margin:0">Noch keine Daten geladen.</p>';
+    return;
+  }
+
+  var nameLower = name.toLowerCase();
+  var myMeetings = MEETINGS.filter(function(m) {
+    return m.verantwortlich && m.verantwortlich.toLowerCase().includes(nameLower);
+  });
+
+  if (myMeetings.length === 0) {
+    resultDiv.innerHTML = '<p class="dp-section-desc" style="color:#94a3b8;margin:0">Kein Meeting mit Verantwortlichem „' + name + '“ gefunden.</p>';
+    return;
+  }
+
+  var withIssues = [];
+  var cleanCount = 0;
+
+  myMeetings.forEach(function(m) {
+    var issues = [];
+    if (m.hatGruppenTeilnehmer) {
+      issues.push('<span style="font-size:.74rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:1px 7px">Unklare Teilnehmer: ' + m.gruppenTeilnehmer.join(', ') + '</span>');
+    }
+    if (m.dauer === null || m.dauer === undefined) {
+      issues.push('<span style="font-size:.74rem;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;padding:1px 7px">Dauer fehlt</span>');
+    }
+    if (m.wert === null || m.wert === undefined) {
+      issues.push('<span style="font-size:.74rem;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;padding:1px 7px">Wirkung fehlt</span>');
+    }
+    if (!m.infofluss || !m.infofluss.trim()) {
+      issues.push('<span style="font-size:.74rem;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;padding:1px 7px">Infofluss fehlt</span>');
+    }
+    if (issues.length > 0) {
+      withIssues.push({ m: m, issueHTML: issues.join(' ') });
+    } else {
+      cleanCount++;
+    }
+  });
+
+  var html = '';
+
+  if (withIssues.length === 0) {
+    html = '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:.84rem;color:#166534">'
+      + '&#10003; Alle ' + myMeetings.length + ' Meetings von „' + name + '“ sind vollständig erfasst.'
+      + '</div>';
+  } else {
+    var total = myMeetings.length;
+    html += '<p style="font-size:.82rem;color:#374151;margin-bottom:10px"><strong>' + total + ' Meeting' + (total !== 1 ? 's' : '') + '</strong> von „' + name + '“ – '
+      + '<strong style="color:#dc2626">' + withIssues.length + '</strong> mit Handlungsbedarf:</p>';
+    html += '<div style="border:1px solid #fee2e2;border-radius:8px;overflow:hidden;background:white">';
+    html += withIssues.map(function(entry) {
+      var farbe = effectiveAbtFarben[entry.m.abteilung] || '#9ca3af';
+      return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-bottom:1px solid #fef2f2;flex-wrap:wrap">'
+        + '<span class="abt-badge" style="font-size:.7rem;padding:1px 6px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44;flex-shrink:0">' + entry.m.abteilung + '</span>'
+        + '<span style="font-size:.82rem;font-weight:600;color:#1a2e2c;flex-shrink:0">' + entry.m.name + '</span>'
+        + '<span style="display:flex;flex-wrap:wrap;gap:4px">' + entry.issueHTML + '</span>'
+        + '</div>';
+    }).join('');
+    html += '</div>';
+    if (cleanCount > 0) {
+      html += '<p style="font-size:.76rem;color:#9ca3af;margin-top:8px">+ ' + cleanCount + ' Meeting' + (cleanCount !== 1 ? 's' : '') + ' ohne Lücken</p>';
+    }
+  }
+
+  resultDiv.innerHTML = html;
 }
 
 function renderDeptTypenGrid() {
@@ -3766,7 +3865,7 @@ function importConfigFile(input) {
   reader.onload = e => {
     try {
       const cfg = JSON.parse(e.target.result);
-      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","nonPersons"];
+      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","nonPersons","meinName"];
       const sanitized = {};
       VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
       localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
@@ -4582,7 +4681,8 @@ function saveConfig() {
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
   try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, nonPersons: [..._nonPersons].sort() }));
+    const meinName = (document.getElementById("mein-name-input") || {}).value || "";
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, nonPersons: [..._nonPersons].sort(), meinName }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
@@ -4631,6 +4731,11 @@ function applyStoredConfig() {
     if (cfg.deptFunktionen) deptFunktionen = cfg.deptFunktionen;
     // nonPersons aus localStorage (stabil über Imports, unabhängig von Reset)
     if (Array.isArray(cfg.nonPersons)) cfg.nonPersons.forEach(p => _nonPersons.add(p));
+    // meinName in Eingabefeld wiederherstellen
+    if (cfg.meinName) {
+      const _inp = document.getElementById("mein-name-input");
+      if (_inp) _inp.value = cfg.meinName;
+    }
     updateConfigHint(true);
   } catch(e) { /* ignore parse errors */ }
 }
@@ -4645,9 +4750,11 @@ function updateConfigHint(hasStored) {
 }
 
 function resetConfig() {
-  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen und FK-Markierungen löschen?\n(Platzhalter-Markierungen bleiben erhalten)")) return;
-  // nonPersons vor dem Reset sichern (sind persistente Konfiguration)
+  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen und FK-Markierungen löschen?\n(Platzhalter-Markierungen und Mein Name bleiben erhalten)")) return;
+  // nonPersons + meinName vor dem Reset sichern (persistente Konfiguration)
   const savedNonPersons = [..._nonPersons];
+  const _meinInp = document.getElementById("mein-name-input");
+  const savedMeinName = _meinInp ? _meinInp.value : "";
   try { localStorage.removeItem(CONFIG_KEY); } catch(e) {}
   deptFunktionen = {};
   _confirmedPersons = new Set();
@@ -4655,11 +4762,13 @@ function resetConfig() {
   netCache = null;
   // nonPersons wiederherstellen + in neuem Config-Stand sichern
   _nonPersons = new Set(savedNonPersons);
+  // meinName wiederherstellen
+  if (_meinInp) _meinInp.value = savedMeinName;
   // Neu ableiten ohne Overrides (isGruppenParticipant nutzt _nonPersons)
   const derived = autoDerivePERSON_ABT(MEETINGS);
   personConfidence   = derived.confidence;
   effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
-  if (savedNonPersons.length) saveConfig();
+  if (savedNonPersons.length || savedMeinName) saveConfig();
   renderPersonenTab();
   if (typeof renderDatapflege === 'function') renderDatapflege();
   refreshAllCharts();
