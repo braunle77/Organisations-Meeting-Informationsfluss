@@ -655,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 10:54";
+const APP_VERSION = "17.06.2026 11:36";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -728,14 +728,14 @@ RHYTHM_GROUPS.forEach(g => g.rhythms.forEach(r => { RHYTHM_TO_GROUP[r] = g; }));
 function autoDerivePERSON_ABT(meetings) {
   const counts = {};
   meetings.forEach(m => {
-    // Teilnehmer-Liste auswerten
-    m.teilnehmer.forEach(p => {
+    // Teilnehmer-Liste auswerten (Platzhalter vorher herausfiltern)
+    m.teilnehmer.filter(p => !isGruppenParticipant(p)).forEach(p => {
       if (!counts[p]) counts[p] = {};
       counts[p][m.abteilung] = (counts[p][m.abteilung] || 0) + 1;
     });
     // Verantwortliche/r ebenfalls berücksichtigen – steht manchmal nicht in Personen
     const v = m.verantwortlich;
-    if (v) {
+    if (v && !isGruppenParticipant(v)) {
       if (!counts[v]) counts[v] = {};
       counts[v][m.abteilung] = (counts[v][m.abteilung] || 0) + 1;
     }
@@ -782,6 +782,7 @@ let deptFunktionen = {};  // { "Vertrieb": "operativ", "Management": "strategisc
 // Netzwerk: FK-Set (klickbar im Chart togglebar) + Positions-Cache
 let fkSet    = new Set(FK_LIST);   // wird bei neuem Daten-Load auf FK_LIST zurückgesetzt
 let _confirmedPersons = new Set(); // Personen die der Nutzer explizit bestätigt hat (kein gelber Punkt)
+let _nonPersons = new Set();       // Explizit als Nicht-Person markiert (Platzhalter/Gruppe)
 let netCache = null;               // { pos, edges, connectedPersons, isolatedCount }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -833,11 +834,12 @@ function normalizeAlias(raw) {
 // ══════════════════════════════════════════════════════════════════════════════
 function isGruppenParticipant(name) {
   if (!name) return false;
-  if (/^[a-zäöü]/.test(name)) return true;                       // Kleinbuchstabe = generisch
-  if (name.length > 30) return true;                             // Zu lang für einen Namen
+  if (_nonPersons.has(name)) return true;                        // Explizit als Nicht-Person markiert
+  if (name.length > 40) return true;                             // Zu lang für einen Namen
+  if (/[\/+&;|]/.test(name)) return true;                       // Sonderzeichen = kein Eigenname
+  if (/\balle\b|\bteam\b|\babteilung\b|\bgruppe\b|\bextern/i.test(name)) return true;
   if (allDepts.includes(name)) return true;                      // Passt zu bekanntem Abt.-Namen
   if (SPECIAL_DEPTS.find(s => s.key === name)) return true;      // Sonderkategorie
-  if (/\balle\b|\bteam\b/i.test(name)) return true;
   return false;
 }
 
@@ -1188,6 +1190,12 @@ function tryLoad(text) {
 function showDashboard() {
   // Dynamische Konfiguration aus den geladenen Daten ableiten
   allDepts = [...new Set(MEETINGS.map(m => m.abteilung))].filter(Boolean).sort();
+  // _nonPersons vorab laden – wird in isGruppenParticipant benötigt, das in autoDerivePERSON_ABT aufgerufen wird
+  _nonPersons = new Set();
+  try {
+    const _preCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    if (Array.isArray(_preCfg.nonPersons)) _preCfg.nonPersons.forEach(p => _nonPersons.add(p));
+  } catch(e) {}
   // Auto-Ableitung gewinnt für Personen in den aktuellen Daten;
   // PERSON_ABT dient als Fallback / expliziter Override
   const derived = autoDerivePERSON_ABT(MEETINGS);
@@ -2516,13 +2524,9 @@ function renderPersonenTab() {
 
   const _filtered = [];   // für Diagnose: herausgefilterte Einträge
   const allPersons = _rawCandidates.filter(p => {
-    if (!p.includes(" ")) return true;
-    const words = p.trim().split(/\s+/);
-    const ok = words.length <= 2
-             && /^[A-ZÄÖÜ]/.test(words[0])
-             && p.length <= 30;
-    if (!ok) _filtered.push(p);
-    return ok;
+    if (_nonPersons.has(p)) return false; // Manuell als Nicht-Person markiert → nur im Diagnose-Panel
+    if (isGruppenParticipant(p)) { _filtered.push(p); return false; }
+    return true;
   });
 
   // Unsichere Zuordnungen (gelber Punkt = Konfidenz < 0.7) ermitteln
@@ -2743,6 +2747,19 @@ function openPersonPopover(person, anchorEl, event) {
   fkItem.onclick = () => { toggleFK(person); closePopover(); renderPersonenTab(); };
   pop.appendChild(fkItem);
 
+  // Trennlinie + Kein-Mensch-Toggle
+  const sep3 = document.createElement("div");
+  sep3.className = "person-popover-sep";
+  pop.appendChild(sep3);
+
+  const npItem = document.createElement("div");
+  npItem.className = "person-popover-item";
+  npItem.style.color = "#9333ea";
+  npItem.innerHTML = "<span style='font-size:.8rem'>&#128683;</span> Kein Mensch / Platzhalter markieren";
+  npItem.title = "Bezeichnung ist keine einzelne Person – wird im Diagnose-Panel angezeigt";
+  npItem.onclick = () => { toggleNonPerson(person); closePopover(); };
+  pop.appendChild(npItem);
+
   document.body.appendChild(pop);
   _activePopover = pop;
 
@@ -2777,6 +2794,40 @@ function assignPerson(person, newDept) {
   // in der neuen Abteilung, auch wenn diese Spalte vorher nicht existierte) und rechnet
   // abhängige Analysen neu. Ersetzt die fragile manuelle Chip-Verschiebung.
   refreshAllCharts();
+}
+
+function toggleNonPerson(person) {
+  if (_nonPersons.has(person)) {
+    _nonPersons.delete(person);
+  } else {
+    _nonPersons.add(person);
+    _confirmedPersons.delete(person);
+  }
+  // Nur nonPersons in localStorage aktualisieren (personAbt-Overrides bleiben erhalten)
+  try {
+    var _cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+    _cfg.nonPersons = [..._nonPersons].sort();
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(_cfg));
+  } catch(e) {}
+  // Person-Map neu ableiten (isGruppenParticipant nutzt jetzt den aktualisierten _nonPersons-Set)
+  var derived = autoDerivePERSON_ABT(MEETINGS);
+  personConfidence   = derived.confidence;
+  effectivePersonAbt = Object.assign({}, derived.map, PERSON_ABT);
+  // Gespeicherte Overrides (personAbt, fkList etc.) wiederherstellen
+  applyStoredConfig();
+  // gruppenTeilnehmer + abteilungsuebergreifend neu setzen
+  MEETINGS.forEach(function(m) {
+    m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
+    m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
+    var abts = new Set(m.teilnehmer.map(function(t){ return effectivePersonAbt[t]; }).filter(Boolean));
+    m.abteilungsuebergreifend = abts.size > 1;
+  });
+  [0,1,2,3,4,5,6,7,8,9,10].forEach(function(t){ renderedTabs.delete(t); });
+  renderPersonenTab();
+  if (typeof renderDatapflege === 'function') renderDatapflege();
+  renderStats();
+  var isNow = _nonPersons.has(person);
+  showToast(isNow ? '"' + person + '" als Platzhalter markiert' : '"' + person + '" wieder als Person erkannt');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3651,10 +3702,16 @@ function renderGruppenTeilnehmerSection() {
   const rowsHTML = entries.map(function(e) {
     const m = e.m;
     const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
+    const isManual = _nonPersons.has(e.g);
+    const herkunftBadge = isManual
+      ? '<span style="font-size:.68rem;background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;border-radius:4px;padding:1px 6px">manuell markiert<\/span>'
+      + '<button onclick="toggleNonPerson(\'' + e.g.replace(/'/g,"\\'") + '\')" style="font-size:.68rem;background:none;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;cursor:pointer;color:#6b7280;margin-left:2px">&#8617; Rückgängig<\/button>'
+      : '<span style="font-size:.68rem;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px">&#9881; automatisch erkannt<\/span>';
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
       + '<span class="abt-badge" style="font-size:.7rem;padding:1px 6px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
       + '<span style="font-size:.82rem;font-weight:600;color:#1a2e2c">' + m.name + '<\/span>'
       + '<span style="font-size:.78rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:1px 7px;font-weight:600">' + e.g + '<\/span>'
+      + herkunftBadge
       + '<\/div>';
   }).join("");
 
@@ -3707,11 +3764,12 @@ function importConfigFile(input) {
   reader.onload = e => {
     try {
       const cfg = JSON.parse(e.target.result);
-      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen"];
+      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","nonPersons"];
       const sanitized = {};
       VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
       localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
       deptFunktionen = sanitized.deptFunktionen || {};
+      _nonPersons = new Set(Array.isArray(sanitized.nonPersons) ? sanitized.nonPersons : []);
       // Vollständige Re-Init des abgeleiteten Zustands
       const derived = autoDerivePERSON_ABT(MEETINGS);
       personConfidence   = derived.confidence;
@@ -4522,7 +4580,7 @@ function saveConfig() {
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
   try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, nonPersons: [..._nonPersons].sort() }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
@@ -4569,6 +4627,8 @@ function applyStoredConfig() {
     }
     // deptFunktionen aus localStorage (stabil über Imports)
     if (cfg.deptFunktionen) deptFunktionen = cfg.deptFunktionen;
+    // nonPersons aus localStorage (stabil über Imports, unabhängig von Reset)
+    if (Array.isArray(cfg.nonPersons)) cfg.nonPersons.forEach(p => _nonPersons.add(p));
     updateConfigHint(true);
   } catch(e) { /* ignore parse errors */ }
 }
@@ -4583,15 +4643,21 @@ function updateConfigHint(hasStored) {
 }
 
 function resetConfig() {
-  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen, FK-Markierungen und Gruppen-Auflösungen löschen?")) return;
+  if (!confirm("Alle manuellen Zuordnungen, Abteilungstypen und FK-Markierungen löschen?\n(Platzhalter-Markierungen bleiben erhalten)")) return;
+  // nonPersons vor dem Reset sichern (sind persistente Konfiguration)
+  const savedNonPersons = [..._nonPersons];
   try { localStorage.removeItem(CONFIG_KEY); } catch(e) {}
   deptFunktionen = {};
-  // Neu ableiten ohne Overrides
+  _confirmedPersons = new Set();
+  fkSet = new Set(FK_LIST);
+  netCache = null;
+  // nonPersons wiederherstellen + in neuem Config-Stand sichern
+  _nonPersons = new Set(savedNonPersons);
+  // Neu ableiten ohne Overrides (isGruppenParticipant nutzt _nonPersons)
   const derived = autoDerivePERSON_ABT(MEETINGS);
   personConfidence   = derived.confidence;
   effectivePersonAbt = { ...derived.map, ...PERSON_ABT };
-  fkSet = new Set(FK_LIST);
-  netCache = null;
+  if (savedNonPersons.length) saveConfig();
   renderPersonenTab();
   refreshAllCharts();
   showToast("Zuordnungen zurückgesetzt");
