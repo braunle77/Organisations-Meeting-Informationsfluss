@@ -574,7 +574,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 
     <div class="dp-section" id="sec-personen">
       <p class="dp-section-title">Personen-Zuordnung</p>
-      <p class="hint" style="margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher (Algorithmus &lt; 70 % sicher) &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung oder FK-Status ändern &nbsp;·&nbsp; 🚫 Kein Mensch = Bezeichnung ist kein Personenname (Platzhalter) – erscheint dann im Diagnose-Panel</p>
+      <p class="hint" style="margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px"></span>Gelber Punkt = Abteilungszuordnung unsicher &nbsp;·&nbsp; ★ = Führungskraft &nbsp;·&nbsp; Klick auf Chip = Abteilung / FK-Status ändern &nbsp;·&nbsp; 🚫 Kein Mensch = keine Einzelperson = Gruppenplatzhalter</p>
       <div class="dp-unsicher-bar" id="personen-unsicher-bar" style="display:none"></div>
       <div class="personen-grid" id="personen-grid"></div>
     </div>
@@ -655,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 12:08";
+const APP_VERSION = "17.06.2026 12:17";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
