@@ -655,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 10:39";
+const APP_VERSION = "17.06.2026 10:54";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -1184,33 +1184,6 @@ function tryLoad(text) {
   }
 }
 
-function applyGruppenAufloesungen() {
-  var cfg;
-  try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}"); } catch(e) { return; }
-  var aufloesungen = cfg.gruppenAufloesungen || {};
-  if (!Object.keys(aufloesungen).length) return;
-
-  MEETINGS.forEach(function(m) {
-    // Immer vom Original starten (verhindert Doppel-Expansion bei mehrfachem Aufruf)
-    if (m._originalTeilnehmer) m.teilnehmer = m._originalTeilnehmer.slice();
-    if (!m.hatGruppenTeilnehmer) return;
-
-    var changed = false;
-    m.gruppenTeilnehmer.forEach(function(g) {
-      var key = m.abteilung + "||" + m.name + "||" + g;
-      var resolved = aufloesungen[key];
-      if (!resolved || !resolved.length) return;
-      // Gruppen-Platzhalter entfernen
-      var idx = m.teilnehmer.indexOf(g);
-      if (idx !== -1) { m.teilnehmer.splice(idx, 1); changed = true; }
-      // Aufgelöste Personen hinzufügen
-      resolved.forEach(function(p) {
-        if (!m.teilnehmer.includes(p)) { m.teilnehmer.push(p); changed = true; }
-      });
-    });
-    if (changed) m.teilnehmer_anzahl = m.teilnehmer.length;
-  });
-}
 
 function showDashboard() {
   // Dynamische Konfiguration aus den geladenen Daten ableiten
@@ -1242,9 +1215,6 @@ function showDashboard() {
   netCache      = null;
   sankeyRendered = false;
   abtRendered    = false;
-
-  // Gruppen-Auflösungen expandieren (vor abteilungsuebergreifend-Berechnung)
-  applyGruppenAufloesungen();
 
   // abteilungsuebergreifend nachträglich korrekt berechnen (parseData läuft vor effectivePersonAbt)
   MEETINGS.forEach(m => {
@@ -3666,106 +3636,36 @@ function renderQualitaetsCockpit() {
 function renderGruppenTeilnehmerSection() {
   const section = document.getElementById("dp-gruppen-section");
   if (!section) return;
-  const withGroups = MEETINGS.filter(m => m.hatGruppenTeilnehmer);
+  const withGroups = MEETINGS.filter(function(m){ return m.hatGruppenTeilnehmer; });
   if (withGroups.length === 0) {
-    section.innerHTML = `<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge dp-count-ok">0 erkannt</span></p>
-      <p class="dp-section-desc" style="color:#059669;margin-bottom:0">✓ Alle Teilnehmer sind einzelne Personen – keine Gruppen-Platzhalter erkannt.</p>`;
+    section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-ok">Keine erkannt</span><\/p>'
+      + '<p class="dp-section-desc" style="color:#059669;margin-bottom:0">&#10003; Alle Teilnehmer sind eindeutige Personen – keine unklaren Bezeichnungen gefunden.<\/p>';
     return;
   }
-  // Nur ECHTE Personen als Auflösungs-Kandidaten (keine anderen Platzhalter wie „Alle", „??")
-  const realPersons = [...new Set(Object.keys(effectivePersonAbt))].filter(p => !isGruppenParticipant(p)).sort();
-  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  const aufloesungen = cfg.gruppenAufloesungen || {};
 
-  // Einträge (Meeting × Platzhalter) sammeln; offene zuerst
+  // Einträge (Meeting × Platzhalter) sammeln
   const entries = withGroups.flatMap(function(m) {
-    return m.gruppenTeilnehmer.map(function(g) {
-      const key = m.abteilung + "||" + m.name + "||" + g;
-      return { m: m, g: g, key: key, cur: aufloesungen[key] || [] };
-    });
+    return m.gruppenTeilnehmer.map(function(g) { return { m: m, g: g }; });
   });
-  const total = entries.length;
-  const resolved = entries.filter(function(e){ return e.cur.length > 0; }).length;
-  entries.sort(function(a, b){ return (a.cur.length > 0 ? 1 : 0) - (b.cur.length > 0 ? 1 : 0); });
 
-  // Zeilen vorab berechnen (kein nested Template-Literal in ${} – Safari-Kompatibilität)
   const rowsHTML = entries.map(function(e) {
-    const m = e.m, g = e.g, key = e.key, cur = e.cur;
+    const m = e.m;
     const farbe = effectiveAbtFarben[m.abteilung] || "#9ca3af";
-    // Personen der Meeting-Abteilung zuerst, dann übrige
-    const inDept = realPersons.filter(function(p){ return effectivePersonAbt[p] === m.abteilung; });
-    const others = realPersons.filter(function(p){ return effectivePersonAbt[p] !== m.abteilung; });
-    const checkboxes = inDept.concat(others).map(function(p) {
-      var chk = cur.includes(p) ? ' checked' : '';
-      return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:.79rem">'
-        + '<input type="checkbox" value="' + p + '"' + chk + ' style="cursor:pointer">' + p + '<\/label>';
-    }).join("");
-    const statusBadge = cur.length > 0
-      ? '<span style="font-size:.72rem;color:#059669;font-weight:600">✓ ' + cur.length + ' Person' + (cur.length===1?'':'en') + ' aufgelöst<\/span>'
-      : '<span style="font-size:.72rem;color:#d97706;font-weight:600">⚠ noch nicht aufgelöst<\/span>';
-    return '<div class="dp-gruppen-row">'
-      + '<div class="dp-gruppen-meeting">'
-      + '<span class="abt-badge" style="font-size:.7rem;padding:1px 5px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
-      + '<strong style="font-size:.83rem">' + m.name + '<\/strong>'
-      + '<span class="kat-pill" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚑ ' + g + '<\/span>'
-      + statusBadge
-      + '<\/div>'
-      + '<input type="text" placeholder="Tippen zum Filtern…" oninput="_filterGruppenList(this)" style="width:100%;max-width:280px;margin:6px 0 4px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;font-family:inherit;font-size:.78rem;box-sizing:border-box">'
-      + '<div class="dp-gruppen-checklist" data-key="' + key + '" style="max-height:160px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;background:#f9fafb">' + checkboxes + '<\/div>'
-      + '<button class="btn-secondary" style="font-size:.76rem;margin-top:8px" onclick="saveGruppenAufloesung(this)">Speichern<\/button>'
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap">'
+      + '<span class="abt-badge" style="font-size:.7rem;padding:1px 6px;background:' + farbe + '22;color:' + farbe + ';border:1px solid ' + farbe + '44">' + m.abteilung + '<\/span>'
+      + '<span style="font-size:.82rem;font-weight:600;color:#1a2e2c">' + m.name + '<\/span>'
+      + '<span style="font-size:.78rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:1px 7px;font-weight:600">' + e.g + '<\/span>'
       + '<\/div>';
   }).join("");
 
-  const badgeClass = resolved >= total ? 'dp-count-ok' : 'dp-count-warn';
-  section.innerHTML = '<p class="dp-section-title">Gruppen-Teilnehmer <span class="dp-count-badge ' + badgeClass + '">' + resolved + ' / ' + total + ' aufgelöst<\/span><\/p>'
-    + '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.8rem;color:#1e40af;line-height:1.5">'
-    + '💡 <strong>Am besten direkt in der Quelltabelle pflegen.</strong> Dieses Panel ist nur für Sonderfälle, die sich dort <strong>nicht</strong> abbilden lassen.<\/div>'
-    + '<p class="dp-section-desc">Auflösbare Platzhalter (z.B. „PC alle" = echte Personen) den echten Personen zuordnen. Variable Rollen (z.B. „Ticket-Owner") leer lassen – das Meeting bleibt in Abteilungs- und Zeitanalysen erhalten, wird aber von der Personenanalyse ausgeschlossen.<\/p>'
-    + rowsHTML;
-}
-
-// Filtert die Personen-Checkboxen einer Gruppen-Zeile per Tippen
-function _filterGruppenList(input) {
-  const list = input.nextElementSibling;
-  if (!list) return;
-  const q = input.value.trim().toLowerCase();
-  list.querySelectorAll('label').forEach(function(l){
-    l.style.display = l.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
-  });
-}
-
-function saveGruppenAufloesung(btn) {
-  const row = btn.closest('.dp-gruppen-row');
-  const checklist = row ? row.querySelector('.dp-gruppen-checklist') : btn.previousElementSibling;
-  const key = checklist.dataset.key;
-  const selected = [...checklist.querySelectorAll('input[type=checkbox]:checked')].map(function(cb){ return cb.value; });
-  const cfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-  if (!cfg.gruppenAufloesungen) cfg.gruppenAufloesungen = {};
-  if (selected.length > 0) cfg.gruppenAufloesungen[key] = selected;
-  else delete cfg.gruppenAufloesungen[key];
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-
-  // Sofort in die Daten expandieren + betroffene Charts invalidieren
-  if (MEETINGS.length) {
-    applyGruppenAufloesungen();
-    MEETINGS.forEach(function(m) {
-      var abts = new Set(m.teilnehmer.map(function(t){ return effectivePersonAbt[t]; }).filter(Boolean));
-      m.abteilungsuebergreifend = abts.size > 1;
-      m.gruppenTeilnehmer = m.teilnehmer.filter(isGruppenParticipant);
-      m.hatGruppenTeilnehmer = m.gruppenTeilnehmer.length > 0;
-    });
-    // Alle personen-basierten Charts invalidieren
-    [1, 5, 6, 7, 8, 9, 10].forEach(function(t){ renderedTabs.delete(t); });
-    renderedTabs.delete(0);
-    renderStats();
-    renderTable();
-    if (typeof renderDatapflege === 'function') renderDatapflege();
-  }
-  var n = selected.length;
-  var toastMsg = n > 0
-    ? 'Gruppe aufgelöst – ' + n + ' Person' + (n===1?'':'en') + ' werden beim nächsten Tab-Besuch berücksichtigt'
-    : 'Auflösung entfernt – Gruppe bleibt als Platzhalter';
-  showToast(toastMsg);
+  section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-warn">' + entries.length + ' gefunden<\/span><\/p>'
+    + '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.82rem;color:#991b1b;line-height:1.6">'
+    + '&#128680; <strong>Diese Bezeichnungen konnten keiner Person zugeordnet werden.</strong><br>'
+    + 'Bitte direkt in der <strong>Quelltabelle</strong> korrigieren – die Meetings sind in Abteilungs- und Zeitanalysen enthalten, werden aber in der Personenanalyse nicht vollständig erfasst.'
+    + '<\/div>'
+    + '<div style="border:1px solid #fee2e2;border-radius:8px;overflow:hidden;background:white">'
+    + rowsHTML
+    + '<\/div>';
 }
 
 function exportConfig() {
@@ -3807,7 +3707,7 @@ function importConfigFile(input) {
   reader.onload = e => {
     try {
       const cfg = JSON.parse(e.target.result);
-      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen","gruppenAufloesungen"];
+      const VALID = ["personAbt","fkList","flugebeneOverrides","deptFunktionen"];
       const sanitized = {};
       VALID.forEach(k => { if (cfg[k] !== undefined) sanitized[k] = cfg[k]; });
       localStorage.setItem(CONFIG_KEY, JSON.stringify(sanitized));
@@ -4573,8 +4473,6 @@ function _renderFLSchluesselFragen(aktive, byFL) {
 
 // ── Alle Charts neu rendern ───────────────────────────────────────────────────
 function refreshAllCharts() {
-  // Gruppen-Auflösungen neu expandieren (vom Original starten)
-  applyGruppenAufloesungen();
   // abteilungsuebergreifend neu berechnen
   MEETINGS.forEach(m => {
     const abts = new Set(m.teilnehmer.map(t => effectivePersonAbt[t]).filter(Boolean));
@@ -4624,10 +4522,7 @@ function saveConfig() {
       flugebeneOverrides[m.abteilung + "||" + m.name] = m.flugebene;
   });
   try {
-    // deptFunktionen + gruppenAufloesungen bleiben stabil über Imports
-    const storedCfg = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
-    const gruppenAufloesungen = storedCfg.gruppenAufloesungen || {};
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen, gruppenAufloesungen }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ personAbt, fkList: fkArr, flugebeneOverrides, deptFunktionen }));
     const hint = document.getElementById("config-save-hint");
     if (hint) {
       hint.textContent = "● Gespeichert";
