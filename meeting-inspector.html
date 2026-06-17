@@ -667,7 +667,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 13:51";
+const APP_VERSION = "17.06.2026 14:03";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3796,8 +3796,11 @@ function renderGruppenTeilnehmerSection() {
   });
 
   // Verwaiste nonPersons: manuell markiert, aber in aktuellen Daten nicht vorhanden
-  const activeGroupNames = new Set(entries.map(function(e) { return e.g; }));
-  const orphaned = [..._nonPersons].filter(function(name) { return !activeGroupNames.has(name); });
+  // Alle Namen in den aktuellen Daten (Teilnehmer + Verantwortliche)
+  const allDataNames = new Set(MEETINGS.flatMap(function(m) {
+    return [...m.teilnehmer, m.verantwortlich].filter(Boolean);
+  }));
+  const orphaned = [..._nonPersons].filter(function(name) { return !allDataNames.has(name); });
   const orphanedHTML = orphaned.length > 0
     ? '<div style="margin-top:12px">'
       + '<p style="font-size:.8rem;font-weight:600;color:#92400e;margin:0 0 6px">&#9888; Verwaiste Markierungen – nicht in aktuellen Daten</p>'
