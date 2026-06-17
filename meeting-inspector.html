@@ -530,7 +530,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <div class="fl-kpi-row" id="fl-kpi-cards"></div>
 
     <p class="fl-section-title">Existiert eine Koordinationsebene?</p>
-    <div class="chart-card" id="chart-fl-pyramide" style="height:240px"></div>
+    <p class="hint" style="text-align:right;margin-bottom:4px">👆 Balken anklicken – Meetings der Ebene einblenden</p>
+    <div class="chart-card" id="chart-fl-pyramide" style="height:240px;cursor:default"></div>
     <div id="fl-pyramide-liste"></div>
     <div id="fl-alert-f1" class="fl-alert"></div>
     <p class="hint">Gesunde Pyramide: FL1 (Operativ, breite Basis) &gt; FL2 (Koordination) &gt; FL3 (Strategisch, Spitze). Fehlt FL2, wird abteilungsübergreifend koordiniert ohne strukturelles Format.</p>
@@ -654,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "16.06.2026 15:02";
+const APP_VERSION = "17.06.2026 10:39";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -4039,6 +4040,8 @@ function renderFlightLevels() {
       _listEl.dataset.open = fl;
     }
     if (_pyEl && _pyEl.on && _listEl) {
+      _pyEl.on("plotly_hover", function() { var d = _pyEl.querySelector(".nsewdrag"); if (d) d.style.cursor = "pointer"; });
+      _pyEl.on("plotly_unhover", function() { var d = _pyEl.querySelector(".nsewdrag"); if (d) d.style.cursor = "default"; });
       _pyEl.on("plotly_click", function(d) {
         if (!d.points || !d.points.length) return;
         var fl = FL_KEYS[d.points[0].pointIndex];
