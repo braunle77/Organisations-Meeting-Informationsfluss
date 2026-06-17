@@ -655,7 +655,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 10:35";
+const APP_VERSION = "17.06.2026 10:39";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -4040,8 +4040,8 @@ function renderFlightLevels() {
       _listEl.dataset.open = fl;
     }
     if (_pyEl && _pyEl.on && _listEl) {
-      _pyEl.on("plotly_hover", function() { _pyEl.style.cursor = "pointer"; });
-      _pyEl.on("plotly_unhover", function() { _pyEl.style.cursor = "default"; });
+      _pyEl.on("plotly_hover", function() { var d = _pyEl.querySelector(".nsewdrag"); if (d) d.style.cursor = "pointer"; });
+      _pyEl.on("plotly_unhover", function() { var d = _pyEl.querySelector(".nsewdrag"); if (d) d.style.cursor = "default"; });
       _pyEl.on("plotly_click", function(d) {
         if (!d.points || !d.points.length) return;
         var fl = FL_KEYS[d.points[0].pointIndex];
