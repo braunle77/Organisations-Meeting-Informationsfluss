@@ -667,7 +667,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "17.06.2026 13:41";
+const APP_VERSION = "17.06.2026 13:51";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -3789,16 +3789,38 @@ function renderGruppenTeilnehmerSection() {
   const section = document.getElementById("dp-gruppen-section");
   if (!section) return;
   const withGroups = MEETINGS.filter(function(m){ return m.hatGruppenTeilnehmer; });
-  if (withGroups.length === 0) {
-    section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-ok">Keine erkannt</span><\/p>'
-      + '<p class="dp-section-desc" style="color:#059669;margin-bottom:0">&#10003; Alle Teilnehmer sind eindeutige Personen – keine unklaren Bezeichnungen gefunden.<\/p>';
-    return;
-  }
 
   // Einträge (Meeting × Platzhalter) sammeln
   const entries = withGroups.flatMap(function(m) {
     return m.gruppenTeilnehmer.map(function(g) { return { m: m, g: g }; });
   });
+
+  // Verwaiste nonPersons: manuell markiert, aber in aktuellen Daten nicht vorhanden
+  const activeGroupNames = new Set(entries.map(function(e) { return e.g; }));
+  const orphaned = [..._nonPersons].filter(function(name) { return !activeGroupNames.has(name); });
+  const orphanedHTML = orphaned.length > 0
+    ? '<div style="margin-top:12px">'
+      + '<p style="font-size:.8rem;font-weight:600;color:#92400e;margin:0 0 6px">&#9888; Verwaiste Markierungen – nicht in aktuellen Daten</p>'
+      + '<div style="border:1px solid #fde68a;border-radius:8px;overflow:hidden;background:#fffbeb">'
+      + orphaned.map(function(name) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #fef3c7;flex-wrap:wrap">'
+          + '<span style="font-size:.78rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:1px 7px;font-weight:600">&#128683; ' + name + '<\/span>'
+          + '<span style="font-size:.68rem;background:#f3e8ff;color:#7e22ce;border:1px solid #d8b4fe;border-radius:4px;padding:1px 6px">manuell markiert<\/span>'
+          + '<span style="font-size:.68rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:4px;padding:1px 6px">&#9888; nicht in aktuellen Daten<\/span>'
+          + '<button onclick="toggleNonPerson(\'' + name.replace(/'/g,"\\'") + '\')" style="font-size:.68rem;background:none;border:1px solid #d1d5db;border-radius:4px;padding:1px 6px;cursor:pointer;color:#6b7280;margin-left:2px">&#128465; Markierung entfernen<\/button>'
+          + '<\/div>';
+      }).join('')
+      + '<\/div>'
+      + '<p style="font-size:.74rem;color:#92400e;margin:6px 0 0">Diese Namen wurden als Platzhalter markiert, kommen in den aktuellen Daten aber nicht vor. Markierung entfernen, falls nicht mehr relevant.<\/p>'
+      + '<\/div>'
+    : '';
+
+  if (withGroups.length === 0) {
+    section.innerHTML = '<p class="dp-section-title">Datenqualität: Gruppen-Bezeichnungen <span class="dp-count-badge dp-count-ok">Keine erkannt</span><\/p>'
+      + '<p class="dp-section-desc" style="color:#059669;margin-bottom:' + (orphaned.length ? '12px' : '0') + '">&#10003; Alle Teilnehmer sind eindeutige Personen – keine unklaren Bezeichnungen gefunden.<\/p>'
+      + orphanedHTML;
+    return;
+  }
 
   const rowsHTML = entries.map(function(e) {
     const m = e.m;
@@ -3823,7 +3845,8 @@ function renderGruppenTeilnehmerSection() {
     + '<\/div>'
     + '<div style="border:1px solid #fee2e2;border-radius:8px;overflow:hidden;background:white">'
     + rowsHTML
-    + '<\/div>';
+    + '<\/div>'
+    + orphanedHTML;
 }
 
 function exportConfig() {
