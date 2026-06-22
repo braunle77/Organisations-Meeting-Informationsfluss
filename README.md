@@ -1,17 +1,18 @@
-# Organisations-Meeting-Informationsfluss
+# Meeting-Inspektor
 
-Interaktives Analyse-Dashboard für Meeting-Strukturen in Organisationen.  
-Läuft vollständig im Browser – kein Python, kein Server, keine Installation.
+Interaktives Browser-Dashboard zur Analyse der Meeting-Landschaft einer Organisation.  
+Kein Server, keine Installation, keine KI für den Betrieb erforderlich – eine einzige HTML-Datei.
 
 ---
 
 ## Wozu
 
-- Meeting-Landschaft einer Organisation visualisieren
-- Kommunikation und Informationsfluss zwischen Abteilungen sichtbar machen
-- Redundante Meetings identifizieren (Teilnehmer-Überschneidungen)
-- Kommunikationslücken aufdecken
-- Personen Abteilungen zuordnen und Führungskräfte markieren
+- Meeting-Landschaft visualisieren und auf einen Blick erfassen
+- Kommunikations- und Informationsfluss zwischen Abteilungen sichtbar machen
+- Redundante Meetings und Teilnehmer-Überschneidungen identifizieren
+- Personen-Engpässe und Meeting-Last pro Person erkennen
+- Kommunikationsfluss über Flight Levels diagnostizieren
+- Datenqualität der Urliste verbessern (Vollständigkeits-Impulse)
 
 Das Dashboard ist als Gesprächsgrundlage für Management-Reviews gedacht, nicht als statischer Bericht.
 
@@ -19,93 +20,85 @@ Das Dashboard ist als Gesprächsgrundlage für Management-Reviews gedacht, nicht
 
 ## Schnellstart
 
-1. `meeting-inspector.html` im Browser öffnen
+1. [`meeting-inspector.html`](https://raw.githubusercontent.com/braunle77/Organisations-Meeting-Informationsfluss/main/meeting-inspector.html) herunterladen (Rechtsklick → „Ziel speichern unter") und im Browser öffnen
 2. Daten laden – zwei Wege:
 
 **Option A – Paste aus Confluence:**
-
 1. Confluence-Seite mit der Meeting-Tabelle öffnen
-2. Alles markieren (`⌘A`) und kopieren (`⌘C`)
-3. Im Dashboard einfügen (`⌘V`) → „Prüfen & Laden"
+2. Alles markieren (`⌘A` / `Strg+A`) und kopieren
+3. Im Dashboard einfügen → „Prüfen & Laden"
 
-Der Header wird automatisch erkannt und Navigationszeilen übersprungen.
-
-**Option B – CSV-Datei wählen:**
-
-CSV, TSV oder TXT mit den [erwarteten Spalten](#eingabedatei) hochladen.  
+**Option B – Datei wählen:**
+CSV, TSV oder TXT mit den [erwarteten Spalten](#eingabeformat) hochladen.  
 Trennzeichen (Komma, Semikolon, Tab) und UTF-8-BOM (Excel/Numbers) werden automatisch erkannt.
 
-3. Das Dashboard öffnet automatisch den **Personen-Tab** – dort die automatischen Abteilungs-Zuordnungen prüfen und ggf. korrigieren
-4. „Alle Charts aktualisieren" – fertig
+3. Im **Personen-Tab** Abteilungszuordnungen prüfen und ggf. bestätigen
+4. Im **Konfiguration-Tab** Abteilungstypen und weitere Einstellungen vornehmen
+
+Quelldaten bleiben **lokal** im Browser – keine Daten verlassen das Gerät.
 
 ---
 
-## Eingabedatei
+## Eingabeformat
 
-Tabelle mit 12 Spalten. **Reihenfolge zählt, Spaltennamen spielen keine Rolle.**
+Spalten werden automatisch per **Name** erkannt – Reihenfolge spielt keine Rolle.
 
-| # | Spalte | Beschreibung |
-|---|--------|-------------|
-| 1 | Abt. | Kürzel der Organisationseinheit |
-| 2 | Meeting-Name | Bezeichnung des Meetings |
-| 3 | Kategorie | Jour Fixe / Teammeeting / Regeltermin / Einzelgespräch / Sprint Review / Workshop / Sonstiges |
-| 4 | Zweck | Kurzbeschreibung des Meeting-Inhalts |
-| 5 | Kopf | Kürzel der verantwortlichen Person |
-| 6 | Teilnehmer | Komma- oder semikolon-getrennte Kürzel |
-| 7 | Rhythmus | Freitext – wird normalisiert (täglich, wöchentlich, zweiwöchentlich …) |
-| 8 | Informations-Fluss | Beschreibung des Informationsflusses |
-| 9 | Status | „Aktiv" oder „Geplant" |
-| 10 | Abt.übergreifend | „Ja" oder „Nein" |
-| 11 | Platzhalter | „Ja" wenn Teilnehmerkreis vage oder variabel |
-| 12 | Learnings | Optionale Notizen |
-
-Quelldaten bleiben **lokal** und werden nicht ins Repository eingecheckt (`.gitignore`).
+| Spalte | Beschreibung | Pflicht |
+|--------|-------------|---------|
+| Abteilung | Bezeichnung der Organisationseinheit | ✓ |
+| Meetingname | Bezeichnung des Meetings | ✓ |
+| Kategorie | Frei definierbar | |
+| Zweck | Kurzbeschreibung | |
+| Verantwortlich | Kürzel der verantwortlichen Person | |
+| Personen | Komma- oder semikolon-getrennte Kürzel | ✓ |
+| Rhythmus | Freitext – wird automatisch normalisiert | ✓ |
+| Dauer | Dauer in Minuten | |
+| Informationsfluss | Beschreibung des Informationsflusses | |
+| Wirkung (1–4) | Empfundener Wert – direkt in der Quelltabelle pflegen | |
+| Status | „Aktiv" oder „Geplant" | ✓ |
+| Abteilungsübergreifend | „Ja" / „Nein" (wird automatisch berechnet) | |
+| Platzhalter | „Ja" wenn Teilnehmerkreis variabel | |
+| Learnings | Optionale Notizen | |
+| Flugebene | FL1 / FL2 / FL3 – wird automatisch klassifiziert wenn leer | |
 
 ---
 
-## Dashboard-Tabs
+## Analyse-Tabs
 
 | Tab | Inhalt |
 |-----|--------|
-| Netzwerk | Wer kommuniziert mit wem? Zentralität und Brücken sichtbar machen |
-| Kalender | Wann findet was statt? Rhythmus-Verteilung über die Woche |
-| Überschneidungen | Jaccard-Ähnlichkeit der Teilnehmergruppen |
-| Abteilungen | Meeting-Anzahl und -Frequenz pro Abteilung |
-| Kommunikation | Sankey-Diagramm der Kommunikationsintensität zwischen Abteilungen |
-| Alle Meetings | Filterbare Tabelle mit allen Daten |
-| KI Analyse | Kommentierte Beobachtungen als Gesprächsgrundlage |
-| Personen | Abteilungs-Zuordnung & Führungskräfte-Verwaltung |
+| **Netzwerk** | Wer kommuniziert mit wem? Zentralität und Brücken sichtbar machen |
+| **Abteilungen** | Meeting-Dichte, Frequenz und Rollen pro Abteilung |
+| **Kalender** | Wann findet was statt? Rhythmus-Verteilung über die Woche |
+| **Kommunikation** | Sankey- und Chord-Diagramm der Kommunikationsintensität |
+| **Überschneidungen** | Meetings mit ähnlichen Teilnehmergruppen (Jaccard-Ähnlichkeit) |
+| **Engpass** | Meeting-Last und Zeitaufwand je Person |
+| **Zeitverteilung** | Monatliche Personen-Stunden nach Kategorie |
+| **Wirkung** | Zeitaufwand vs. empfundene Wirkung (Optimierungspotenzial) |
+| **Flight Levels** | Kommunikationsfluss-Diagnose auf FL1 / FL2 / FL3 |
+| **Personen** | Abteilungszuordnung und Führungskräfte-Verwaltung |
+| **Alle Meetings** | Filterbare Read-only-Tabelle aller Meetings |
+| **Konfiguration** | Datenpflege, Datenqualität und Tool-Einstellungen |
 
 ---
 
-## Personen-Tab
+## Konfiguration
 
-Der Algorithmus ordnet Personen automatisch ihrer häufigsten Abteilung zu.  
-Im Personen-Tab können Zuordnungen korrigiert und Führungskräfte markiert werden.
+Der **Konfiguration-Tab** bietet mehrere Bereiche:
 
-Sonder-Kategorien für Personen, die nicht in eine reguläre Abteilung gehören:
+- **Individuelle Impulse zur Datenoptimierung** – Name oder Kürzel eingeben und sofort sehen, welche eigenen Meetings noch Lücken in der Urliste haben (fehlende Dauer, Wirkung, Infofluss, Wochentag)
+- **Personen-Zuordnung** – Abteilungen manuell übersteuern und Führungskräfte markieren
+- **Abteilungstypen** – Abteilungen als Linie, Stab oder Projekt klassifizieren
+- **Datenqualität: Gruppen-Bezeichnungen** – Platzhalter und Gruppenbezeichnungen erkennen und markieren
+- **Config Export/Import** – Konfiguration als JSON sichern und auf anderen Geräten wiederverwenden
 
-| Kategorie | Wann |
-|-----------|------|
-| Management | GF-Ebene oder übergeordnet (berichten an sie, sind aber nicht Teil der Org-Einheit) |
-| Extern | Partner, Lieferanten, externe Dienstleister |
-| Kunden | Endabnehmer |
-
-Änderungen werden im `localStorage` des Browsers gespeichert und bleiben beim nächsten Öffnen erhalten.
+Alle Einstellungen werden im `localStorage` des Browsers gespeichert und bleiben beim nächsten Öffnen erhalten.
 
 ---
 
-## Konfiguration (optional)
+## Testdaten
 
-Am Anfang der `<script>`-Sektion in der HTML-Datei gibt es einen optionalen Config-Block.  
-Alle Felder können leer bleiben – Abteilungen, Zuordnungen und Farben werden automatisch abgeleitet.
-
-```javascript
-const ALIAS_MAP   = { /* Kürzel-Normalisierung, z.B. "max": "Max" */  };
-const PERSON_ABT  = { /* Override Person→Abteilung; leer = auto     */  };
-const FK_LIST     = [ /* Führungskräfte (Stern im Netzwerk)          */ ];
-const ABT_FARBEN  = { /* Override Abteilungsfarben; leer = auto      */  };
-```
+[`testdaten.tsv`](https://raw.githubusercontent.com/braunle77/Organisations-Meeting-Informationsfluss/main/testdaten.tsv) enthält 73 fiktive Meetings für einen Schnelltest ohne echte Daten.
 
 ---
 
@@ -113,7 +106,7 @@ const ABT_FARBEN  = { /* Override Abteilungsfarben; leer = auto      */  };
 
 | Datei | Beschreibung |
 |-------|-------------|
-| `meeting-inspector.html` | Dashboard – die einzige Datei, die du brauchst |
-| `CLAUDE_CONTEXT.md` | Entwicklungs-Kontext für Claude-Sessions |
+| `meeting-inspector.html` | Das Dashboard – die einzige Datei, die du brauchst |
+| `testdaten.tsv` | Synthetische Testdaten (73 Meetings) |
 
-Quelldaten (`*.xlsx`, `*.csv`) sind in `.gitignore` ausgeschlossen.
+Echte Quelldaten (`*.xlsx`, `*.csv`) sind in `.gitignore` ausgeschlossen und verbleiben lokal.
