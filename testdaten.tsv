@@ -4,7 +4,7 @@ Sales	Teammeeting Sales	Teammeeting	Monatlicher Austausch im Vertriebsteam	Bsc	B
 Support	Teammeeting Support	Teammeeting	Monatlicher Austausch im Support-Team	Kna	Kna, Uri, Dbe, Mho, Fwi, Sle, Rgi, Amu	monatlich Mi	60	Ticket-Status, Eskalationen, Verbesserungsideen	3	Aktiv	Nein
 Operations	Teammeeting Operations	Teammeeting	Wöchentliche Abstimmung im Operations-Team	Ste	Ste, Mla, Bha, Cwa, Nvo	wöchentlich Do	45	Operative Aufgaben, Prioritäten, Blocker	3	Aktiv	Nein
 Product Management	Teammeeting Product Management	Teammeeting	Wöchentlicher Austausch im PM-Team	Foh	Foh, Lpe	wöchentlich Di	30	Roadmap, Priorisierung, Stakeholder-Feedback	4	Aktiv	Nein
-Business Excellence	Qualitätszirkel	Koordination	Monatliche Qualitätsrunde mit Vertreterinnen aller Abteilungen	Rie	Rie, Bsc, Kna, Wku, Ste, Foh	monatlich Mi	60	Qualitätsindikatoren, Prozessverbesserungen, KPIs	3	Aktiv	Ja
+Business Excellence	Qualitätszirkel	Koordination	Monatliche Qualitätsrunde mit Vertreterinnen aller Abteilungen	Rie	Rie, Bsc, Kna, Wku, Ste, Foh	monatlich Mi	60	Qualitätsindikatoren, Prozessverbesserungen, KPIs	3///2	Aktiv	Ja
 Entwicklung	Teammeeting Entwicklung	Teammeeting	Monatliches Gesamtteam-Meeting der Entwicklung	Wku	Wku, Awo, Nki, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	monatlich Do	90	Entwicklungsfortschritt, Teamankündigungen, Highlights	3	Aktiv	Nein
 Entwicklung	Standup Produkt-Team A	Standup	Zweimal wöchentlicher Sync – Di und Do	Awo	Awo, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma	wöchentlich Di Do	15	Fortschritt, Blocker, Tagesplanung	4	Aktiv	Nein
 Entwicklung	Standup Produkt-Team B	Standup	Zweimal wöchentlicher Sync – Mo und Mi	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	wöchentlich Mo Mi	15	Fortschritt, Blocker, Tagesplanung	4	Aktiv	Nein
@@ -29,7 +29,7 @@ Entwicklung	Retrospektive Team A	Retrospektive	Monatliche Retrospektive für Pro
 Entwicklung	Retrospektive Team B	Retrospektive	Monatliche Retrospektive für Produktteam B	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso	monatlich Fr	60	Verbesserungsideen, Teamdynamik, Prozessoptimierung	4	Aktiv	Nein
 Entwicklung	Sprint Planning Team A	Planung	Zweiwöchentliches Sprint Planning für Produktteam A	Awo	Awo, Rsc, Tba, Mfi, Jhe, Kst, Pwo, Hma, Foh	zweiwöchentlich Mo	90	Sprint-Ziele, Story Points, Kapazitätsplanung	3	Aktiv	Ja
 Entwicklung	Sprint Planning Team B	Planung	Zweiwöchentliches Sprint Planning für Produktteam B	Nki	Nki, Dho, Cpr, Sre, Ipl, Gle, Bme, Jso, Lpe	zweiwöchentlich Mo	90	Sprint-Ziele, Story Points, Kapazitätsplanung	3	Aktiv	Ja
-Sales	Sales Pipeline Review	Statusmeeting	Wöchentliche Pipeline-Besprechung im Vertrieb	Bsc	Bsc, Jha, Tkr, Mvo, Swe, Pku	wöchentlich Mi	45	CRM-Daten, offene Opportunities, Forecast	3	Aktiv	Nein
+Sales	Sales Pipeline Review	Statusmeeting	Wöchentliche Pipeline-Besprechung im Vertrieb	Bsc	Bsc, Jha, Tkr, Mvo, Swe, Pku	wöchentlich Mi	45	CRM-Daten, offene Opportunities, Forecast	////3	Aktiv	Nein
 Support	Customer Escalation Meeting	Koordination	Ad-hoc Meeting bei kritischen Kundeneskalationen	Kna	Kna, Uri, Dbe, Bsc	variabel	30	Kundenproblem, Lösungsweg, Zeitplan		Aktiv	Ja
 Product Management	Produktroadmap Review	Statusmeeting	Monatliche Review der Produktroadmap mit Stakeholdern	Foh	Foh, Lpe, Wku, Bsc, Maa	monatlich Do	60	Roadmap-Anpassungen, Marktfeedback, Machbarkeit	4	Aktiv	Ja		Kundenfeedback früher einbeziehen
 Business Excellence	Prozessoptimierungs-Workshop	Workshop	Quartalsweiser Workshop zu Prozessverbesserungen	Rie	Rie, Maa, Kna, Ste, Wku	quartalsweise	120	Prozessanalyse, Optimierungsmaßnahmen, KPIs		Aktiv	Ja
