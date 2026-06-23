@@ -20,7 +20,7 @@ Das Dashboard ist als Gesprächsgrundlage für Management-Reviews gedacht, nicht
 
 ## Schnellstart
 
-1. [`meeting-inspector.html`](https://raw.githubusercontent.com/braunle77/Organisations-Meeting-Informationsfluss/main/meeting-inspector.html) herunterladen (Rechtsklick → „Ziel speichern unter") und im Browser öffnen
+1. [`meeting-inspektor.html`](https://raw.githubusercontent.com/braunle77/Meeting-Inspektor/main/meeting-inspektor.html) herunterladen (Rechtsklick → „Ziel speichern unter") und im Browser öffnen
 2. Daten laden – zwei Wege:
 
 **Option A – Paste aus Confluence:**
@@ -106,7 +106,7 @@ Alle Einstellungen werden im `localStorage` des Browsers gespeichert und bleiben
 
 | Datei | Beschreibung |
 |-------|-------------|
-| `meeting-inspector.html` | Das Dashboard – die einzige Datei, die du brauchst |
+| `meeting-inspektor.html` | Das Dashboard – die einzige Datei, die du brauchst |
 | `testdaten.tsv` | Synthetische Testdaten (73 Meetings) |
 
 Echte Quelldaten (`*.xlsx`, `*.csv`) sind in `.gitignore` ausgeschlossen und verbleiben lokal.
