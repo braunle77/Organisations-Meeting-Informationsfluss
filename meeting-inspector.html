@@ -544,7 +544,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
     <p class="fl-section-title">Wirkungsgrad nach Ebene</p>
     <div class="chart-card" id="chart-fl-wirkung"></div>
     <div id="fl-alert-f3" class="fl-alert"></div>
-    <p class="hint">Wirkung aus Confluence-Spalte (1–4). FL2/FL3-Meetings mit Wirkung ≤ 2 sind Kandidaten für „Koordinationstheater".</p>
+    <p class="hint">Wirkung aus Urliste (1–4). FL2/FL3-Meetings mit Wirkung ≤ 2 sind Kandidaten für „Koordinationstheater".</p>
 
     <p class="fl-section-title">Wer ist Brückenkopf zwischen den Ebenen?</p>
     <div class="chart-card" id="chart-fl-bruecke"></div>
@@ -649,8 +649,8 @@ textarea#paste-area::placeholder{color:#cbd5e1}
   <div id="panel-10" class="panel" data-tab="8">
     <button class="tab-info-btn" onclick="showTabInfo(8)">ℹ</button>
     <div id="wirkung-briefing"></div>
-    <div class="chart-card" id="chart-wirkung" style="height:480px"></div>
-    <p class="hint">X-Achse = <strong>Kalender-Stunden/Monat</strong> (Dauer × Häufigkeit ÷ 60, nicht × Teilnehmer) · Y-Achse = Wirkung (1–4) · Bubble-Größe = Teilnehmerzahl · Farbe = Kategorie · Nur Meetings mit Dauer- UND Wirkungsangabe</p>
+    <div class="chart-card" id="chart-wirkung" style="height:960px"></div>
+    <p class="hint">Je weiter <strong>rechts</strong>, desto mehr Kalenderzeit bindet das Meeting (Dauer × Häufigkeit, nicht × Teilnehmer). Je <strong>höher</strong>, desto besser bewertet. Bubble-Größe = Teilnehmerzahl · Farbe = Meeting-Kategorie · Nur Meetings mit Dauer- UND Wirkungsangabe werden angezeigt.</p>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -667,7 +667,7 @@ textarea#paste-area::placeholder{color:#cbd5e1}
 // FK_LIST    : Führungskräfte (Stern im Netzwerk); [] = keine Hervorhebung
 // PERSON_SUBTEAM : optionale Subteam-Zuordnung für Hover-Texte
 // ══════════════════════════════════════════════════════════════════════════════
-const APP_VERSION = "23.06.2026 10:02";
+const APP_VERSION = "23.06.2026 10:51";
 const ALIAS_MAP = {
   // Beispiel: "max": "Max"
 };
@@ -2639,7 +2639,7 @@ function renderPersonenTab() {
     diagBox.style.display = "block";
     diagBox.innerHTML =
       `<b>⚠ Diagnose – fehlende Personen</b><br>${diagLines.join("<br>")}` +
-      `<br><span style="color:#7a6000">Tipp: Prüfe in Confluence die genaue Schreibweise im Feld „Personen".</span>`;
+      `<br><span style="color:#7a6000">Tipp: Prüfe in der Urliste die genaue Schreibweise im Feld „Personen".</span>`;
   } else {
     diagBox.style.display = "none";
   }
@@ -2980,7 +2980,7 @@ function renderZeitlast() {
     document.getElementById("chart-zeitlast").innerHTML =
       `<div style="padding:32px;text-align:center;color:#9ca3af;font-size:.9rem">
         Noch keine Dauer-Angaben in den Daten – Zeitlast-Chart wird verfügbar,<br>
-        sobald die Spalte „Dauer" in der Confluence-Tabelle befüllt ist.
+        sobald die Spalte „Dauer" in der Urliste befüllt ist.
       </div>`;
     if (hint) hint.textContent = "Zeitlast-Chart: Dauer-Spalte noch nicht befüllt";
     return;
@@ -3111,7 +3111,7 @@ function renderTreemap() {
     document.getElementById("chart-treemap").innerHTML =
       `<div style="padding:32px;text-align:center;color:#9ca3af;font-size:.9rem">
         Noch keine Dauer-Angaben in den Daten – Zeitverteilung wird verfügbar,<br>
-        sobald die Spalte „Dauer" in der Confluence-Tabelle befüllt ist.
+        sobald die Spalte „Dauer" in der Urliste befüllt ist.
       </div>`;
     return;
   }
@@ -3286,11 +3286,11 @@ function renderWirkungsMatrix() {
   ];
 
   Plotly.react(el, traces, {
-    margin: { t: 64, r: 24, b: 56, l: 56 },
+    margin: { t: 40, r: 180, b: 56, l: 56 },
     xaxis: { title: "Zeitaufwand h/Monat", zeroline: false, gridcolor: "#f1f5f9", range: [0, xMax] },
     yaxis: { title: "Wirkung", tickvals: [1,2,3,4], ticktext: ["1","2","3","4"], range: [0.5, 4.5], gridcolor: "#f1f5f9" },
     shapes, annotations,
-    legend: { orientation: "h", y: 1.08, x: 0.5, xanchor: "center" },
+    legend: { orientation: "v", y: 1, x: 1.02, xanchor: "left", yanchor: "top" },
     plot_bgcolor: "#fff", paper_bgcolor: "#fff",
     font: { family: "Inter, system-ui, sans-serif", size: 12, color: "#374151" },
     hovermode: "closest"
@@ -3352,23 +3352,33 @@ function _renderWirkungsBriefing(data, xVals, xMedian) {
 
   var moreOpt = optimieren.length > 4 ? '<div style="font-size:.75rem;color:#9ca3af;padding:2px 0 0 24px">+ ' + (optimieren.length-4) + ' weitere</div>' : '';
 
-  var hintLine = hinterfragen.length
-    ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9;font-size:.78rem;color:#6b7280">'
-      + '<span style="font-weight:600;color:#6b7280">? Hinterfragen (' + hinterfragen.length + ')</span>'
-      + ' – geringer Zeitaufwand, aber Wirkung ≤ 2: '
-      + hinterfragen.slice(0,3).map(function(d){ return d.m.name.length>22 ? d.m.name.slice(0,21)+'…' : d.m.name; }).join(', ')
-      + (hinterfragen.length > 3 ? ' +' + (hinterfragen.length-3) + ' weitere' : '')
-      + '</div>'
-    : '';
+  var leftCol = '<div>'
+    + '<div style="font-size:.75rem;font-weight:700;color:#dc2626;margin-bottom:4px">⚠ OPTIMIEREN (' + optimieren.length + ')</div>'
+    + '<div style="font-size:.72rem;color:#9ca3af;margin-bottom:6px">Hoher Zeitaufwand · Wirkung ≤ 2</div>'
+    + (optimieren.length ? optRows + moreOpt : '<div style="font-size:.8rem;color:#059669;padding:4px 0">✓ Keine kritischen Meetings</div>')
+    + '</div>';
+
+  var rightCol = '<div>'
+    + '<div style="font-size:.75rem;font-weight:700;color:#6b7280;margin-bottom:4px">? HINTERFRAGEN (' + hinterfragen.length + ')</div>'
+    + '<div style="font-size:.72rem;color:#9ca3af;margin-bottom:6px">Geringer Zeitaufwand · Wirkung ≤ 2</div>'
+    + (hinterfragen.length
+      ? hinterfragen.slice(0,5).map(function(d){
+          var n = d.m.name.length>28 ? d.m.name.slice(0,27)+'…' : d.m.name;
+          return '<div style="font-size:.78rem;color:#6b7280;padding:2px 0">' + n + '</div>';
+        }).join('')
+        + (hinterfragen.length > 5 ? '<div style="font-size:.75rem;color:#9ca3af;padding:2px 0">+ ' + (hinterfragen.length-5) + ' weitere</div>' : '')
+      : '<div style="font-size:.8rem;color:#059669;padding:4px 0">✓ Keine auffälligen Meetings</div>')
+    + (ohneWert ? '<div style="margin-top:10px;font-size:.75rem;color:#9ca3af;border-top:1px solid #f1f5f9;padding-top:8px">' + ohneWert + ' Meetings noch ohne Wirkungsangabe</div>' : '')
+    + '</div>';
 
   el.innerHTML = '<div class="treemap-briefing">'
     + '<div class="tbr-header">'
     + '<span class="tbr-title">Wirkung – Auf einen Blick</span>'
     + '<span class="tbr-sub">' + bewertet + ' Meetings bewertet' + (ohneWert ? ' · ' + ohneWert + ' noch ohne Wirkungsangabe' : '') + '</span>'
     + '</div>'
-    + (optimieren.length ? '<div style="font-size:.75rem;font-weight:700;color:#dc2626;margin-bottom:4px">⚠ OPTIMIEREN (' + optimieren.length + ') – hoher Zeitaufwand, Wirkung ≤ 2</div>'
-        + optRows + moreOpt : '')
-    + hintLine
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">'
+    + leftCol + rightCol
+    + '</div>'
     + '</div>';
 }
 
@@ -3474,6 +3484,8 @@ function _renderKalenderBriefing() {
   var sortedTage = tagOrder.slice().sort(function(a,b){ return tagCounts[b]-tagCounts[a]; });
   var busiestTag = sortedTage[0];
   var freeTage   = tagOrder.filter(function(t){ return tagCounts[t] === 0; });
+  var nonZeroTage = sortedTage.filter(function(t){ return tagCounts[t] > 0; });
+  var leastTag    = nonZeroTage.length > 1 ? nonZeroTage[nonZeroTage.length - 1] : null;
 
   // Rhythmus-Verteilung
   var rhyCounts = {};
@@ -3507,6 +3519,9 @@ function _renderKalenderBriefing() {
     + '<div class="komm-insight"><div class="komm-insight-label">Meistbelasteter Tag</div>'
     + '<div class="komm-insight-value">' + busiestTag + '</div>'
     + '<div class="komm-insight-sub">' + tagCounts[busiestTag] + ' Meeting-Einträge (inkl. mehrere Abteilungen)</div></div>'
+    + (leastTag ? '<div class="komm-insight"><div class="komm-insight-label">Ruhigster Tag</div>'
+      + '<div class="komm-insight-value">' + leastTag + '</div>'
+      + '<div class="komm-insight-sub">' + tagCounts[leastTag] + ' Meeting-Einträge</div></div>' : '')
     + '<div class="komm-insight"><div class="komm-insight-label">Häufigster Rhythmus</div>'
     + '<div class="komm-insight-value">' + topRhy.charAt(0).toUpperCase() + topRhy.slice(1) + '</div>'
     + '<div class="komm-insight-sub">' + topRhyPct + '% aller aktiven Meetings (' + rhyCounts[topRhy] + ' von ' + aktive.length + ')</div></div>'
@@ -3739,15 +3754,15 @@ function renderQualitaetsCockpit() {
     { label: "Dauer erfasst",
       count: MEETINGS.filter(m => m.dauer !== null).length, tot: total,
       hint: "Nötig für Zeitlastberechnung, Engpass und Treemap.",
-      action: "Dauern in Confluence eintragen." },
+      action: "Dauern in der Urliste eintragen." },
     { label: "Wirkung bewertet",
       count: MEETINGS.filter(m => m.wert !== null).length, tot: total,
       hint: "Nötig für Wirkungsmatrix (Tab 8) und FL-Wirkungsdiagramm.",
-      action: "Als Spalte in Confluence-Tabelle eintragen (Wirkung 1-4)." },
+      action: "Als Spalte in der Urliste eintragen (Wirkung 1-4)." },
     { label: "Infofluss dokumentiert",
       count: MEETINGS.filter(m => m.infofluss && m.infofluss.trim()).length, tot: total,
       hint: "Dokumentiert wohin Informationen fließen.",
-      action: "In Confluence-Tabelle befüllen." },
+      action: "In der Urliste befüllen." },
     { label: "Abteilungstypen gepflegt",
       count: allDepts.filter(d => deptFunktionen[d]).length, tot: allDepts.length || 1,
       hint: "Verbessert Flight-Level-Klassifikation erheblich.",
@@ -4250,7 +4265,7 @@ function renderFlightLevels() {
     const rated = aktive.filter(m => m.flugebene && m.wert !== null);
     if (rated.length < 3) {
       document.getElementById("chart-fl-wirkung").innerHTML =
-        '<p style="padding:20px;color:#7a9e9a;font-size:.85em">Zu wenig Wirkungsbewertungen – Wirkung (1–4) als Spalte in der Confluence-Tabelle ergaenzen.</p>';
+        '<p style="padding:20px;color:#7a9e9a;font-size:.85em">Zu wenig Wirkungsbewertungen – Wirkung (1–4) in der Urliste ergänzen.</p>';
     } else {
       Plotly.newPlot("chart-fl-wirkung", FL_KEYS.map(fl => {
         const ms = rated.filter(m => m.flugebene === fl);
@@ -4619,7 +4634,7 @@ function _renderFLSchluesselFragen(aktive, byFL) {
   var mitWert  = aktive.filter(function(m){ return m.wert !== null && m.dauer !== null; });
   var q5Answer, q5Missing = '';
   if (mitWert.length === 0) {
-    q5Missing = 'Keine Wirkungsangaben vorhanden – diese Frage kann nicht beantwortet werden. Felder "Wirkung" und "Dauer" in Confluence befllen.';
+    q5Missing = 'Keine Wirkungsangaben vorhanden – diese Frage kann nicht beantwortet werden. Felder „Wirkung" und „Dauer" in der Urliste befüllen.';
     q5Answer = '';
   } else {
     var kandidaten = mitWert.filter(function(m){ return m.wert <= 2; });
